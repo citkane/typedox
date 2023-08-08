@@ -1,0 +1,9 @@
+{
+	"extends": "./base.json",
+	"compilerOptions": {
+		"module": "commonJs",
+		"target": "esnext",
+		"moduleResolution": "node",
+		"resolveJsonModule": true
+	}
+}

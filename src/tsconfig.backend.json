@@ -1,0 +1,12 @@
+{
+	"extends": "@typedox/tsconfig/commonJs.json",
+	"include": [
+		"./backend",
+		"./types/types.ts",
+		"./types/backendTypes.ts",
+		"index.ts"
+	],
+	"compilerOptions": {
+		"outDir": "../dist"
+	}
+}
