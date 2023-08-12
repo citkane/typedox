@@ -21,4 +21,7 @@ import * as handlers_1 from "./handlers/index.js";
 export { handlers_1 as handlers };
 import * as webComponents_1 from "./webComponents/index.js";
 export { webComponents_1 as webComponents };
+const foo = "xxx";
+const bar = "yyy";
+export { foo as Foo, bar };
 //# sourceMappingURL=index.js.map

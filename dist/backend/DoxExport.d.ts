@@ -1,17 +1,17 @@
-import { ExportDeclaration, NamedExports, Program, SyntaxKind, TypeChecker, Node, StringLiteral, ExportSpecifier, NamespaceExport, SourceFile, ExportAssignment, Identifier } from "typescript";
-import TypeDox from "./TypeDox";
-export default class DoxExport extends TypeDox {
-    exportDeclaration: Node;
-    exportSources: SourceFile[];
-    location: string[];
-    constructor(checker: TypeChecker, program: Program, declaration: Node, location: string[]);
-    parseExportDeclaration(exportDeclaration: ExportDeclaration, namespace?: boolean): void;
-    parseNamedExports(namedExport: NamedExports, namespace?: boolean): void;
-    parseExportSpecifier: (exportSpecifier: ExportSpecifier, namespace?: boolean) => void;
-    parseStringLiteral(stringLiteral: StringLiteral, namespace?: boolean): void;
-    parseNamespaceExport(namespaceExport: NamespaceExport, namespace?: boolean): void;
-    parseExportAssignment(exportAssignment: ExportAssignment, namespace?: boolean): void;
-    parseIdentifier(identifier: Identifier, namespace?: boolean): void;
-    parse(node: Node, namespace?: boolean): any;
-    static nodesToSkip: SyntaxKind[];
+import { ExportDeclaration } from "typescript";
+import { exportAlias, fileRef } from "./types";
+import Dox from "./Dox";
+import DoxContext from "./DoxContext";
+export default class DoxExport extends Dox {
+    private exportDeclaration;
+    readonly exportSources: fileRef[];
+    readonly location: exportAlias[];
+    constructor(context: DoxContext, declaration: ExportDeclaration);
+    private parse;
+    private parseNamedExports;
+    private parseExportSpecifier;
+    private parseStringLiteral;
+    private parseNamespaceExport;
+    private parseExportAssignment;
+    private parseIdentifier;
 }

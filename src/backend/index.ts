@@ -1,78 +1,38 @@
 import * as ts from "typescript";
-//import * as tsdoc from "@microsoft/tsdoc";
 import * as path from "path";
-import * as model from "@microsoft/api-extractor-model";
-import Package from "./Package";
+import DoxPackage from "./DoxPackage";
+import DoxContext from "./DoxContext";
+import Dox from "./Dox";
+import Id from "./Id";
 
 const projectRoot = path.join(__dirname, "../../");
 const inputFilename = path.join(projectRoot, "src/frontend/index.ts");
+const configFile = ts.findConfigFile(projectRoot, ts.sys.fileExists);
+if (configFile) parseConfig(configFile, projectRoot);
 
-const program = ts.createProgram([inputFilename], {
-  target: ts.ScriptTarget.ES2016,
-  module: ts.ModuleKind.ES2015,
-  noLib: true,
-  types: [],
-});
-const entrySourceFile = program.getSourceFile(inputFilename);
-const checker = program.getTypeChecker();
+function parseConfig(configFile: string, baseDir: string) {
+  const config = Dox.loadConfigFromFile(configFile, baseDir);
+  config.options.types = [];
+  config.options.noLib = true;
+  config.projectReferences?.forEach((reference) => {
+    if (reference.originalPath === "./src/tsconfig.frontend.json")
+      parseConfig(reference.path, path.dirname(reference.path));
+  });
+  if (!config.fileNames.length) return;
 
-//new Package(checker, program, [...program.getSourceFiles()]);
-new Package(checker, program, [entrySourceFile]);
-
-//const entrySymbol = checker.getSymbolAtLocation(entrySourceFile);
-
-//console.log(entrySymbol["documentationComment"]);
-//console.log(entrySymbol.getDocumentationComment(checker));
-
-/*
-program.getSourceFiles().forEach((sourceFile) => {
-  if (sourceFile.isDeclarationFile) return;
-  console.log(sourceFile.fileName);
-  ts.forEachChild(sourceFile, visit);
-});
-*/
-
-//ts.forEachChild(entrySourceFile, visit);
-/*
-checker.getExportsOfModule(entrySymbol).forEach((exportSymbol) => {
-  //console.log(exportSymbol);
-});
-
-function getExportsFromSourcefile(sourceFile: ts.SourceFile) {
-  const sourceSymbol = checker.getSymbolAtLocation(sourceFile);
-  return checker.getExportsOfModule(sourceSymbol);
+  const program = ts.createProgram(config.fileNames, config.options);
+  const checker = program.getTypeChecker();
+  const id = new Id();
+  const context = new DoxContext(checker, program, config, id);
+  // new DoxPackage(context, config.fileNames);
+  new DoxPackage(context, [inputFilename]);
+  /*
+  
+  const program = ts.createProgram([inputFilename],);
+  const entrySourceFile = program.getSourceFile(inputFilename);
+  const checker = program.getTypeChecker();
+  const doxContext = new DoxContext(checker, program);
+  
+  new DoxPackage(doxContext, [entrySourceFile]);
+  */
 }
-
-function visit(node: ts.Node) {
-  if (!isNodeExported(node)) return;
-
-  if (ts.isClassDeclaration(node) && node.name) {
-    const classSymbol = checker.getSymbolAtLocation(node.name);
-    const type = checker.getTypeOfSymbolAtLocation(
-      classSymbol,
-      classSymbol.valueDeclaration
-    );
-    // console.log(checker.typeToString(type));
-    type.getConstructSignatures().map((signature) => {
-      //console.log(signature.getParameters());
-    });
-
-    const docText = classSymbol.getDocumentationComment(checker);
-    console.log(docText);
-    //console.log(classSymbol.getName(), checker.typeToString(type));
-  }
-  if (ts.isExportDeclaration) {
-    const exportSymbol = checker.getSymbolAtLocation(node.parent);
-    console.log(exportSymbol);
-  }
-}
-
-function isNodeExported(node: ts.Node) {
-  return (
-    (ts.getCombinedModifierFlags(node as ts.Declaration) &
-      ts.ModifierFlags.Export) !==
-      0 ||
-    (!!node.parent && node.parent.kind === ts.SyntaxKind.SourceFile)
-  );
-}
-*/

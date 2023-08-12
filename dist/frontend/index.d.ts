@@ -18,3 +18,6 @@ export * from "./YafElementDrawers.js";
 export * as yafElement from "./yafElement.js";
 export * as handlers from "./handlers/index.js";
 export * as webComponents from "./webComponents/index.js";
+declare const foo = "xxx";
+declare const bar = "yyy";
+export { foo as Foo, bar };

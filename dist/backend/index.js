@@ -27,73 +27,40 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ts = __importStar(require("typescript"));
-//import * as tsdoc from "@microsoft/tsdoc";
 const path = __importStar(require("path"));
-const Package_1 = __importDefault(require("./Package"));
+const DoxPackage_1 = __importDefault(require("./DoxPackage"));
+const DoxContext_1 = __importDefault(require("./DoxContext"));
+const Dox_1 = __importDefault(require("./Dox"));
+const Id_1 = __importDefault(require("./Id"));
 const projectRoot = path.join(__dirname, "../../");
 const inputFilename = path.join(projectRoot, "src/frontend/index.ts");
-const program = ts.createProgram([inputFilename], {
-    target: ts.ScriptTarget.ES2016,
-    module: ts.ModuleKind.ES2015,
-    noLib: true,
-    types: [],
-});
-const entrySourceFile = program.getSourceFile(inputFilename);
-const checker = program.getTypeChecker();
-//new Package(checker, program, [...program.getSourceFiles()]);
-new Package_1.default(checker, program, [entrySourceFile]);
-//const entrySymbol = checker.getSymbolAtLocation(entrySourceFile);
-//console.log(entrySymbol["documentationComment"]);
-//console.log(entrySymbol.getDocumentationComment(checker));
-/*
-program.getSourceFiles().forEach((sourceFile) => {
-  if (sourceFile.isDeclarationFile) return;
-  console.log(sourceFile.fileName);
-  ts.forEachChild(sourceFile, visit);
-});
-*/
-//ts.forEachChild(entrySourceFile, visit);
-/*
-checker.getExportsOfModule(entrySymbol).forEach((exportSymbol) => {
-  //console.log(exportSymbol);
-});
-
-function getExportsFromSourcefile(sourceFile: ts.SourceFile) {
-  const sourceSymbol = checker.getSymbolAtLocation(sourceFile);
-  return checker.getExportsOfModule(sourceSymbol);
-}
-
-function visit(node: ts.Node) {
-  if (!isNodeExported(node)) return;
-
-  if (ts.isClassDeclaration(node) && node.name) {
-    const classSymbol = checker.getSymbolAtLocation(node.name);
-    const type = checker.getTypeOfSymbolAtLocation(
-      classSymbol,
-      classSymbol.valueDeclaration
-    );
-    // console.log(checker.typeToString(type));
-    type.getConstructSignatures().map((signature) => {
-      //console.log(signature.getParameters());
+const configFile = ts.findConfigFile(projectRoot, ts.sys.fileExists);
+if (configFile)
+    parseConfig(configFile, projectRoot);
+function parseConfig(configFile, baseDir) {
+    const config = Dox_1.default.loadConfigFromFile(configFile, baseDir);
+    config.options.types = [];
+    config.options.noLib = true;
+    config.projectReferences?.forEach((reference) => {
+        if (reference.originalPath === "./src/tsconfig.frontend.json")
+            parseConfig(reference.path, path.dirname(reference.path));
     });
-
-    const docText = classSymbol.getDocumentationComment(checker);
-    console.log(docText);
-    //console.log(classSymbol.getName(), checker.typeToString(type));
-  }
-  if (ts.isExportDeclaration) {
-    const exportSymbol = checker.getSymbolAtLocation(node.parent);
-    console.log(exportSymbol);
-  }
+    if (!config.fileNames.length)
+        return;
+    const program = ts.createProgram(config.fileNames, config.options);
+    const checker = program.getTypeChecker();
+    const id = new Id_1.default();
+    const context = new DoxContext_1.default(checker, program, config, id);
+    // new DoxPackage(context, config.fileNames);
+    new DoxPackage_1.default(context, [inputFilename]);
+    /*
+    
+    const program = ts.createProgram([inputFilename],);
+    const entrySourceFile = program.getSourceFile(inputFilename);
+    const checker = program.getTypeChecker();
+    const doxContext = new DoxContext(checker, program);
+    
+    new DoxPackage(doxContext, [entrySourceFile]);
+    */
 }
-
-function isNodeExported(node: ts.Node) {
-  return (
-    (ts.getCombinedModifierFlags(node as ts.Declaration) &
-      ts.ModifierFlags.Export) !==
-      0 ||
-    (!!node.parent && node.parent.kind === ts.SyntaxKind.SourceFile)
-  );
-}
-*/
 //# sourceMappingURL=index.js.map

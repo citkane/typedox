@@ -4,23 +4,39 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const typescript_1 = require("typescript");
-const TypeDox_1 = __importDefault(require("./TypeDox"));
+const Dox_1 = __importDefault(require("./Dox"));
 const DoxExport_1 = __importDefault(require("./DoxExport"));
-class Package extends TypeDox_1.default {
-    exportSymbols;
-    exportDeclarations;
+class Package extends Dox_1.default {
+    location;
     constructor(checker, program, entrySources) {
         super(checker, program);
-        this.parseExports(entrySources);
+        this.location = [Package.makeExportAlias(this.packageName)];
+        this.parseEntrySources(entrySources);
     }
-    parseExports(sources, location) {
-        sources.forEach((source) => {
-            console.log(location);
-            const doxExport = new DoxExport_1.default(this.checker, this.program, source, location || [this.packageName]);
-            if (doxExport.location.length)
-                console.log(doxExport.exportSources.length, doxExport.location.join("."));
-            //this.parseExports(doxExport.exportSources, doxExport.location);
+    parseEntrySources(sourceFiles, location = this.location) {
+        sourceFiles.forEach((sourceFile) => {
+            const exportDeclarations = Package.getExportDeclarations(sourceFile);
+            exportDeclarations.forEach((exportDeclaration) => this.parseExportDeclaration(exportDeclaration, location));
         });
+    }
+    parseExportDeclaration(exportDeclaration, location) {
+        const doxExport = new DoxExport_1.default(this.checker, this.program, exportDeclaration, location);
+        if (doxExport.location.length) {
+            console.log(Package.resolveLocation(doxExport.location));
+        }
+        const moreExportSources = doxExport.exportSources.map((source) => this.program.getSourceFile(source.filePath));
+        this.parseEntrySources(moreExportSources, doxExport.location);
+    }
+    static getExportDeclarations(node, exportDeclarations = []) {
+        node.forEachChild((childNode) => {
+            if (childNode.kind === typescript_1.SyntaxKind.ExportDeclaration) {
+                exportDeclarations.push(childNode);
+            }
+            if (childNode.getChildCount) {
+                this.getExportDeclarations(childNode, exportDeclarations);
+            }
+        });
+        return exportDeclarations;
     }
     get packageName() {
         return process.env.npm_package_name;
@@ -30,11 +46,6 @@ class Package extends TypeDox_1.default {
           //console.log(exportSymbol.valueDeclaration?.getSourceFile().fileName);
         });
         */
-    }
-    static isNodeExported(node) {
-        return (((0, typescript_1.getCombinedModifierFlags)(node) & typescript_1.ModifierFlags.Export) !==
-            0 ||
-            (!!node.parent && node.parent.kind === typescript_1.SyntaxKind.SourceFile));
     }
 }
 exports.default = Package;

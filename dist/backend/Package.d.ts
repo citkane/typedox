@@ -1,10 +1,11 @@
-import { TypeChecker, SourceFile, Symbol, Node, Program } from "typescript";
-import TypeDox from "./TypeDox";
-export default class Package extends TypeDox {
-    exportSymbols: Symbol[];
-    exportDeclarations: Node[];
+import { TypeChecker, SourceFile, Node, Program, ExportDeclaration } from "typescript";
+import Dox from "./Dox";
+import { exportAlias } from "./types";
+export default class Package extends Dox {
+    location: exportAlias[];
     constructor(checker: TypeChecker, program: Program, entrySources: readonly SourceFile[]);
-    parseExports(sources: readonly SourceFile[], location?: string[]): void;
+    parseEntrySources(sourceFiles: readonly SourceFile[], location?: exportAlias[]): void;
+    parseExportDeclaration(exportDeclaration: ExportDeclaration, location: exportAlias[]): void;
+    static getExportDeclarations(node: Node, exportDeclarations?: ExportDeclaration[]): ExportDeclaration[];
     get packageName(): string;
-    static isNodeExported(node: Node): boolean;
 }
