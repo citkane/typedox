@@ -39,7 +39,7 @@ export class YafChromeHeader extends YafHTMLElement {
 		mobileHTMLElement.id = 'mobileNav';
 
 		[openMenuHTMLElement, closeMenHTMLElement].forEach(
-			(menuToggle) => (menuToggle.onclick = this.toggleMenu)
+			(menuToggle) => (menuToggle.onclick = this.toggleMenu),
 		);
 
 		hamburgerHTMLElement.appendChildren([
@@ -71,7 +71,7 @@ export class YafChromeHeader extends YafHTMLElement {
 				const linkHTMLElement = makeLinkElement(
 					`?page=${link.query}`,
 					undefined,
-					link.name
+					link.name,
 				);
 				return i < breadcrumbs.length - 1
 					? [linkHTMLElement, makeElement('span', 'divider', '>')]

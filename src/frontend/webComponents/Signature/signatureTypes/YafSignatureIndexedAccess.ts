@@ -17,12 +17,12 @@ export class YafSignatureIndexedAccess extends YafHTMLElement<JSONOutput.Indexed
 			!!referenceId && objectType.type !== 'reference';
 		const indexTypeHTMLElement = renderSignatureType(
 			indexType,
-			'indexedIndex'
+			'indexedIndex',
 		);
 		const indexSignatureHTMLElement = linkTheSignature
 			? factory.wrapSignatureInLink(
 					String(referenceId!),
-					indexTypeHTMLElement
+					indexTypeHTMLElement,
 			  )
 			: indexTypeHTMLElement;
 
@@ -39,10 +39,10 @@ export class YafSignatureIndexedAccess extends YafHTMLElement<JSONOutput.Indexed
 	private static factory = {
 		wrapSignatureInLink: (
 			referenceId: string,
-			indexTypeElement: HTMLElement
+			indexTypeElement: HTMLElement,
 		) => {
 			const linkElement = makeLinkElement(
-				`?page=${appState.reflectionMap[referenceId].query}`
+				`?page=${appState.reflectionMap[referenceId].query}`,
 			);
 			linkElement.appendChild(indexTypeElement);
 			return linkElement;

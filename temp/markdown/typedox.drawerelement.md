@@ -9,5 +9,5 @@
 ```typescript
 export declare type DrawerElement = HTMLElement & YafElementDrawers;
 ```
-**References:** [YafElementDrawers](./typedox.yafelementdrawers.md)
 
+**References:** [YafElementDrawers](./typedox.yafelementdrawers.md)

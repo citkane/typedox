@@ -1,10 +1,8 @@
 {
 	"extends": "@typedox/tsconfig/commonJs.json",
-	"include": [
-		"./backend",
-	],
+	"include": ["./backend"],
 	"compilerOptions": {
-		"outDir": "../dist",
-		"sourceMap": true,
+		"outDir": "../dist/backend",
+		"target":"es6"
 	}
 }

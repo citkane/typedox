@@ -43,7 +43,7 @@ export class YafSignatureMapped extends YafHTMLElement<JSONOutput.MappedType> {
 		readonlyModifier: (readonlyModifier: '-' | '+' | undefined) =>
 			readonlyModifier
 				? makeSymbolSpan(
-						readonlyModifier === '+' ? 'readonly ' : '-readonly '
+						readonlyModifier === '+' ? 'readonly ' : '-readonly ',
 				  )
 				: undefined,
 		nameType: (nameType: JSONOutput.MappedType['nameType']) =>

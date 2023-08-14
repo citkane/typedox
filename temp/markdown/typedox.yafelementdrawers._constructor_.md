@@ -14,11 +14,10 @@ constructor(drawerParent: DrawerElement, drawer: HTMLElement, drawerTrigger: HTM
 
 ## Parameters
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  drawerParent | [DrawerElement](./typedox.drawerelement.md) |  |
-|  drawer | HTMLElement |  |
-|  drawerTrigger | HTMLElement |  |
-|  id | string |  |
-|  parentDrawerElement | [DrawerElement](./typedox.drawerelement.md) | _(Optional)_ |
-
+| Parameter           | Type                                        | Description  |
+| ------------------- | ------------------------------------------- | ------------ |
+| drawerParent        | [DrawerElement](./typedox.drawerelement.md) |              |
+| drawer              | HTMLElement                                 |              |
+| drawerTrigger       | HTMLElement                                 |              |
+| id                  | string                                      |              |
+| parentDrawerElement | [DrawerElement](./typedox.drawerelement.md) | _(Optional)_ |

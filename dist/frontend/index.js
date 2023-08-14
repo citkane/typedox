@@ -12,16 +12,16 @@
  * @author Michael Jonker
  * @module frontend
  */
-export { default as YafHTMLElement } from "./YafHTMLElement.js";
-export { Events } from "./handlers/events/Events.js";
-export * from "./YafElementDrawers.js";
-import * as yafElement_1 from "./yafElement.js";
+export { default as YafHTMLElement } from './YafHTMLElement.js';
+export { Events } from './handlers/events/Events.js';
+export * from './YafElementDrawers.js';
+import * as yafElement_1 from './yafElement.js';
 export { yafElement_1 as yafElement };
-import * as handlers_1 from "./handlers/index.js";
+import * as handlers_1 from './handlers/index.js';
 export { handlers_1 as handlers };
-import * as webComponents_1 from "./webComponents/index.js";
+import * as webComponents_1 from './webComponents/index.js';
 export { webComponents_1 as webComponents };
-const foo = "xxx";
-const bar = "yyy";
+const foo = 'xxx';
+const bar = 'yyy';
 export { foo as Foo, bar };
 //# sourceMappingURL=index.js.map

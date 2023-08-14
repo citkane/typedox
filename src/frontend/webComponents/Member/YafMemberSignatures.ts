@@ -38,14 +38,14 @@ export class YafMemberSignatures extends YafHTMLElement<
 						signature.kind ===
 						appState.reflectionKind.CallSignature,
 					wrappedInPre: true,
-				}
+				},
 			),
 		signatureBody: (signature: YafSignatureReflection) =>
 			makeElement<YafSignatureBody, YafSignatureBody['props']>(
 				'yaf-signature-body',
 				null,
 				null,
-				signature
+				signature,
 			),
 	};
 }

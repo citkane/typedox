@@ -13,7 +13,7 @@ This debounces or triggers the new `onConnect` trigger used in all ancestor Yaf 
 ```typescript
 connectedCallback(): void;
 ```
+
 **Returns:**
 
 void
-

@@ -51,7 +51,7 @@ export class YafMemberDeclaration extends YafHTMLElement<{
 		memberGroups: (
 			type: JSONOutput.ReflectionType,
 			parentId: number,
-			idPrefix: string | undefined
+			idPrefix: string | undefined,
 		) => {
 			if (
 				!type.declaration ||
@@ -64,8 +64,8 @@ export class YafMemberDeclaration extends YafHTMLElement<{
 			const serialisedGroups = groups?.map((group) =>
 				YafMember.serialiseReflectionGroup(
 					group,
-					(children as YAFDataObject[]) || []
-				)
+					(children as YAFDataObject[]) || [],
+				),
 			);
 			return (
 				serialisedGroups?.map((group) => {
@@ -83,7 +83,7 @@ export class YafMemberDeclaration extends YafHTMLElement<{
 			);
 		},
 		memberSignatures: (
-			member: JSONOutput.ReflectionType | YafDeclarationReflection
+			member: JSONOutput.ReflectionType | YafDeclarationReflection,
 		) => {
 			const declaration = (<JSONOutput.ReflectionType>member).declaration;
 			const signatures = declaration
@@ -97,7 +97,7 @@ export class YafMemberDeclaration extends YafHTMLElement<{
 				'yaf-member-signatures',
 				null,
 				null,
-				signatures || [member as YafDeclarationReflection]
+				signatures || [member as YafDeclarationReflection],
 			);
 		},
 	};

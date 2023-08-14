@@ -67,7 +67,7 @@ export class YafNavigationSearchbar extends YafHTMLElement {
 			searchHTMLInput.setAttribute('type', 'search');
 			searchHTMLInput.setAttribute(
 				'placeholder',
-				'Search the documents...'
+				'Search the documents...',
 			);
 			searchHTMLInput.setAttribute('aria-label', 'Search the documents');
 			searchHTMLInput.setAttribute('minlength', '3');

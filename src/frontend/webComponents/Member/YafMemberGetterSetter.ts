@@ -27,7 +27,7 @@ export class YafMemberGetterSetter extends YafHTMLElement<YAFDataObject> {
 			this.appendChild(
 				factory.makeBody({
 					sources: this.props.sources!,
-				} as YafSignatureReflection)
+				} as YafSignatureReflection),
 			);
 	}
 
@@ -52,7 +52,7 @@ export class YafMemberGetterSetter extends YafHTMLElement<YAFDataObject> {
 				'yaf-signature-body',
 				null,
 				null,
-				data
+				data,
 			),
 	};
 }

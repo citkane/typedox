@@ -40,7 +40,7 @@ export class YafMemberGroupLink extends YafHTMLElement<yafMemberGroupLinkProps> 
 					? `?page=${child.query}#${child.hash}`
 					: `?page=${child.query}`,
 				undefined,
-				child.name
+				child.name,
 			);
 
 			liHTMLElement.appendChild(linkHTMLElement);

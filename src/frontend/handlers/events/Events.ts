@@ -27,19 +27,19 @@ export class Events {
 	};
 	dispatch = (
 		action: CustomEvent | Event,
-		element: HTMLElement = Events.body
+		element: HTMLElement = Events.body,
 	) => element.dispatchEvent(action);
 	on = (
 		trigger: string,
 		callBack: unknown,
-		element: HTMLElement | Window = Events.body
+		element: HTMLElement | Window = Events.body,
 	) => {
 		element.addEventListener(trigger, callBack as EventListener);
 	};
 	off = (
 		trigger: string,
 		callBack: unknown,
-		element: HTMLElement | Window = Events.body
+		element: HTMLElement | Window = Events.body,
 	) => {
 		element.removeEventListener(trigger, callBack as EventListener);
 	};

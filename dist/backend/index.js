@@ -32,17 +32,18 @@ const DoxPackage_1 = __importDefault(require("./DoxPackage"));
 const DoxContext_1 = __importDefault(require("./DoxContext"));
 const Dox_1 = __importDefault(require("./Dox"));
 const Id_1 = __importDefault(require("./Id"));
-const projectRoot = path.join(__dirname, "../../");
-const inputFilename = path.join(projectRoot, "src/frontend/index.ts");
+const projectRoot = path.join(__dirname, '../../');
+const inputFilename = path.join(projectRoot, 'src/frontend/index.ts');
 const configFile = ts.findConfigFile(projectRoot, ts.sys.fileExists);
 if (configFile)
     parseConfig(configFile, projectRoot);
 function parseConfig(configFile, baseDir) {
+    var _a;
     const config = Dox_1.default.loadConfigFromFile(configFile, baseDir);
     config.options.types = [];
     config.options.noLib = true;
-    config.projectReferences?.forEach((reference) => {
-        if (reference.originalPath === "./src/tsconfig.frontend.json")
+    (_a = config.projectReferences) === null || _a === void 0 ? void 0 : _a.forEach((reference) => {
+        if (reference.originalPath === './src/tsconfig.frontend.json')
             parseConfig(reference.path, path.dirname(reference.path));
     });
     if (!config.fileNames.length)
@@ -50,17 +51,17 @@ function parseConfig(configFile, baseDir) {
     const program = ts.createProgram(config.fileNames, config.options);
     const checker = program.getTypeChecker();
     const id = new Id_1.default();
-    const context = new DoxContext_1.default(checker, program, config, id);
+    const context = new DoxContext_1.default(checker, program, config, id, undefined);
     // new DoxPackage(context, config.fileNames);
     new DoxPackage_1.default(context, [inputFilename]);
     /*
-    
-    const program = ts.createProgram([inputFilename],);
-    const entrySourceFile = program.getSourceFile(inputFilename);
-    const checker = program.getTypeChecker();
-    const doxContext = new DoxContext(checker, program);
-    
-    new DoxPackage(doxContext, [entrySourceFile]);
-    */
+  
+  const program = ts.createProgram([inputFilename],);
+  const entrySourceFile = program.getSourceFile(inputFilename);
+  const checker = program.getTypeChecker();
+  const doxContext = new DoxContext(checker, program);
+  
+  new DoxPackage(doxContext, [entrySourceFile]);
+  */
 }
 //# sourceMappingURL=index.js.map

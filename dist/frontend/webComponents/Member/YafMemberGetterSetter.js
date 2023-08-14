@@ -24,7 +24,7 @@ class YafMemberGetterSetter extends YafHTMLElement {
 }
 YafMemberGetterSetter.factory = {
     makeSignature: (prefix, data) => {
-        const title = makeElement('yaf-signature-title', null, null, { ...data, hideName: true });
+        const title = makeElement('yaf-signature-title', null, null, Object.assign(Object.assign({}, data), { hideName: true }));
         const preHTMLElement = makeElement('pre', 'highlight');
         preHTMLElement.appendChildren([
             makeSymbolSpan(`${prefix} `),

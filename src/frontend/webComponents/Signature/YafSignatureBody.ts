@@ -61,7 +61,7 @@ export class YafSignatureBody extends YafHTMLElement<YafSignatureReflection> {
 				  >('yaf-content-marked', text.comment)
 				: undefined,
 		typeParameters: (
-			typeParameter: YafTypeParameterReflection[] | undefined
+			typeParameter: YafTypeParameterReflection[] | undefined,
 		) =>
 			typeParameter && typeParameter.length
 				? this.factory.makeElement<
@@ -85,7 +85,7 @@ export class YafSignatureBody extends YafHTMLElement<YafSignatureReflection> {
 		},
 		returns: (
 			type: YafSignatureReflection['type'],
-			isCallSignature: boolean
+			isCallSignature: boolean,
 		) => {
 			if (!(type && isCallSignature)) return undefined;
 
@@ -99,7 +99,7 @@ export class YafSignatureBody extends YafHTMLElement<YafSignatureReflection> {
 		},
 		modifier: (
 			modifierData: { id?: number; name: string } | undefined,
-			modifierHeading: string
+			modifierHeading: string,
 		) => {
 			if (!modifierData) return undefined;
 
@@ -125,17 +125,17 @@ export class YafSignatureBody extends YafHTMLElement<YafSignatureReflection> {
 			const headingEHTMLElement = makeElement(
 				'h5',
 				null,
-				modifierHeading
+				modifierHeading,
 			);
 			const ulHTMLElement = makeElement('ul', 'references');
 			const liHTMLElement = makeElement(
 				'li',
 				null,
-				data.link ? '' : data.name
+				data.link ? '' : data.name,
 			);
 			if (data.link)
 				liHTMLElement.appendChild(
-					makeLinkElement(data.link, undefined, data.name)
+					makeLinkElement(data.link, undefined, data.name),
 				);
 			ulHTMLElement.appendChild(liHTMLElement);
 			return [headingEHTMLElement, ulHTMLElement];

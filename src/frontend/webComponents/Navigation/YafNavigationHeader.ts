@@ -23,11 +23,11 @@ export class YafNavigationHeader extends YafHTMLElement {
 		const { factory } = YafNavigationHeader;
 		const drawerTriggerHTMLElement = makeElement('span', 'info');
 		const navigationControlsHTMLElement = factory.navigationControls(
-			drawerTriggerHTMLElement
+			drawerTriggerHTMLElement,
 		);
 		const drawerHTMLElement = factory.infoDrawer(
 			this.keyKinds,
-			appState.kindSymbols
+			appState.kindSymbols,
 		);
 
 		drawerTriggerHTMLElement.appendChildren([
@@ -45,7 +45,7 @@ export class YafNavigationHeader extends YafHTMLElement {
 			this as unknown as DrawerElement,
 			drawerHTMLElement,
 			drawerTriggerHTMLElement,
-			this.id
+			this.id,
 		);
 		this.drawers.renderDrawers(true);
 	}
@@ -69,7 +69,7 @@ export class YafNavigationHeader extends YafHTMLElement {
 		navigationControls: (drawerTriggerHTMLElement: HTMLElement) => {
 			const navigationControlsHTMLElement = makeElement(
 				'div',
-				'controls-navigation'
+				'controls-navigation',
 			);
 			navigationControlsHTMLElement.appendChildren([
 				makeElement('yaf-navigation-searchbar'),
@@ -82,7 +82,7 @@ export class YafNavigationHeader extends YafHTMLElement {
 			const closeAllHTMLElement = makeElement('span', 'close button');
 			const drawerControlsHTMLElement = makeElement(
 				'span',
-				'controls-drawers'
+				'controls-drawers',
 			);
 
 			openAllHTMLElement.appendChild(makeIconSpan('expand_more'));
@@ -112,7 +112,7 @@ export class YafNavigationHeader extends YafHTMLElement {
 				const widgetHTMLElement = makeElement('span', 'widget');
 				const nameHTMLElement = makeNameSpan(nameString);
 				const kindIconHTMLElement = this.factory.kindIcon(
-					String(keyKind)
+					String(keyKind),
 				);
 
 				widgetHTMLElement.appendChildren([
@@ -132,7 +132,7 @@ export class YafNavigationHeader extends YafHTMLElement {
 				'yaf-widget-kind',
 				null,
 				null,
-				{ kind }
+				{ kind },
 			),
 	};
 

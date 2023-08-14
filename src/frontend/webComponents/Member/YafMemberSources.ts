@@ -18,7 +18,7 @@ export class YafMemberSources extends YafHTMLElement<
 			const liHTMLElement = makeElement('li');
 			url
 				? liHTMLElement.appendChild(
-						makeLinkElement(url, undefined, `${fileName}:${line}`)
+						makeLinkElement(url, undefined, `${fileName}:${line}`),
 				  )
 				: (liHTMLElement.innerText = `${fileName}:${line}`);
 

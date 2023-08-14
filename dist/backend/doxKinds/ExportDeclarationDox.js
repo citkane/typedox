@@ -8,36 +8,46 @@ const types_1 = require("../types");
 const Dox_1 = __importDefault(require("../Dox"));
 const ExportMemberDox_1 = __importDefault(require("./ExportMemberDox"));
 class ExportDeclarationDox extends Dox_1.default {
-    kind = types_1.DoxKind.ExportDeclaration;
-    declaration;
-    nameSpace;
-    exportSourceFile;
-    exportTargetFile;
-    members = new Map();
     constructor(context, declaration) {
         super(context);
-        const { getNameSpace, getFileName, getExportTargetFile } = ExportDeclarationDox;
+        this.kind = types_1.DoxKind.ExportDeclaration;
+        this.parentFiles = [];
+        this.membersMap = new Map();
+        const { getNameSpace, getExportTargetFile } = ExportDeclarationDox;
         this.declaration = declaration;
-        this.exportSourceFile = getFileName(declaration);
-        this.exportTargetFile = getExportTargetFile(this.moduleSymbol, this.exportSourceFile);
+        this.exportSourceFile = declaration.getSourceFile().fileName;
+        this.moduleSymbol = this.getModuleSymbol();
+        this.exportTargetFile = getExportTargetFile(this.moduleSymbol);
         this.nameSpace = getNameSpace(declaration);
         const { exportTargetFile, moduleType, sourceType } = this;
         const type = moduleType || sourceType;
-        this.registerMembersToSelf(type);
-        this.registerSelfToPackage();
-        this.package?.addEntryFile(exportTargetFile);
+        this.makeMembers(type);
+        this.package.registerExportDeclaration(this);
+        this.package.addEntryFile(exportTargetFile);
+    }
+    registerMember(member) {
+        this.membersMap.set(member.name, member);
+    }
+    makeMembers(type) {
+        const namedExport = this.namedExport;
+        const context = Object.assign(Object.assign({}, this.context), { exportDeclaration: this });
+        const members = !!namedExport
+            ? namedExport.elements.map((specifier) => new ExportMemberDox_1.default(context, specifier, type))
+            : type
+                .getProperties()
+                .map((symbol) => new ExportMemberDox_1.default(context, symbol));
     }
     get namedExport() {
         return this.declaration
             .getChildren()
             .find((node) => (0, typescript_1.isNamedExports)(node));
     }
-    get moduleSymbol() {
+    getModuleSymbol() {
+        if (!('moduleSpecifier' in this.declaration))
+            return undefined;
         const { checker } = this.context;
         const { moduleSpecifier } = this.declaration;
-        return !!moduleSpecifier
-            ? checker.getSymbolAtLocation(moduleSpecifier)
-            : undefined;
+        return checker.getSymbolAtLocation(moduleSpecifier);
     }
     get moduleType() {
         const { checker } = this.context;
@@ -49,33 +59,18 @@ class ExportDeclarationDox extends Dox_1.default {
         const symbol = checker.getSymbolAtLocation(this.declaration.parent.getSourceFile());
         return checker.getTypeOfSymbol(symbol);
     }
-    registerSelfToPackage() {
-        const map = this.package.declarationsMap.get(this.exportSourceFile).exports;
-        map.set(this.id, this);
-    }
-    registerMembersToSelf(type) {
-        const namedExport = this.namedExport;
-        const context = { ...this.context, exportDeclaration: this };
-        const members = !!namedExport
-            ? namedExport.elements.map((specifier) => new ExportMemberDox_1.default(context, specifier, type))
-            : type
-                .getProperties()
-                .map((symbol) => new ExportMemberDox_1.default(context, symbol));
-    }
-    static getExportTargetFile = (module, sourceFile) => {
-        return !!module
-            ? module.valueDeclaration.getSourceFile().fileName
-            : sourceFile;
-    };
-    static getFileName = (declaration) => {
-        return declaration.getSourceFile().fileName;
-    };
-    static getNameSpace = (declaration) => {
-        const node = declaration
-            .getChildren()
-            .find((node) => (0, typescript_1.isNamespaceExport)(node));
-        return node?.name.getText();
-    };
 }
+ExportDeclarationDox.getExportTargetFile = (module) => {
+    var _a;
+    if (!module)
+        return undefined;
+    return (_a = module.valueDeclaration) === null || _a === void 0 ? void 0 : _a.getSourceFile().fileName;
+};
+ExportDeclarationDox.getNameSpace = (declaration) => {
+    const node = declaration
+        .getChildren()
+        .find((node) => (0, typescript_1.isNamespaceExport)(node));
+    return node === null || node === void 0 ? void 0 : node.name.getText();
+};
 exports.default = ExportDeclarationDox;
 //# sourceMappingURL=ExportDeclarationDox.js.map

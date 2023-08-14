@@ -57,8 +57,8 @@ export class YafContent extends YafHTMLElement {
 
 			events.dispatch(
 				action.content.scrollTo(
-					url.hash ? url.hash.replace('#', '') : scrollTop
-				)
+					url.hash ? url.hash.replace('#', '') : scrollTop,
+				),
 			);
 		});
 	};
@@ -95,7 +95,7 @@ export class YafContent extends YafHTMLElement {
 					signatures
 						? factory.memberSignatures(signatures)
 						: factory.memberSources(
-								data as YafDeclarationReflection
+								data as YafDeclarationReflection,
 						  ),
 
 					factory.memberGroups(data),
@@ -134,42 +134,42 @@ export class YafContent extends YafHTMLElement {
 				'yaf-content-header',
 				null,
 				null,
-				data
+				data,
 			),
 		contentMarked: (html: htmlString) =>
 			makeElement<YafContentMarked, YafContentMarked['props']>(
 				'yaf-content-marked',
 				null,
 				null,
-				html
+				html,
 			),
 		memberDeclaration: (data: YafDeclarationReflection) =>
 			makeElement<YafMemberDeclaration, YafMemberDeclaration['props']>(
 				'yaf-member-declaration',
 				null,
 				null,
-				{ data, idPrefix: '' }
+				{ data, idPrefix: '' },
 			),
 		memberGroups: (data: YAFDataObject) =>
 			makeElement<YafContentMembers, YafContentMembers['props']>(
 				'yaf-content-members',
 				null,
 				null,
-				data
+				data,
 			),
 		typeParameters: (typeParameter: YafTypeParameterReflection[]) =>
 			makeElement<YafTypeParameters, YafTypeParameters['props']>(
 				'yaf-type-parameters',
 				null,
 				null,
-				typeParameter
+				typeParameter,
 			),
 		memberSignatures: (signatures: YafSignatureReflection[]) =>
 			makeElement<YafMemberSignatures, YafMemberSignatures['props']>(
 				'yaf-member-signatures',
 				null,
 				null,
-				signatures
+				signatures,
 			),
 		memberSources: (data: YafDeclarationReflection) => {
 			return data
@@ -177,7 +177,7 @@ export class YafContent extends YafHTMLElement {
 						'yaf-member-sources',
 						null,
 						null,
-						data
+						data,
 				  )
 				: undefined;
 		},
@@ -191,7 +191,7 @@ export class YafContent extends YafHTMLElement {
 					hierarchy,
 					pageId: String(id),
 					init: true,
-				}
+				},
 			),
 	};
 }

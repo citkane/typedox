@@ -16,7 +16,7 @@ export default class ErrorHandlers {
 
 	static localStorage = (key: localStorageKey) => {
 		console.error(
-			`There was a problem with "localStorage.${key}. It is being removed.`
+			`There was a problem with "localStorage.${key}. It is being removed.`,
 		);
 		window.localStorage.removeItem('key');
 	};

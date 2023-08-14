@@ -1,43 +1,44 @@
 {
-  "name": "typedox",
-  "version": "0.0.0",
-  "description": "Document Generator for Typedoc",
-  "main": "./dist/index.js",
-  "scripts": {
-    "build:watch": "npx tsc -b -w",
-    "backend": "node -r source-map-support/register ./dist/backend/index.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/citkane/typedox.git"
-  },
-  "keywords": [
-    "typescript",
-    "tsdoc",
-    "documentation",
-    "generator",
-    "frontend"
-  ],
-  "author": "Michael Jonker",
-  "license": "GPL-3.0-or-later",
-  "bugs": {
-    "url": "https://github.com/citkane/typedox/issues"
-  },
-  "homepage": "https://github.com/citkane/typedox#readme",
-  "workspaces": [
-    "./.tsconfig"
-  ],
-  "devDependencies": {
-    "@typedox/tsconfig": "*",
-    "@types/node": "^20.4.5",
-    "source-map-support": "^0.5.21",
-    "typedoc": "^0.23.28",
-    "typescript": "5.0"
-  },
-  "dependencies": {
-    "@microsoft/api-extractor": "^7.36.3",
-    "@microsoft/api-extractor-model": "^7.27.5",
-    "@microsoft/tsdoc": "^0.14.2",
-    "fs-extra": "^11.1.1"
-  }
+	"name": "typedox",
+	"version": "0.0.0",
+	"description": "Document Generator for Typedoc",
+	"main": "./dist/index.js",
+	"scripts": {
+		"build:watch": "npx tsc -b -w",
+		"backend": "node -r source-map-support/register ./dist/backend/index.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/citkane/typedox.git"
+	},
+	"keywords": [
+		"typescript",
+		"tsdoc",
+		"documentation",
+		"generator",
+		"frontend"
+	],
+	"author": "Michael Jonker",
+	"license": "GPL-3.0-or-later",
+	"bugs": {
+		"url": "https://github.com/citkane/typedox/issues"
+	},
+	"homepage": "https://github.com/citkane/typedox#readme",
+	"workspaces": [
+		"./.tsconfig"
+	],
+	"devDependencies": {
+		"@typedox/tsconfig": "*",
+		"@types/node": "^20.4.5",
+		"prettier": "^3.0.1",
+		"source-map-support": "^0.5.21",
+		"typedoc": "^0.23.28",
+		"typescript": "5.0"
+	},
+	"dependencies": {
+		"@microsoft/api-extractor": "^7.36.3",
+		"@microsoft/api-extractor-model": "^7.27.5",
+		"@microsoft/tsdoc": "^0.14.2",
+		"fs-extra": "^11.1.1"
+	}
 }

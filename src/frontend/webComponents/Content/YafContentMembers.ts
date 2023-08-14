@@ -20,7 +20,7 @@ export class YafContentMembers extends YafHTMLElement<YAFDataObject> {
 
 		const isLinkList = this.linkReferencPageTypes.includes(kind);
 		const constructorGroup = groups?.find(
-			(group) => group.title === 'Constructors'
+			(group) => group.title === 'Constructors',
 		);
 		const hasConstructor =
 			constructorGroup && constructorGroup.children?.length === 1;
@@ -45,7 +45,7 @@ export class YafContentMembers extends YafHTMLElement<YAFDataObject> {
 								: factory.reflectionGroup(
 										group,
 										children || [],
-										String(id)
+										String(id),
 								  );
 						})
 				: undefined,
@@ -65,7 +65,7 @@ export class YafContentMembers extends YafHTMLElement<YAFDataObject> {
 		 */
 		constructorElement: (
 			constructorGroup: JSONOutput.ReflectionGroup,
-			children: YAFDataObject[]
+			children: YAFDataObject[],
 		) => {
 			const childId = constructorGroup.children![0];
 			const data = children.find((child) => child.id === childId);
@@ -74,19 +74,19 @@ export class YafContentMembers extends YafHTMLElement<YAFDataObject> {
 					'yaf-member',
 					null,
 					null,
-					{ data, idPrefix: '' }
+					{ data, idPrefix: '' },
 				);
 				HTMLElement.id = 'constructor';
 				return HTMLElement;
 			} else {
 				errorHandlers.notFound(
-					`Could not find reflection id: ${childId} in group ${constructorGroup.title}`
+					`Could not find reflection id: ${childId} in group ${constructorGroup.title}`,
 				);
 			}
 		},
 		linkGroup: (
 			group: JSONOutput.ReflectionGroup,
-			children: YAFDataObject[]
+			children: YAFDataObject[],
 		) => {
 			const serialisedChildren = this.serialiseLinkGroup(group, children);
 
@@ -97,17 +97,17 @@ export class YafContentMembers extends YafHTMLElement<YAFDataObject> {
 				{
 					title: group.title,
 					children: serialisedChildren,
-				}
+				},
 			);
 		},
 		reflectionGroup: (
 			group: JSONOutput.ReflectionGroup,
 			children: YAFDataObject[],
-			pageId: string
+			pageId: string,
 		) => {
 			const serialisedGroup = YafMember.serialiseReflectionGroup(
 				group,
-				children
+				children,
 			);
 
 			return makeElement<
@@ -128,7 +128,7 @@ export class YafContentMembers extends YafHTMLElement<YAFDataObject> {
 
 	private static serialiseLinkGroup = (
 		group: JSONOutput.ReflectionGroup,
-		children: YAFDataObject[]
+		children: YAFDataObject[],
 	) =>
 		(group.children
 			?.map((id) => {

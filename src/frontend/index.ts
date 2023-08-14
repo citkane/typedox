@@ -13,18 +13,20 @@
  * @module frontend
  */
 
-export { default as YafHTMLElement } from "./YafHTMLElement.js";
+import * as poo from './YafHTMLElement.js';
 
-export { Events } from "./handlers/events/Events.js";
-export * from "./YafElementDrawers.js";
+export { default as YafHTMLElement } from './YafHTMLElement.js';
 
-export * as yafElement from "./yafElement.js";
+export { Events } from './handlers/events/Events.js';
+export * from './YafElementDrawers.js';
 
-export * as handlers from "./handlers/index.js";
+export * as yafElement from './yafElement.js';
 
-export * as webComponents from "./webComponents/index.js";
+export * as handlers from './handlers/index.js';
 
-const foo = "xxx";
-const bar = "yyy";
+export * as webComponents from './webComponents/index.js';
+
+const foo = 'xxx';
+const bar = 'yyy';
 
 export { foo as Foo, bar };

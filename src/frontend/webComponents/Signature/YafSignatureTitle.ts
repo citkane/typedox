@@ -82,7 +82,7 @@ export class YafSignatureTitle extends YafHTMLElement<yafSignatureTitleProps> {
 					makeSymbolSpan(`${arrowStyle ? ' => ' : ': '}`),
 					renderSignatureType(type, 'none'),
 					factory.defaultValue(defaultValue),
-				].flat()
+				].flat(),
 			);
 		}
 
@@ -108,14 +108,14 @@ export class YafSignatureTitle extends YafHTMLElement<yafSignatureTitleProps> {
 			makeSymbolSpan(`${flags.isAbstract ? 'abstract new ' : 'new '}`),
 
 		typeParameter: (
-			typeParameter: YafTypeParameterReflection[] | undefined
+			typeParameter: YafTypeParameterReflection[] | undefined,
 		) =>
 			typeParameter
 				? makeElement<YafTypeParameters, YafTypeParameters['props']>(
 						'yaf-type-parameters',
 						null,
 						null,
-						typeParameter
+						typeParameter,
 				  )
 				: undefined,
 		defaultValue: (defaultValue: unknown) =>

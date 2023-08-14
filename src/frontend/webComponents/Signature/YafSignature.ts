@@ -26,7 +26,7 @@ export class YafSignature extends YafHTMLElement<yafSignatureProps> {
 		const typeSignature: HTMLElement & {
 			props: YAFDataObject['type'];
 		} = makeElement(
-			`yaf-signature-${YafSignature.parseTypeName(type.type)}`
+			`yaf-signature-${YafSignature.parseTypeName(type.type)}`,
 		);
 		typeSignature.props = type;
 		if (parenthesis) typeSignature.setAttribute('needsParenthesis', '');

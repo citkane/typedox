@@ -86,7 +86,7 @@ YafContentMembers.serialiseLinkGroup = (group, children) => {
     return ((_b = group.children) === null || _b === void 0 ? void 0 : _b.map((id) => {
         const child = children.find((child) => child.id == id) ||
             appState.reflectionMap[id];
-        const childClone = { ...child };
+        const childClone = Object.assign({}, child);
         childClone.id = id;
         return childClone;
     }).filter((child) => !!child)) || [];

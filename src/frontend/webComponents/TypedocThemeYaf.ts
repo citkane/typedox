@@ -27,10 +27,10 @@ export class TypedocThemeYaf extends YafHTMLElement {
 	};
 	private initVersions = () => {
 		const versionHTMLElement = document.getElementById(
-			'plugin-versions-select'
+			'plugin-versions-select',
 		);
 		const footerHTMLElement = document.querySelector(
-			'yaf-navigation-footer'
+			'yaf-navigation-footer',
 		);
 
 		footerHTMLElement?.appendChild(versionHTMLElement!);

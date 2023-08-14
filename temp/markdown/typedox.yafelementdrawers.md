@@ -9,45 +9,44 @@ Utility class for folding, hierarchical drawers
 **Signature:**
 
 ```typescript
-export declare class YafElementDrawers 
+export declare class YafElementDrawers
 ```
 
 ## Constructors
 
-|  Constructor | Modifiers | Description |
-|  --- | --- | --- |
-|  [(constructor)(drawerParent, drawer, drawerTrigger, id, parentDrawerElement)](./typedox.yafelementdrawers._constructor_.md) |  | Constructs a new instance of the <code>YafElementDrawers</code> class |
+| Constructor                                                                                                                 | Modifiers | Description                                                           |
+| --------------------------------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------- |
+| [(constructor)(drawerParent, drawer, drawerTrigger, id, parentDrawerElement)](./typedox.yafelementdrawers._constructor_.md) |           | Constructs a new instance of the <code>YafElementDrawers</code> class |
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [childDrawerElements](./typedox.yafelementdrawers.childdrawerelements.md) | <code>readonly</code> | [DrawerElement](./typedox.drawerelement.md)<!-- -->\[\] |  |
-|  [childDrawers](./typedox.yafelementdrawers.childdrawers.md) |  | [DrawerElement](./typedox.drawerelement.md)<!-- -->\[\] |  |
-|  [closeDrawer](./typedox.yafelementdrawers.closedrawer.md) |  | () =&gt; void |  |
-|  [dataExtraHeight](./typedox.yafelementdrawers.dataextraheight.md) |  | number |  |
-|  [dataExtraReset](./typedox.yafelementdrawers.dataextrareset.md) |  | number |  |
-|  [dataHeight](./typedox.yafelementdrawers.dataheight.md) |  | number |  |
-|  [debounceResize](./typedox.yafelementdrawers.debounceresize.md) |  | ReturnType&lt;typeof setTimeout&gt; \| null |  |
-|  [drawer](./typedox.yafelementdrawers.drawer.md) |  | HTMLElement |  |
-|  [drawerHasDisconnected](./typedox.yafelementdrawers.drawerhasdisconnected.md) |  | () =&gt; void |  |
-|  [drawerId](./typedox.yafelementdrawers.drawerid.md) |  | string |  |
-|  [drawerParent](./typedox.yafelementdrawers.drawerparent.md) |  | [DrawerElement](./typedox.drawerelement.md) |  |
-|  [drawers](./typedox.yafelementdrawers.drawers.md) |  | [YafElementDrawers](./typedox.yafelementdrawers.md) |  |
-|  [drawerState](./typedox.yafelementdrawers.drawerstate.md) | <code>readonly</code> | drawerState |  |
-|  [drawerTrigger](./typedox.yafelementdrawers.drawertrigger.md) |  | HTMLElement |  |
-|  [findParentDrawers](./typedox.yafelementdrawers.findparentdrawers.md) | <code>static</code> | (child: HTMLElement, parents?: [DrawerElement](./typedox.drawerelement.md)<!-- -->\[\]) =&gt; [DrawerElement](./typedox.drawerelement.md)<!-- -->\[\] |  |
-|  [flagCounts](./typedox.yafelementdrawers.flagcounts.md) | <code>readonly</code> | flagCounts |  |
-|  [hasClosedDrawers](./typedox.yafelementdrawers.hascloseddrawers.md) | <code>static</code> | (drawers: [DrawerElement](./typedox.drawerelement.md)<!-- -->\[\]) =&gt; boolean \| 0 |  |
-|  [hasContent](./typedox.yafelementdrawers.hascontent.md) |  | boolean |  |
-|  [heightControl](./typedox.yafelementdrawers.heightcontrol.md) |  | { initDataHeight: (clientHeight: number) =&gt; void; setMaxHeightStyle: () =&gt; void; updateHeightAbove: (height: number) =&gt; void; reRenderDrawers: (init?: boolean) =&gt; void; resetHeights: (init?: boolean) =&gt; void; debounceReset: () =&gt; void; } |  |
-|  [isBranch](./typedox.yafelementdrawers.isbranch.md) | <code>readonly</code> | boolean |  |
-|  [isDrawer](./typedox.yafelementdrawers.isdrawer.md) |  | boolean |  |
-|  [isLeaf](./typedox.yafelementdrawers.isleaf.md) | <code>readonly</code> | boolean |  |
-|  [isRoot](./typedox.yafelementdrawers.isroot.md) | <code>readonly</code> | boolean |  |
-|  [maxHeightPixels](./typedox.yafelementdrawers.maxheightpixels.md) | <code>readonly</code> | string |  |
-|  [openDrawer](./typedox.yafelementdrawers.opendrawer.md) |  | () =&gt; void |  |
-|  [parentDrawerElement?](./typedox.yafelementdrawers.parentdrawerelement.md) |  | [DrawerElement](./typedox.drawerelement.md) | _(Optional)_ |
-|  [renderDrawers](./typedox.yafelementdrawers.renderdrawers.md) |  | (init?: boolean) =&gt; void |  |
-|  [toggleDrawerState](./typedox.yafelementdrawers.toggledrawerstate.md) |  | () =&gt; void |  |
-
+| Property                                                                      | Modifiers             | Type                                                                                                                                                                                                                                                            | Description  |
+| ----------------------------------------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| [childDrawerElements](./typedox.yafelementdrawers.childdrawerelements.md)     | <code>readonly</code> | [DrawerElement](./typedox.drawerelement.md)<!-- -->\[\]                                                                                                                                                                                                         |              |
+| [childDrawers](./typedox.yafelementdrawers.childdrawers.md)                   |                       | [DrawerElement](./typedox.drawerelement.md)<!-- -->\[\]                                                                                                                                                                                                         |              |
+| [closeDrawer](./typedox.yafelementdrawers.closedrawer.md)                     |                       | () =&gt; void                                                                                                                                                                                                                                                   |              |
+| [dataExtraHeight](./typedox.yafelementdrawers.dataextraheight.md)             |                       | number                                                                                                                                                                                                                                                          |              |
+| [dataExtraReset](./typedox.yafelementdrawers.dataextrareset.md)               |                       | number                                                                                                                                                                                                                                                          |              |
+| [dataHeight](./typedox.yafelementdrawers.dataheight.md)                       |                       | number                                                                                                                                                                                                                                                          |              |
+| [debounceResize](./typedox.yafelementdrawers.debounceresize.md)               |                       | ReturnType&lt;typeof setTimeout&gt; \| null                                                                                                                                                                                                                     |              |
+| [drawer](./typedox.yafelementdrawers.drawer.md)                               |                       | HTMLElement                                                                                                                                                                                                                                                     |              |
+| [drawerHasDisconnected](./typedox.yafelementdrawers.drawerhasdisconnected.md) |                       | () =&gt; void                                                                                                                                                                                                                                                   |              |
+| [drawerId](./typedox.yafelementdrawers.drawerid.md)                           |                       | string                                                                                                                                                                                                                                                          |              |
+| [drawerParent](./typedox.yafelementdrawers.drawerparent.md)                   |                       | [DrawerElement](./typedox.drawerelement.md)                                                                                                                                                                                                                     |              |
+| [drawers](./typedox.yafelementdrawers.drawers.md)                             |                       | [YafElementDrawers](./typedox.yafelementdrawers.md)                                                                                                                                                                                                             |              |
+| [drawerState](./typedox.yafelementdrawers.drawerstate.md)                     | <code>readonly</code> | drawerState                                                                                                                                                                                                                                                     |              |
+| [drawerTrigger](./typedox.yafelementdrawers.drawertrigger.md)                 |                       | HTMLElement                                                                                                                                                                                                                                                     |              |
+| [findParentDrawers](./typedox.yafelementdrawers.findparentdrawers.md)         | <code>static</code>   | (child: HTMLElement, parents?: [DrawerElement](./typedox.drawerelement.md)<!-- -->\[\]) =&gt; [DrawerElement](./typedox.drawerelement.md)<!-- -->\[\]                                                                                                           |              |
+| [flagCounts](./typedox.yafelementdrawers.flagcounts.md)                       | <code>readonly</code> | flagCounts                                                                                                                                                                                                                                                      |              |
+| [hasClosedDrawers](./typedox.yafelementdrawers.hascloseddrawers.md)           | <code>static</code>   | (drawers: [DrawerElement](./typedox.drawerelement.md)<!-- -->\[\]) =&gt; boolean \| 0                                                                                                                                                                           |              |
+| [hasContent](./typedox.yafelementdrawers.hascontent.md)                       |                       | boolean                                                                                                                                                                                                                                                         |              |
+| [heightControl](./typedox.yafelementdrawers.heightcontrol.md)                 |                       | { initDataHeight: (clientHeight: number) =&gt; void; setMaxHeightStyle: () =&gt; void; updateHeightAbove: (height: number) =&gt; void; reRenderDrawers: (init?: boolean) =&gt; void; resetHeights: (init?: boolean) =&gt; void; debounceReset: () =&gt; void; } |              |
+| [isBranch](./typedox.yafelementdrawers.isbranch.md)                           | <code>readonly</code> | boolean                                                                                                                                                                                                                                                         |              |
+| [isDrawer](./typedox.yafelementdrawers.isdrawer.md)                           |                       | boolean                                                                                                                                                                                                                                                         |              |
+| [isLeaf](./typedox.yafelementdrawers.isleaf.md)                               | <code>readonly</code> | boolean                                                                                                                                                                                                                                                         |              |
+| [isRoot](./typedox.yafelementdrawers.isroot.md)                               | <code>readonly</code> | boolean                                                                                                                                                                                                                                                         |              |
+| [maxHeightPixels](./typedox.yafelementdrawers.maxheightpixels.md)             | <code>readonly</code> | string                                                                                                                                                                                                                                                          |              |
+| [openDrawer](./typedox.yafelementdrawers.opendrawer.md)                       |                       | () =&gt; void                                                                                                                                                                                                                                                   |              |
+| [parentDrawerElement?](./typedox.yafelementdrawers.parentdrawerelement.md)    |                       | [DrawerElement](./typedox.drawerelement.md)                                                                                                                                                                                                                     | _(Optional)_ |
+| [renderDrawers](./typedox.yafelementdrawers.renderdrawers.md)                 |                       | (init?: boolean) =&gt; void                                                                                                                                                                                                                                     |              |
+| [toggleDrawerState](./typedox.yafelementdrawers.toggledrawerstate.md)         |                       | () =&gt; void                                                                                                                                                                                                                                                   |              |

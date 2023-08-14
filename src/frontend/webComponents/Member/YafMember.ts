@@ -94,27 +94,27 @@ export class YafMember extends YafHTMLElement<{
 				'yaf-member-signatures',
 				null,
 				null,
-				signatures
+				signatures,
 			),
 		getterOrSetter: () =>
 			makeElement<YafMemberGetterSetter, YafMemberGetterSetter['props']>(
 				'yaf-member-getter-setter',
 				null,
 				null,
-				this.props.data as YAFDataObject
+				this.props.data as YAFDataObject,
 			),
 		memberDeclaration: (idPrefix: string) =>
 			makeElement<YafMemberDeclaration, YafMemberDeclaration['props']>(
 				'yaf-member-declaration',
 				null,
 				null,
-				{ data: this.props.data as YafDeclarationReflection, idPrefix }
+				{ data: this.props.data as YafDeclarationReflection, idPrefix },
 			),
 	};
 
 	public static serialiseReflectionGroup = (
 		group: JSONOutput.ReflectionGroup,
-		children: YAFDataObject[]
+		children: YAFDataObject[],
 	): yafReflectionGroup => {
 		if (!group.children) return { title: group.title, children: [] };
 
@@ -123,12 +123,12 @@ export class YafMember extends YafHTMLElement<{
 				(id) =>
 					children?.find((child) => child.id === id) ||
 					appState.reflectionMap[id] ||
-					id
+					id,
 			)
 			.filter((child) => {
 				if (typeof child === 'number')
 					errorHandlers.notFound(
-						`Did not find reflection id: ${child}`
+						`Did not find reflection id: ${child}`,
 					);
 				return !!child;
 			}) as Omit<YAFDataObject & YAFReflectionLink, 'query'>[];

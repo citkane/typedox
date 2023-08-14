@@ -1,4 +1,4 @@
-import { appendChildren } from "./yafElement.js";
+import { appendChildren } from './yafElement.js';
 /**
  * A base class extension for all custom HTML WebComponents.
  *
@@ -21,15 +21,15 @@ export default class YafHtmlElement extends HTMLElement {
     connectedCallback() {
         if (this.debounceCount) {
             /*
-                  console.debug(
-                      `${this.constructor.name} was debounced [${this.debounceCount}]`
-                  );
-                  */
+            console.debug(
+                `${this.constructor.name} was debounced [${this.debounceCount}]`
+            );
+            */
             this.debounceCount += 1;
             return;
         }
         this.debounceCount += 1;
-        if ("onConnect" in this && typeof this.onConnect === "function") {
+        if ('onConnect' in this && typeof this.onConnect === 'function') {
             this.onConnect();
         }
     }

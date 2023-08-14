@@ -2,10 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const typescript_1 = require("typescript");
 class Dox {
-    context;
-    package;
-    exportDeclaration;
-    id;
     constructor(context) {
         this.context = context;
         this.id = context.id.uid;

@@ -39,15 +39,15 @@ export class YafContentHeader extends YafHTMLElement<YAFDataObject> {
 					'yaf-type-parameters',
 					null,
 					null,
-					typeParameters
-				)
+					typeParameters,
+				),
 			);
 		}
 		titleHTMLElement.appendChild(nameHTMLElement);
 		titleHTMLElement.appendChild(makeFlags(flags, comment));
 		if (signatures?.length === 1)
 			titleHTMLElement.appendChild(
-				makeFlags(signatures[0].flags, signatures[0].comment)
+				makeFlags(signatures[0].flags, signatures[0].comment),
 			);
 
 		this.appendChild(titleHTMLElement);

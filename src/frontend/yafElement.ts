@@ -26,12 +26,12 @@ export const appendChildren =
 
 export const makeElement = <
 	T = HTMLElement,
-	P = Record<string, unknown> | string
+	P = Record<string, unknown> | string,
 >(
 	tagName: string,
 	className?: string | null,
 	innerText?: string | null,
-	props?: P
+	props?: P,
 ) => {
 	const element = document.createElement(tagName);
 	if (className)
@@ -75,25 +75,25 @@ export const makeLiteralSpan = (text: string) =>
 
 export const makeIconSpan = (
 	iconInnerHtml: materialIcon,
-	size: 18 | 24 | 36 | 48 = 24
+	size: 18 | 24 | 36 | 48 = 24,
 ): HTMLElement => {
 	return makeElement(
 		'span',
 		`${iconClass} md-${size} yaficon`,
-		iconInnerHtml
+		iconInnerHtml,
 	);
 };
 
 export const makeLinkElement = (
 	href: string,
 	className?: string,
-	innerText?: string
+	innerText?: string,
 ) => {
 	const link = makeElement<YafNavigationLink>(
 		'yaf-navigation-link',
 		className,
 		innerText,
-		undefined
+		undefined,
 	);
 	link.setAttribute('href', href);
 	return link;
@@ -101,7 +101,7 @@ export const makeLinkElement = (
 
 export const makeFlags = (
 	flags: JSONOutput.ReflectionFlags,
-	comment: JSONOutput.Comment | undefined
+	comment: JSONOutput.Comment | undefined,
 ) => {
 	const normalisedFlags = normaliseFlags(flags);
 	const flagElement = makeElement<YafWidgetFlags, YafWidgetFlags['props']>(
@@ -111,7 +111,7 @@ export const makeFlags = (
 		{
 			flags: normalisedFlags,
 			comment,
-		}
+		},
 	);
 	return flagElement;
 };
@@ -122,12 +122,12 @@ export const makeFlags = (
  * @returns
  */
 export const normaliseFlags = (
-	flags: JSONOutput.ReflectionFlags | undefined
+	flags: JSONOutput.ReflectionFlags | undefined,
 ) => {
 	if (!flags) return [];
 	const flagsArray = Object.keys(flags)
 		.map((flag) =>
-			flag.replace('is', '').replace('has', '').toLowerCase().trim()
+			flag.replace('is', '').replace('has', '').toLowerCase().trim(),
 		)
 		.filter((flag) => !!flag);
 
@@ -144,7 +144,7 @@ export const getHtmlTemplate = (id: componentName) => {
 	return template
 		? template.content
 		: errorHandlers.notFound(
-				`Could not find the HTMLTemplate for "#${id}".`
+				`Could not find the HTMLTemplate for "#${id}".`,
 		  );
 };
 
@@ -154,7 +154,7 @@ export const needsParenthesis = (element: HTMLElement) => {
 
 export const renderSignatureType = (
 	type: YAFDataObject['type'],
-	context: TypeContext
+	context: TypeContext,
 ) => {
 	if (!type) return makeElement('span', null, 'null');
 	return makeElement<YafSignature, YafSignature['props']>(
@@ -164,7 +164,7 @@ export const renderSignatureType = (
 		{
 			type,
 			context,
-		}
+		},
 	);
 };
 
@@ -173,14 +173,14 @@ export const initCap = (text: string) =>
 
 export const getTransitionDuration = (drawer: HTMLElement) => {
 	const animationDelay = getComputedStyle(drawer).getPropertyValue(
-		'transition-duration'
+		'transition-duration',
 	);
 	return parseFloat(animationDelay) * 1000;
 };
 
 export const scrollToAnchor = (
 	container: HTMLElement,
-	anchor: string | number
+	anchor: string | number,
 ) => {
 	if (typeof anchor === 'number') return (container.scrollTop = 0);
 
@@ -200,17 +200,17 @@ export const scrollToAnchor = (
 			drawerParents.forEach((element) => element.drawers.openDrawer());
 			setTimeout(
 				() => scrollIntoView(),
-				getTransitionDuration(drawerParents[0].drawers.drawer) / 2
+				getTransitionDuration(drawerParents[0].drawers.drawer) / 2,
 			);
 		}
 	} else {
 		return errorHandlers.notFound(
-			`Could not find element for "#${anchor}"`
+			`Could not find element for "#${anchor}"`,
 		);
 	}
 	function hackFixMobileScrolling() {
 		const containerHTMLElements = document.querySelectorAll(
-			'html, body, typedoc-theme-yaf, yaf-chrome-left, yaf-chrome-right'
+			'html, body, typedoc-theme-yaf, yaf-chrome-left, yaf-chrome-right',
 		);
 		[...containerHTMLElements].forEach((containerHTMLElement) => {
 			if (containerHTMLElement) containerHTMLElement.scrollTop = 0;

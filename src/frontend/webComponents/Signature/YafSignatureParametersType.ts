@@ -17,7 +17,7 @@ export class YafSignatureParametersType extends YafHTMLElement<
 		const thead = makeElement('thead');
 		const headers = makeElement('tr');
 		['name', 'modifier', 'extends', 'default', 'comment'].forEach(
-			(heading) => headers.appendChild(makeElement('th', null, heading))
+			(heading) => headers.appendChild(makeElement('th', null, heading)),
 		);
 		thead.appendChild(headers);
 		table.appendChild(thead);

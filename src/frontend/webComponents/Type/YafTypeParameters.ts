@@ -23,14 +23,14 @@ export class YafTypeParameters extends YafHTMLElement<
 				const span = makeElement(
 					'span',
 					`type ${param.kindString ? ` ${param.kindString}` : ''}`,
-					param.name
+					param.name,
 				);
 				return param.varianceModifier
 					? [
 							makeElement(
 								'span',
 								'modifier',
-								`${param.varianceModifier}`
+								`${param.varianceModifier}`,
 							),
 							span,
 					  ]

@@ -26,25 +26,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = __importStar(require("path"));
 const api_extractor_1 = require("@microsoft/api-extractor");
 const api_extractor_model_1 = require("@microsoft/api-extractor-model");
-const projectFolder = path.join(__dirname, "../../");
-const apiFile = path.join(projectFolder, "temp/typedox.api.json");
+const projectFolder = path.join(__dirname, '../../');
+const apiFile = path.join(projectFolder, 'temp/typedox.api.json');
 //const extractorConfig: ExtractorConfig = ExtractorConfig.loadFileAndPrepare(apiExtractorJsonPath);
 const extractorConfig = api_extractor_1.ExtractorConfig.prepare({
-    packageJsonFullPath: path.join(projectFolder, "package.json"),
+    packageJsonFullPath: path.join(projectFolder, 'package.json'),
     configObject: {
-        mainEntryPointFilePath: path.join(projectFolder, "./dist/frontend/index.d.ts"),
+        mainEntryPointFilePath: path.join(projectFolder, './dist/frontend/index.d.ts'),
         projectFolder,
-        compiler: { tsconfigFilePath: "tsconfig.json" },
+        compiler: { tsconfigFilePath: 'tsconfig.json' },
         docModel: {
             enabled: true,
-            apiJsonFilePath: "<projectFolder>/temp/<unscopedPackageName>.api.json",
+            apiJsonFilePath: '<projectFolder>/temp/<unscopedPackageName>.api.json',
         },
         /*
-        dtsRollup: {
-          enabled: true,
-          untrimmedFilePath: "<projectFolder>/temp/<unscopedPackageName>.d.ts",
-        },
-        */
+    dtsRollup: {
+      enabled: true,
+      untrimmedFilePath: "<projectFolder>/temp/<unscopedPackageName>.d.ts",
+    },
+    */
     },
     configObjectFullPath: undefined,
 });

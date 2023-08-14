@@ -35,7 +35,7 @@ export class YafSignatureReference extends YafHTMLElement<JSONOutput.ReferenceTy
 
 	private static factory = {
 		renderTypeArguments: (
-			args: JSONOutput.ReferenceType['typeArguments']
+			args: JSONOutput.ReferenceType['typeArguments'],
 		) =>
 			makeElement<YafTypeArguments, YafTypeArguments['props']>(
 				'yaf-type-arguments',
@@ -44,7 +44,7 @@ export class YafSignatureReference extends YafHTMLElement<JSONOutput.ReferenceTy
 				{
 					args,
 					context: 'referenceTypeArgument',
-				}
+				},
 			),
 		externalUrl: (externalUrl: string, typeName: string) => {
 			const linkHTMLElement = makeLinkElement(externalUrl);
@@ -60,7 +60,7 @@ export class YafSignatureReference extends YafHTMLElement<JSONOutput.ReferenceTy
 			return linkHTMLElement;
 		},
 		typeArguments: (
-			typeArguments: JSONOutput.ReferenceType['typeArguments']
+			typeArguments: JSONOutput.ReferenceType['typeArguments'],
 		) =>
 			typeArguments && typeArguments.length
 				? this.factory.renderTypeArguments(typeArguments)

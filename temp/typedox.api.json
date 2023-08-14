@@ -1,1801 +1,1801 @@
 {
-  "metadata": {
-    "toolPackage": "@microsoft/api-extractor",
-    "toolVersion": "7.36.3",
-    "schemaVersion": 1011,
-    "oldestForwardsCompatibleVersion": 1001,
-    "tsdocConfig": {
-      "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
-      "noStandardTags": true,
-      "tagDefinitions": [
-        {
-          "tagName": "@alpha",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@beta",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@defaultValue",
-          "syntaxKind": "block"
-        },
-        {
-          "tagName": "@decorator",
-          "syntaxKind": "block",
-          "allowMultiple": true
-        },
-        {
-          "tagName": "@deprecated",
-          "syntaxKind": "block"
-        },
-        {
-          "tagName": "@eventProperty",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@example",
-          "syntaxKind": "block",
-          "allowMultiple": true
-        },
-        {
-          "tagName": "@experimental",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@inheritDoc",
-          "syntaxKind": "inline"
-        },
-        {
-          "tagName": "@internal",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@label",
-          "syntaxKind": "inline"
-        },
-        {
-          "tagName": "@link",
-          "syntaxKind": "inline",
-          "allowMultiple": true
-        },
-        {
-          "tagName": "@override",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@packageDocumentation",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@param",
-          "syntaxKind": "block",
-          "allowMultiple": true
-        },
-        {
-          "tagName": "@privateRemarks",
-          "syntaxKind": "block"
-        },
-        {
-          "tagName": "@public",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@readonly",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@remarks",
-          "syntaxKind": "block"
-        },
-        {
-          "tagName": "@returns",
-          "syntaxKind": "block"
-        },
-        {
-          "tagName": "@sealed",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@see",
-          "syntaxKind": "block"
-        },
-        {
-          "tagName": "@throws",
-          "syntaxKind": "block",
-          "allowMultiple": true
-        },
-        {
-          "tagName": "@typeParam",
-          "syntaxKind": "block",
-          "allowMultiple": true
-        },
-        {
-          "tagName": "@virtual",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@betaDocumentation",
-          "syntaxKind": "modifier"
-        },
-        {
-          "tagName": "@internalRemarks",
-          "syntaxKind": "block"
-        },
-        {
-          "tagName": "@preapproved",
-          "syntaxKind": "modifier"
-        }
-      ],
-      "supportForTags": {
-        "@alpha": true,
-        "@beta": true,
-        "@defaultValue": true,
-        "@decorator": true,
-        "@deprecated": true,
-        "@eventProperty": true,
-        "@example": true,
-        "@experimental": true,
-        "@inheritDoc": true,
-        "@internal": true,
-        "@label": true,
-        "@link": true,
-        "@override": true,
-        "@packageDocumentation": true,
-        "@param": true,
-        "@privateRemarks": true,
-        "@public": true,
-        "@readonly": true,
-        "@remarks": true,
-        "@returns": true,
-        "@sealed": true,
-        "@see": true,
-        "@throws": true,
-        "@typeParam": true,
-        "@virtual": true,
-        "@betaDocumentation": true,
-        "@internalRemarks": true,
-        "@preapproved": true
-      },
-      "reportUnsupportedHtmlElements": false
-    }
-  },
-  "kind": "Package",
-  "canonicalReference": "typedox!",
-  "docComment": "",
-  "name": "typedox",
-  "preserveMemberOrder": false,
-  "members": [
-    {
-      "kind": "EntryPoint",
-      "canonicalReference": "typedox!",
-      "name": "",
-      "preserveMemberOrder": false,
-      "members": [
-        {
-          "kind": "TypeAlias",
-          "canonicalReference": "typedox!DrawerElement:type",
-          "docComment": "",
-          "excerptTokens": [
-            {
-              "kind": "Content",
-              "text": "export declare type DrawerElement = "
-            },
-            {
-              "kind": "Reference",
-              "text": "HTMLElement",
-              "canonicalReference": "!HTMLElement:interface"
-            },
-            {
-              "kind": "Content",
-              "text": " & "
-            },
-            {
-              "kind": "Reference",
-              "text": "YafElementDrawers",
-              "canonicalReference": "typedox!YafElementDrawers:class"
-            },
-            {
-              "kind": "Content",
-              "text": ";"
-            }
-          ],
-          "fileUrlPath": "temp/typedox.d.ts",
-          "releaseTag": "Public",
-          "name": "DrawerElement",
-          "typeTokenRange": {
-            "startIndex": 1,
-            "endIndex": 4
-          }
-        },
-        {
-          "kind": "Class",
-          "canonicalReference": "typedox!Events:class",
-          "docComment": "",
-          "excerptTokens": [
-            {
-              "kind": "Content",
-              "text": "export declare class Events "
-            }
-          ],
-          "fileUrlPath": "temp/typedox.d.ts",
-          "releaseTag": "Public",
-          "isAbstract": false,
-          "name": "Events",
-          "preserveMemberOrder": false,
-          "members": [
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!Events#action:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "action: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "{\n        content: {\n            setLocation: () => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "Event",
-                  "canonicalReference": "!Event:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";\n            scrollTo: (target: string | number) => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "CustomEvent",
-                  "canonicalReference": "!CustomEvent:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": "<"
-                },
-                {
-                  "kind": "Reference",
-                  "text": "actions.scrollTo",
-                  "canonicalReference": "typedox!~scrollTo_2:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ">;\n            scrollTop: (scrollTop: number) => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "CustomEvent",
-                  "canonicalReference": "!CustomEvent:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": "<"
-                },
-                {
-                  "kind": "Reference",
-                  "text": "actions.content.scrollTop",
-                  "canonicalReference": "typedox!~scrollTop:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ">;\n            getPageId: (callBack: (pageId: number) => void) => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "CustomEvent",
-                  "canonicalReference": "!CustomEvent:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": "<"
-                },
-                {
-                  "kind": "Reference",
-                  "text": "actions.content.getPageId",
-                  "canonicalReference": "typedox!~getPageId:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ">;\n            breadcrumb: (id: number) => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "CustomEvent",
-                  "canonicalReference": "!CustomEvent:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": "<"
-                },
-                {
-                  "kind": "Reference",
-                  "text": "actions.content.breadcrumb",
-                  "canonicalReference": "typedox!~breadcrumb:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ">;\n        };\n        menu: {\n            rollMenuDown: () => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "Event",
-                  "canonicalReference": "!Event:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";\n            rollMenuUp: () => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "Event",
-                  "canonicalReference": "!Event:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";\n            scrollTo: (target: string | number) => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "CustomEvent",
-                  "canonicalReference": "!CustomEvent:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": "<"
-                },
-                {
-                  "kind": "Reference",
-                  "text": "actions.scrollTo",
-                  "canonicalReference": "typedox!~scrollTo_2:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ">;\n            toggle: (state?: \"open\" | \"close\" | undefined) => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "CustomEvent",
-                  "canonicalReference": "!CustomEvent:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": "<"
-                },
-                {
-                  "kind": "Reference",
-                  "text": "actions.menu.toggle",
-                  "canonicalReference": "typedox!~toggle:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ">;\n            search: (searchString: string) => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "CustomEvent",
-                  "canonicalReference": "!CustomEvent:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": "<"
-                },
-                {
-                  "kind": "Reference",
-                  "text": "actions.menu.search",
-                  "canonicalReference": "typedox!~search:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ">;\n        };\n        drawers: {\n            resetHeight: () => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "Event",
-                  "canonicalReference": "!Event:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";\n        };\n        options: {\n            display: (key: \"inherited\" | \"private\", value: \"show\" | \"hide\") => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "CustomEvent",
-                  "canonicalReference": "!CustomEvent:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": "<{\n                key: \"inherited\" | \"private\";\n                value: \"show\" | \"hide\";\n            }>;\n        };\n    }"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "action",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 40
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!Events#dispatch:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "dispatch: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "(action: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "CustomEvent",
-                  "canonicalReference": "!CustomEvent:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": " | "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "Event",
-                  "canonicalReference": "!Event:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ", element?: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "HTMLElement",
-                  "canonicalReference": "!HTMLElement:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ") => boolean"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "dispatch",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 8
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!Events#off:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "off: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "(trigger: string, callBack: unknown, element?: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "HTMLElement",
-                  "canonicalReference": "!HTMLElement:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": " | "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "Window",
-                  "canonicalReference": "!Window:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ") => void"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "off",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 6
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!Events#on:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "on: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "(trigger: string, callBack: unknown, element?: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "HTMLElement",
-                  "canonicalReference": "!HTMLElement:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": " | "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "Window",
-                  "canonicalReference": "!Window:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ") => void"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "on",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 6
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!Events#trigger:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "trigger: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "{\n        content: {\n            setLocation: string;\n            scrollTo: string;\n            scrollTop: string;\n            getPageId: string;\n            breadcrumb: string;\n        };\n        menu: {\n            rollMenuDown: string;\n            rollMenuUp: string;\n            scrollTo: string;\n            toggle: string;\n            search: string;\n        };\n        drawers: {\n            resetHeight: string;\n        };\n        options: {\n            display: string;\n        };\n    }"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "trigger",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            }
-          ],
-          "implementsTokenRanges": []
-        },
-        {
-          "kind": "Class",
-          "canonicalReference": "typedox!YafElementDrawers:class",
-          "docComment": "/**\n * Utility class for folding, hierarchical drawers\n */\n",
-          "excerptTokens": [
-            {
-              "kind": "Content",
-              "text": "export declare class YafElementDrawers "
-            }
-          ],
-          "fileUrlPath": "temp/typedox.d.ts",
-          "releaseTag": "Public",
-          "isAbstract": false,
-          "name": "YafElementDrawers",
-          "preserveMemberOrder": false,
-          "members": [
-            {
-              "kind": "Constructor",
-              "canonicalReference": "typedox!YafElementDrawers:constructor(1)",
-              "docComment": "/**\n * Constructs a new instance of the `YafElementDrawers` class\n */\n",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "constructor(drawerParent: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "DrawerElement",
-                  "canonicalReference": "typedox!DrawerElement:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ", drawer: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "HTMLElement",
-                  "canonicalReference": "!HTMLElement:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ", drawerTrigger: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "HTMLElement",
-                  "canonicalReference": "!HTMLElement:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ", id: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "string"
-                },
-                {
-                  "kind": "Content",
-                  "text": ", parentDrawerElement?: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "DrawerElement",
-                  "canonicalReference": "typedox!DrawerElement:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ");"
-                }
-              ],
-              "releaseTag": "Public",
-              "isProtected": false,
-              "overloadIndex": 1,
-              "parameters": [
-                {
-                  "parameterName": "drawerParent",
-                  "parameterTypeTokenRange": {
-                    "startIndex": 1,
-                    "endIndex": 2
-                  },
-                  "isOptional": false
-                },
-                {
-                  "parameterName": "drawer",
-                  "parameterTypeTokenRange": {
-                    "startIndex": 3,
-                    "endIndex": 4
-                  },
-                  "isOptional": false
-                },
-                {
-                  "parameterName": "drawerTrigger",
-                  "parameterTypeTokenRange": {
-                    "startIndex": 5,
-                    "endIndex": 6
-                  },
-                  "isOptional": false
-                },
-                {
-                  "parameterName": "id",
-                  "parameterTypeTokenRange": {
-                    "startIndex": 7,
-                    "endIndex": 8
-                  },
-                  "isOptional": false
-                },
-                {
-                  "parameterName": "parentDrawerElement",
-                  "parameterTypeTokenRange": {
-                    "startIndex": 9,
-                    "endIndex": 10
-                  },
-                  "isOptional": true
-                }
-              ]
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#childDrawerElements:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "get childDrawerElements(): "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "DrawerElement",
-                  "canonicalReference": "typedox!DrawerElement:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": "[]"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": true,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "childDrawerElements",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 3
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#childDrawers:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "childDrawers: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "DrawerElement",
-                  "canonicalReference": "typedox!DrawerElement:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": "[]"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "childDrawers",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 3
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#closeDrawer:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "closeDrawer: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "() => void"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "closeDrawer",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#dataExtraHeight:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "get dataExtraHeight(): "
-                },
-                {
-                  "kind": "Content",
-                  "text": "number"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";\n\nset dataExtraHeight(height: number);"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "dataExtraHeight",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#dataExtraReset:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "set dataExtraReset(height: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "number"
-                },
-                {
-                  "kind": "Content",
-                  "text": ");"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "dataExtraReset",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#dataHeight:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "get dataHeight(): "
-                },
-                {
-                  "kind": "Content",
-                  "text": "number"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";\n\nset dataHeight(height: number);"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "dataHeight",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#debounceResize:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "debounceResize: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "ReturnType",
-                  "canonicalReference": "!ReturnType:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": "<typeof "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "setTimeout",
-                  "canonicalReference": "!setTimeout:function"
-                },
-                {
-                  "kind": "Content",
-                  "text": "> | null"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "debounceResize",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 5
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#drawer:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "drawer: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "HTMLElement",
-                  "canonicalReference": "!HTMLElement:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "drawer",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#drawerHasDisconnected:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "drawerHasDisconnected: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "() => void"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "drawerHasDisconnected",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#drawerId:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "drawerId: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "string"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "drawerId",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#drawerParent:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "drawerParent: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "DrawerElement",
-                  "canonicalReference": "typedox!DrawerElement:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "drawerParent",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#drawers:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "drawers: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "YafElementDrawers",
-                  "canonicalReference": "typedox!YafElementDrawers:class"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "drawers",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#drawerState:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "get drawerState(): "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "drawerState",
-                  "canonicalReference": "typedox!~drawerState:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": true,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "drawerState",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#drawerTrigger:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "drawerTrigger: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "HTMLElement",
-                  "canonicalReference": "!HTMLElement:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "drawerTrigger",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers.findParentDrawers:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "static findParentDrawers: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "(child: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "HTMLElement",
-                  "canonicalReference": "!HTMLElement:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": ", parents?: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "DrawerElement",
-                  "canonicalReference": "typedox!DrawerElement:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": "[]) => "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "DrawerElement",
-                  "canonicalReference": "typedox!DrawerElement:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": "[]"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "findParentDrawers",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 8
-              },
-              "isStatic": true,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#flagCounts:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "get flagCounts(): "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "flagCounts",
-                  "canonicalReference": "typedox!~flagCounts:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": true,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "flagCounts",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers.hasClosedDrawers:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "static hasClosedDrawers: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "(drawers: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "DrawerElement",
-                  "canonicalReference": "typedox!DrawerElement:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": "[]) => boolean | 0"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "hasClosedDrawers",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 4
-              },
-              "isStatic": true,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#hasContent:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "hasContent: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "boolean"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "hasContent",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#heightControl:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "heightControl: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "{\n        initDataHeight: (clientHeight: number) => void;\n        setMaxHeightStyle: () => void;\n        updateHeightAbove: (height: number) => void;\n        reRenderDrawers: (init?: boolean) => void;\n        resetHeights: (init?: boolean) => void;\n        debounceReset: () => void;\n    }"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "heightControl",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#isBranch:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "get isBranch(): "
-                },
-                {
-                  "kind": "Content",
-                  "text": "boolean"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": true,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "isBranch",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#isDrawer:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "isDrawer: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "boolean"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "isDrawer",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#isLeaf:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "get isLeaf(): "
-                },
-                {
-                  "kind": "Content",
-                  "text": "boolean"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": true,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "isLeaf",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#isRoot:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "get isRoot(): "
-                },
-                {
-                  "kind": "Content",
-                  "text": "boolean"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": true,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "isRoot",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#maxHeightPixels:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "get maxHeightPixels(): "
-                },
-                {
-                  "kind": "Content",
-                  "text": "string"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": true,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "maxHeightPixels",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#openDrawer:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "openDrawer: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "() => void"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "openDrawer",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#parentDrawerElement:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "parentDrawerElement?: "
-                },
-                {
-                  "kind": "Reference",
-                  "text": "DrawerElement",
-                  "canonicalReference": "typedox!DrawerElement:type"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": true,
-              "releaseTag": "Public",
-              "name": "parentDrawerElement",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#renderDrawers:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "renderDrawers: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "(init?: boolean) => void"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "renderDrawers",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafElementDrawers#toggleDrawerState:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "toggleDrawerState: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "() => void"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "toggleDrawerState",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            }
-          ],
-          "implementsTokenRanges": []
-        },
-        {
-          "kind": "Class",
-          "canonicalReference": "typedox!YafHTMLElement:class",
-          "docComment": "/**\n * A base class extension for all custom HTML WebComponents.\n *\n * It provides: - The often used `appendChildren` utility as a convenience to all Yaf components. - overrides the default `connectedCallback` with the purpose of providing a de-bouncer.\\ For inexplicable reasons, some nested custom WebComponents get multiple connected signals.\n */\n",
-          "excerptTokens": [
-            {
-              "kind": "Content",
-              "text": "export declare class YafHTMLElement<T = "
-            },
-            {
-              "kind": "Reference",
-              "text": "Record",
-              "canonicalReference": "!Record:type"
-            },
-            {
-              "kind": "Content",
-              "text": "<string, never>"
-            },
-            {
-              "kind": "Content",
-              "text": "> extends "
-            },
-            {
-              "kind": "Reference",
-              "text": "HTMLElement",
-              "canonicalReference": "!HTMLElement:interface"
-            },
-            {
-              "kind": "Content",
-              "text": " "
-            }
-          ],
-          "fileUrlPath": "temp/typedox.d.ts",
-          "releaseTag": "Public",
-          "typeParameters": [
-            {
-              "typeParameterName": "T",
-              "constraintTokenRange": {
-                "startIndex": 0,
-                "endIndex": 0
-              },
-              "defaultTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 3
-              }
-            }
-          ],
-          "isAbstract": false,
-          "name": "YafHTMLElement",
-          "preserveMemberOrder": false,
-          "members": [
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafHTMLElement#appendChildren:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "appendChildren: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "(children: ("
-                },
-                {
-                  "kind": "Reference",
-                  "text": "HTMLElement",
-                  "canonicalReference": "!HTMLElement:interface"
-                },
-                {
-                  "kind": "Content",
-                  "text": " | undefined)[] | undefined) => void"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "appendChildren",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 4
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            },
-            {
-              "kind": "Method",
-              "canonicalReference": "typedox!YafHTMLElement#connectedCallback:member(1)",
-              "docComment": "/**\n * The standard Web Component connect entry.\n *\n * This debounces or triggers the new `onConnect` trigger used in all ancestor Yaf theme components.\n */\n",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "connectedCallback(): "
-                },
-                {
-                  "kind": "Content",
-                  "text": "void"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isStatic": false,
-              "returnTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "releaseTag": "Public",
-              "isProtected": false,
-              "overloadIndex": 1,
-              "parameters": [],
-              "isOptional": false,
-              "isAbstract": false,
-              "name": "connectedCallback"
-            },
-            {
-              "kind": "Property",
-              "canonicalReference": "typedox!YafHTMLElement#props:member",
-              "docComment": "",
-              "excerptTokens": [
-                {
-                  "kind": "Content",
-                  "text": "props: "
-                },
-                {
-                  "kind": "Content",
-                  "text": "T"
-                },
-                {
-                  "kind": "Content",
-                  "text": ";"
-                }
-              ],
-              "isReadonly": false,
-              "isOptional": false,
-              "releaseTag": "Public",
-              "name": "props",
-              "propertyTypeTokenRange": {
-                "startIndex": 1,
-                "endIndex": 2
-              },
-              "isStatic": false,
-              "isProtected": false,
-              "isAbstract": false
-            }
-          ],
-          "extendsTokenRange": {
-            "startIndex": 4,
-            "endIndex": 5
-          },
-          "implementsTokenRanges": []
-        }
-      ]
-    }
-  ]
+	"metadata": {
+		"toolPackage": "@microsoft/api-extractor",
+		"toolVersion": "7.36.3",
+		"schemaVersion": 1011,
+		"oldestForwardsCompatibleVersion": 1001,
+		"tsdocConfig": {
+			"$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+			"noStandardTags": true,
+			"tagDefinitions": [
+				{
+					"tagName": "@alpha",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@beta",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@defaultValue",
+					"syntaxKind": "block"
+				},
+				{
+					"tagName": "@decorator",
+					"syntaxKind": "block",
+					"allowMultiple": true
+				},
+				{
+					"tagName": "@deprecated",
+					"syntaxKind": "block"
+				},
+				{
+					"tagName": "@eventProperty",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@example",
+					"syntaxKind": "block",
+					"allowMultiple": true
+				},
+				{
+					"tagName": "@experimental",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@inheritDoc",
+					"syntaxKind": "inline"
+				},
+				{
+					"tagName": "@internal",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@label",
+					"syntaxKind": "inline"
+				},
+				{
+					"tagName": "@link",
+					"syntaxKind": "inline",
+					"allowMultiple": true
+				},
+				{
+					"tagName": "@override",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@packageDocumentation",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@param",
+					"syntaxKind": "block",
+					"allowMultiple": true
+				},
+				{
+					"tagName": "@privateRemarks",
+					"syntaxKind": "block"
+				},
+				{
+					"tagName": "@public",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@readonly",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@remarks",
+					"syntaxKind": "block"
+				},
+				{
+					"tagName": "@returns",
+					"syntaxKind": "block"
+				},
+				{
+					"tagName": "@sealed",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@see",
+					"syntaxKind": "block"
+				},
+				{
+					"tagName": "@throws",
+					"syntaxKind": "block",
+					"allowMultiple": true
+				},
+				{
+					"tagName": "@typeParam",
+					"syntaxKind": "block",
+					"allowMultiple": true
+				},
+				{
+					"tagName": "@virtual",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@betaDocumentation",
+					"syntaxKind": "modifier"
+				},
+				{
+					"tagName": "@internalRemarks",
+					"syntaxKind": "block"
+				},
+				{
+					"tagName": "@preapproved",
+					"syntaxKind": "modifier"
+				}
+			],
+			"supportForTags": {
+				"@alpha": true,
+				"@beta": true,
+				"@defaultValue": true,
+				"@decorator": true,
+				"@deprecated": true,
+				"@eventProperty": true,
+				"@example": true,
+				"@experimental": true,
+				"@inheritDoc": true,
+				"@internal": true,
+				"@label": true,
+				"@link": true,
+				"@override": true,
+				"@packageDocumentation": true,
+				"@param": true,
+				"@privateRemarks": true,
+				"@public": true,
+				"@readonly": true,
+				"@remarks": true,
+				"@returns": true,
+				"@sealed": true,
+				"@see": true,
+				"@throws": true,
+				"@typeParam": true,
+				"@virtual": true,
+				"@betaDocumentation": true,
+				"@internalRemarks": true,
+				"@preapproved": true
+			},
+			"reportUnsupportedHtmlElements": false
+		}
+	},
+	"kind": "Package",
+	"canonicalReference": "typedox!",
+	"docComment": "",
+	"name": "typedox",
+	"preserveMemberOrder": false,
+	"members": [
+		{
+			"kind": "EntryPoint",
+			"canonicalReference": "typedox!",
+			"name": "",
+			"preserveMemberOrder": false,
+			"members": [
+				{
+					"kind": "TypeAlias",
+					"canonicalReference": "typedox!DrawerElement:type",
+					"docComment": "",
+					"excerptTokens": [
+						{
+							"kind": "Content",
+							"text": "export declare type DrawerElement = "
+						},
+						{
+							"kind": "Reference",
+							"text": "HTMLElement",
+							"canonicalReference": "!HTMLElement:interface"
+						},
+						{
+							"kind": "Content",
+							"text": " & "
+						},
+						{
+							"kind": "Reference",
+							"text": "YafElementDrawers",
+							"canonicalReference": "typedox!YafElementDrawers:class"
+						},
+						{
+							"kind": "Content",
+							"text": ";"
+						}
+					],
+					"fileUrlPath": "temp/typedox.d.ts",
+					"releaseTag": "Public",
+					"name": "DrawerElement",
+					"typeTokenRange": {
+						"startIndex": 1,
+						"endIndex": 4
+					}
+				},
+				{
+					"kind": "Class",
+					"canonicalReference": "typedox!Events:class",
+					"docComment": "",
+					"excerptTokens": [
+						{
+							"kind": "Content",
+							"text": "export declare class Events "
+						}
+					],
+					"fileUrlPath": "temp/typedox.d.ts",
+					"releaseTag": "Public",
+					"isAbstract": false,
+					"name": "Events",
+					"preserveMemberOrder": false,
+					"members": [
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!Events#action:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "action: "
+								},
+								{
+									"kind": "Content",
+									"text": "{\n        content: {\n            setLocation: () => "
+								},
+								{
+									"kind": "Reference",
+									"text": "Event",
+									"canonicalReference": "!Event:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ";\n            scrollTo: (target: string | number) => "
+								},
+								{
+									"kind": "Reference",
+									"text": "CustomEvent",
+									"canonicalReference": "!CustomEvent:interface"
+								},
+								{
+									"kind": "Content",
+									"text": "<"
+								},
+								{
+									"kind": "Reference",
+									"text": "actions.scrollTo",
+									"canonicalReference": "typedox!~scrollTo_2:type"
+								},
+								{
+									"kind": "Content",
+									"text": ">;\n            scrollTop: (scrollTop: number) => "
+								},
+								{
+									"kind": "Reference",
+									"text": "CustomEvent",
+									"canonicalReference": "!CustomEvent:interface"
+								},
+								{
+									"kind": "Content",
+									"text": "<"
+								},
+								{
+									"kind": "Reference",
+									"text": "actions.content.scrollTop",
+									"canonicalReference": "typedox!~scrollTop:type"
+								},
+								{
+									"kind": "Content",
+									"text": ">;\n            getPageId: (callBack: (pageId: number) => void) => "
+								},
+								{
+									"kind": "Reference",
+									"text": "CustomEvent",
+									"canonicalReference": "!CustomEvent:interface"
+								},
+								{
+									"kind": "Content",
+									"text": "<"
+								},
+								{
+									"kind": "Reference",
+									"text": "actions.content.getPageId",
+									"canonicalReference": "typedox!~getPageId:type"
+								},
+								{
+									"kind": "Content",
+									"text": ">;\n            breadcrumb: (id: number) => "
+								},
+								{
+									"kind": "Reference",
+									"text": "CustomEvent",
+									"canonicalReference": "!CustomEvent:interface"
+								},
+								{
+									"kind": "Content",
+									"text": "<"
+								},
+								{
+									"kind": "Reference",
+									"text": "actions.content.breadcrumb",
+									"canonicalReference": "typedox!~breadcrumb:type"
+								},
+								{
+									"kind": "Content",
+									"text": ">;\n        };\n        menu: {\n            rollMenuDown: () => "
+								},
+								{
+									"kind": "Reference",
+									"text": "Event",
+									"canonicalReference": "!Event:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ";\n            rollMenuUp: () => "
+								},
+								{
+									"kind": "Reference",
+									"text": "Event",
+									"canonicalReference": "!Event:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ";\n            scrollTo: (target: string | number) => "
+								},
+								{
+									"kind": "Reference",
+									"text": "CustomEvent",
+									"canonicalReference": "!CustomEvent:interface"
+								},
+								{
+									"kind": "Content",
+									"text": "<"
+								},
+								{
+									"kind": "Reference",
+									"text": "actions.scrollTo",
+									"canonicalReference": "typedox!~scrollTo_2:type"
+								},
+								{
+									"kind": "Content",
+									"text": ">;\n            toggle: (state?: \"open\" | \"close\" | undefined) => "
+								},
+								{
+									"kind": "Reference",
+									"text": "CustomEvent",
+									"canonicalReference": "!CustomEvent:interface"
+								},
+								{
+									"kind": "Content",
+									"text": "<"
+								},
+								{
+									"kind": "Reference",
+									"text": "actions.menu.toggle",
+									"canonicalReference": "typedox!~toggle:type"
+								},
+								{
+									"kind": "Content",
+									"text": ">;\n            search: (searchString: string) => "
+								},
+								{
+									"kind": "Reference",
+									"text": "CustomEvent",
+									"canonicalReference": "!CustomEvent:interface"
+								},
+								{
+									"kind": "Content",
+									"text": "<"
+								},
+								{
+									"kind": "Reference",
+									"text": "actions.menu.search",
+									"canonicalReference": "typedox!~search:type"
+								},
+								{
+									"kind": "Content",
+									"text": ">;\n        };\n        drawers: {\n            resetHeight: () => "
+								},
+								{
+									"kind": "Reference",
+									"text": "Event",
+									"canonicalReference": "!Event:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ";\n        };\n        options: {\n            display: (key: \"inherited\" | \"private\", value: \"show\" | \"hide\") => "
+								},
+								{
+									"kind": "Reference",
+									"text": "CustomEvent",
+									"canonicalReference": "!CustomEvent:interface"
+								},
+								{
+									"kind": "Content",
+									"text": "<{\n                key: \"inherited\" | \"private\";\n                value: \"show\" | \"hide\";\n            }>;\n        };\n    }"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "action",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 40
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!Events#dispatch:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "dispatch: "
+								},
+								{
+									"kind": "Content",
+									"text": "(action: "
+								},
+								{
+									"kind": "Reference",
+									"text": "CustomEvent",
+									"canonicalReference": "!CustomEvent:interface"
+								},
+								{
+									"kind": "Content",
+									"text": " | "
+								},
+								{
+									"kind": "Reference",
+									"text": "Event",
+									"canonicalReference": "!Event:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ", element?: "
+								},
+								{
+									"kind": "Reference",
+									"text": "HTMLElement",
+									"canonicalReference": "!HTMLElement:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ") => boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "dispatch",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 8
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!Events#off:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "off: "
+								},
+								{
+									"kind": "Content",
+									"text": "(trigger: string, callBack: unknown, element?: "
+								},
+								{
+									"kind": "Reference",
+									"text": "HTMLElement",
+									"canonicalReference": "!HTMLElement:interface"
+								},
+								{
+									"kind": "Content",
+									"text": " | "
+								},
+								{
+									"kind": "Reference",
+									"text": "Window",
+									"canonicalReference": "!Window:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ") => void"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "off",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 6
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!Events#on:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "on: "
+								},
+								{
+									"kind": "Content",
+									"text": "(trigger: string, callBack: unknown, element?: "
+								},
+								{
+									"kind": "Reference",
+									"text": "HTMLElement",
+									"canonicalReference": "!HTMLElement:interface"
+								},
+								{
+									"kind": "Content",
+									"text": " | "
+								},
+								{
+									"kind": "Reference",
+									"text": "Window",
+									"canonicalReference": "!Window:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ") => void"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "on",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 6
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!Events#trigger:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "trigger: "
+								},
+								{
+									"kind": "Content",
+									"text": "{\n        content: {\n            setLocation: string;\n            scrollTo: string;\n            scrollTop: string;\n            getPageId: string;\n            breadcrumb: string;\n        };\n        menu: {\n            rollMenuDown: string;\n            rollMenuUp: string;\n            scrollTo: string;\n            toggle: string;\n            search: string;\n        };\n        drawers: {\n            resetHeight: string;\n        };\n        options: {\n            display: string;\n        };\n    }"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "trigger",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						}
+					],
+					"implementsTokenRanges": []
+				},
+				{
+					"kind": "Class",
+					"canonicalReference": "typedox!YafElementDrawers:class",
+					"docComment": "/**\n * Utility class for folding, hierarchical drawers\n */\n",
+					"excerptTokens": [
+						{
+							"kind": "Content",
+							"text": "export declare class YafElementDrawers "
+						}
+					],
+					"fileUrlPath": "temp/typedox.d.ts",
+					"releaseTag": "Public",
+					"isAbstract": false,
+					"name": "YafElementDrawers",
+					"preserveMemberOrder": false,
+					"members": [
+						{
+							"kind": "Constructor",
+							"canonicalReference": "typedox!YafElementDrawers:constructor(1)",
+							"docComment": "/**\n * Constructs a new instance of the `YafElementDrawers` class\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "constructor(drawerParent: "
+								},
+								{
+									"kind": "Reference",
+									"text": "DrawerElement",
+									"canonicalReference": "typedox!DrawerElement:type"
+								},
+								{
+									"kind": "Content",
+									"text": ", drawer: "
+								},
+								{
+									"kind": "Reference",
+									"text": "HTMLElement",
+									"canonicalReference": "!HTMLElement:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ", drawerTrigger: "
+								},
+								{
+									"kind": "Reference",
+									"text": "HTMLElement",
+									"canonicalReference": "!HTMLElement:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ", id: "
+								},
+								{
+									"kind": "Content",
+									"text": "string"
+								},
+								{
+									"kind": "Content",
+									"text": ", parentDrawerElement?: "
+								},
+								{
+									"kind": "Reference",
+									"text": "DrawerElement",
+									"canonicalReference": "typedox!DrawerElement:type"
+								},
+								{
+									"kind": "Content",
+									"text": ");"
+								}
+							],
+							"releaseTag": "Public",
+							"isProtected": false,
+							"overloadIndex": 1,
+							"parameters": [
+								{
+									"parameterName": "drawerParent",
+									"parameterTypeTokenRange": {
+										"startIndex": 1,
+										"endIndex": 2
+									},
+									"isOptional": false
+								},
+								{
+									"parameterName": "drawer",
+									"parameterTypeTokenRange": {
+										"startIndex": 3,
+										"endIndex": 4
+									},
+									"isOptional": false
+								},
+								{
+									"parameterName": "drawerTrigger",
+									"parameterTypeTokenRange": {
+										"startIndex": 5,
+										"endIndex": 6
+									},
+									"isOptional": false
+								},
+								{
+									"parameterName": "id",
+									"parameterTypeTokenRange": {
+										"startIndex": 7,
+										"endIndex": 8
+									},
+									"isOptional": false
+								},
+								{
+									"parameterName": "parentDrawerElement",
+									"parameterTypeTokenRange": {
+										"startIndex": 9,
+										"endIndex": 10
+									},
+									"isOptional": true
+								}
+							]
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#childDrawerElements:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get childDrawerElements(): "
+								},
+								{
+									"kind": "Reference",
+									"text": "DrawerElement",
+									"canonicalReference": "typedox!DrawerElement:type"
+								},
+								{
+									"kind": "Content",
+									"text": "[]"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": true,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "childDrawerElements",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 3
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#childDrawers:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "childDrawers: "
+								},
+								{
+									"kind": "Reference",
+									"text": "DrawerElement",
+									"canonicalReference": "typedox!DrawerElement:type"
+								},
+								{
+									"kind": "Content",
+									"text": "[]"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "childDrawers",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 3
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#closeDrawer:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "closeDrawer: "
+								},
+								{
+									"kind": "Content",
+									"text": "() => void"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "closeDrawer",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#dataExtraHeight:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get dataExtraHeight(): "
+								},
+								{
+									"kind": "Content",
+									"text": "number"
+								},
+								{
+									"kind": "Content",
+									"text": ";\n\nset dataExtraHeight(height: number);"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "dataExtraHeight",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#dataExtraReset:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "set dataExtraReset(height: "
+								},
+								{
+									"kind": "Content",
+									"text": "number"
+								},
+								{
+									"kind": "Content",
+									"text": ");"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "dataExtraReset",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#dataHeight:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get dataHeight(): "
+								},
+								{
+									"kind": "Content",
+									"text": "number"
+								},
+								{
+									"kind": "Content",
+									"text": ";\n\nset dataHeight(height: number);"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "dataHeight",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#debounceResize:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "debounceResize: "
+								},
+								{
+									"kind": "Reference",
+									"text": "ReturnType",
+									"canonicalReference": "!ReturnType:type"
+								},
+								{
+									"kind": "Content",
+									"text": "<typeof "
+								},
+								{
+									"kind": "Reference",
+									"text": "setTimeout",
+									"canonicalReference": "!setTimeout:function"
+								},
+								{
+									"kind": "Content",
+									"text": "> | null"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "debounceResize",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 5
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#drawer:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "drawer: "
+								},
+								{
+									"kind": "Reference",
+									"text": "HTMLElement",
+									"canonicalReference": "!HTMLElement:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "drawer",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#drawerHasDisconnected:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "drawerHasDisconnected: "
+								},
+								{
+									"kind": "Content",
+									"text": "() => void"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "drawerHasDisconnected",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#drawerId:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "drawerId: "
+								},
+								{
+									"kind": "Content",
+									"text": "string"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "drawerId",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#drawerParent:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "drawerParent: "
+								},
+								{
+									"kind": "Reference",
+									"text": "DrawerElement",
+									"canonicalReference": "typedox!DrawerElement:type"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "drawerParent",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#drawers:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "drawers: "
+								},
+								{
+									"kind": "Reference",
+									"text": "YafElementDrawers",
+									"canonicalReference": "typedox!YafElementDrawers:class"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "drawers",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#drawerState:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get drawerState(): "
+								},
+								{
+									"kind": "Reference",
+									"text": "drawerState",
+									"canonicalReference": "typedox!~drawerState:type"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": true,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "drawerState",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#drawerTrigger:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "drawerTrigger: "
+								},
+								{
+									"kind": "Reference",
+									"text": "HTMLElement",
+									"canonicalReference": "!HTMLElement:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "drawerTrigger",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers.findParentDrawers:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "static findParentDrawers: "
+								},
+								{
+									"kind": "Content",
+									"text": "(child: "
+								},
+								{
+									"kind": "Reference",
+									"text": "HTMLElement",
+									"canonicalReference": "!HTMLElement:interface"
+								},
+								{
+									"kind": "Content",
+									"text": ", parents?: "
+								},
+								{
+									"kind": "Reference",
+									"text": "DrawerElement",
+									"canonicalReference": "typedox!DrawerElement:type"
+								},
+								{
+									"kind": "Content",
+									"text": "[]) => "
+								},
+								{
+									"kind": "Reference",
+									"text": "DrawerElement",
+									"canonicalReference": "typedox!DrawerElement:type"
+								},
+								{
+									"kind": "Content",
+									"text": "[]"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "findParentDrawers",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 8
+							},
+							"isStatic": true,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#flagCounts:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get flagCounts(): "
+								},
+								{
+									"kind": "Reference",
+									"text": "flagCounts",
+									"canonicalReference": "typedox!~flagCounts:type"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": true,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "flagCounts",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers.hasClosedDrawers:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "static hasClosedDrawers: "
+								},
+								{
+									"kind": "Content",
+									"text": "(drawers: "
+								},
+								{
+									"kind": "Reference",
+									"text": "DrawerElement",
+									"canonicalReference": "typedox!DrawerElement:type"
+								},
+								{
+									"kind": "Content",
+									"text": "[]) => boolean | 0"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "hasClosedDrawers",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 4
+							},
+							"isStatic": true,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#hasContent:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "hasContent: "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "hasContent",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#heightControl:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "heightControl: "
+								},
+								{
+									"kind": "Content",
+									"text": "{\n        initDataHeight: (clientHeight: number) => void;\n        setMaxHeightStyle: () => void;\n        updateHeightAbove: (height: number) => void;\n        reRenderDrawers: (init?: boolean) => void;\n        resetHeights: (init?: boolean) => void;\n        debounceReset: () => void;\n    }"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "heightControl",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#isBranch:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get isBranch(): "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": true,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "isBranch",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#isDrawer:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "isDrawer: "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "isDrawer",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#isLeaf:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get isLeaf(): "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": true,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "isLeaf",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#isRoot:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get isRoot(): "
+								},
+								{
+									"kind": "Content",
+									"text": "boolean"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": true,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "isRoot",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#maxHeightPixels:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "get maxHeightPixels(): "
+								},
+								{
+									"kind": "Content",
+									"text": "string"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": true,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "maxHeightPixels",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#openDrawer:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "openDrawer: "
+								},
+								{
+									"kind": "Content",
+									"text": "() => void"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "openDrawer",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#parentDrawerElement:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "parentDrawerElement?: "
+								},
+								{
+									"kind": "Reference",
+									"text": "DrawerElement",
+									"canonicalReference": "typedox!DrawerElement:type"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": true,
+							"releaseTag": "Public",
+							"name": "parentDrawerElement",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#renderDrawers:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "renderDrawers: "
+								},
+								{
+									"kind": "Content",
+									"text": "(init?: boolean) => void"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "renderDrawers",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafElementDrawers#toggleDrawerState:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "toggleDrawerState: "
+								},
+								{
+									"kind": "Content",
+									"text": "() => void"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "toggleDrawerState",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						}
+					],
+					"implementsTokenRanges": []
+				},
+				{
+					"kind": "Class",
+					"canonicalReference": "typedox!YafHTMLElement:class",
+					"docComment": "/**\n * A base class extension for all custom HTML WebComponents.\n *\n * It provides: - The often used `appendChildren` utility as a convenience to all Yaf components. - overrides the default `connectedCallback` with the purpose of providing a de-bouncer.\\ For inexplicable reasons, some nested custom WebComponents get multiple connected signals.\n */\n",
+					"excerptTokens": [
+						{
+							"kind": "Content",
+							"text": "export declare class YafHTMLElement<T = "
+						},
+						{
+							"kind": "Reference",
+							"text": "Record",
+							"canonicalReference": "!Record:type"
+						},
+						{
+							"kind": "Content",
+							"text": "<string, never>"
+						},
+						{
+							"kind": "Content",
+							"text": "> extends "
+						},
+						{
+							"kind": "Reference",
+							"text": "HTMLElement",
+							"canonicalReference": "!HTMLElement:interface"
+						},
+						{
+							"kind": "Content",
+							"text": " "
+						}
+					],
+					"fileUrlPath": "temp/typedox.d.ts",
+					"releaseTag": "Public",
+					"typeParameters": [
+						{
+							"typeParameterName": "T",
+							"constraintTokenRange": {
+								"startIndex": 0,
+								"endIndex": 0
+							},
+							"defaultTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 3
+							}
+						}
+					],
+					"isAbstract": false,
+					"name": "YafHTMLElement",
+					"preserveMemberOrder": false,
+					"members": [
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafHTMLElement#appendChildren:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "appendChildren: "
+								},
+								{
+									"kind": "Content",
+									"text": "(children: ("
+								},
+								{
+									"kind": "Reference",
+									"text": "HTMLElement",
+									"canonicalReference": "!HTMLElement:interface"
+								},
+								{
+									"kind": "Content",
+									"text": " | undefined)[] | undefined) => void"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "appendChildren",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 4
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						},
+						{
+							"kind": "Method",
+							"canonicalReference": "typedox!YafHTMLElement#connectedCallback:member(1)",
+							"docComment": "/**\n * The standard Web Component connect entry.\n *\n * This debounces or triggers the new `onConnect` trigger used in all ancestor Yaf theme components.\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "connectedCallback(): "
+								},
+								{
+									"kind": "Content",
+									"text": "void"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isStatic": false,
+							"returnTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"releaseTag": "Public",
+							"isProtected": false,
+							"overloadIndex": 1,
+							"parameters": [],
+							"isOptional": false,
+							"isAbstract": false,
+							"name": "connectedCallback"
+						},
+						{
+							"kind": "Property",
+							"canonicalReference": "typedox!YafHTMLElement#props:member",
+							"docComment": "",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "props: "
+								},
+								{
+									"kind": "Content",
+									"text": "T"
+								},
+								{
+									"kind": "Content",
+									"text": ";"
+								}
+							],
+							"isReadonly": false,
+							"isOptional": false,
+							"releaseTag": "Public",
+							"name": "props",
+							"propertyTypeTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isStatic": false,
+							"isProtected": false,
+							"isAbstract": false
+						}
+					],
+					"extendsTokenRange": {
+						"startIndex": 4,
+						"endIndex": 5
+					},
+					"implementsTokenRanges": []
+				}
+			]
+		}
+	]
 }

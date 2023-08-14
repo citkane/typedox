@@ -1,9 +1,9 @@
-import { trigger } from "./triggers.js";
+import { trigger } from './triggers.js';
 
-import * as content from "./actionsContent.js";
-import * as menu from "./actionsMenu.js";
-import * as drawers from "./actionsDrawers.js";
-import * as options from "./actionsOptions.js";
+import * as content from './actionsContent.js';
+import * as menu from './actionsMenu.js';
+import * as drawers from './actionsDrawers.js';
+import * as options from './actionsOptions.js';
 export { content, menu, drawers, options };
 
 /**
@@ -14,9 +14,9 @@ export { content, menu, drawers, options };
  */
 export type scrollTo = { target: number | string };
 export const scrollTo = (
-  context: "menu" | "content",
-  target: scrollTo["target"]
+	context: 'menu' | 'content',
+	target: scrollTo['target'],
 ) =>
-  new CustomEvent<scrollTo>(trigger[context].scrollTo, {
-    detail: { target },
-  });
+	new CustomEvent<scrollTo>(trigger[context].scrollTo, {
+		detail: { target },
+	});

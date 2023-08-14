@@ -11,20 +11,20 @@ It provides: - The often used `appendChildren` utility as a convenience to all Y
 **Signature:**
 
 ```typescript
-export declare class YafHTMLElement<T = Record<string, never>> extends HTMLElement 
+export declare class YafHTMLElement<T = Record<string, never>> extends HTMLElement
 ```
+
 **Extends:** HTMLElement
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [appendChildren](./typedox.yafhtmlelement.appendchildren.md) |  | (children: (HTMLElement \| undefined)\[\] \| undefined) =&gt; void |  |
-|  [props](./typedox.yafhtmlelement.props.md) |  | T |  |
+| Property                                                     | Modifiers | Type                                                               | Description |
+| ------------------------------------------------------------ | --------- | ------------------------------------------------------------------ | ----------- |
+| [appendChildren](./typedox.yafhtmlelement.appendchildren.md) |           | (children: (HTMLElement \| undefined)\[\] \| undefined) =&gt; void |             |
+| [props](./typedox.yafhtmlelement.props.md)                   |           | T                                                                  |             |
 
 ## Methods
 
-|  Method | Modifiers | Description |
-|  --- | --- | --- |
-|  [connectedCallback()](./typedox.yafhtmlelement.connectedcallback.md) |  | <p>The standard Web Component connect entry.</p><p>This debounces or triggers the new <code>onConnect</code> trigger used in all ancestor Yaf theme components.</p> |
-
+| Method                                                               | Modifiers | Description                                                                                                                                                         |
+| -------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [connectedCallback()](./typedox.yafhtmlelement.connectedcallback.md) |           | <p>The standard Web Component connect entry.</p><p>This debounces or triggers the new <code>onConnect</code> trigger used in all ancestor Yaf theme components.</p> |

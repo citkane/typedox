@@ -18,13 +18,8 @@ class YafMemberSignatures extends YafHTMLElement {
     }
 }
 YafMemberSignatures.factory = {
-    signatureTitle: (signature) => makeElement('yaf-signature-title', null, null, {
-        ...signature,
-        hideName: false,
-        arrowStyle: signature.kind ===
-            appState.reflectionKind.CallSignature,
-        wrappedInPre: true,
-    }),
+    signatureTitle: (signature) => makeElement('yaf-signature-title', null, null, Object.assign(Object.assign({}, signature), { hideName: false, arrowStyle: signature.kind ===
+            appState.reflectionKind.CallSignature, wrappedInPre: true })),
     signatureBody: (signature) => makeElement('yaf-signature-body', null, null, signature),
 };
 export { YafMemberSignatures };

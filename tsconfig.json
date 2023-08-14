@@ -5,5 +5,9 @@
 		{ "path": "./src/tsconfig.frontend.json" },
 		{ "path": "./src/tsconfig.types.json" }
 	],
-	"exclude": ["./"]
+	"exclude": ["./"],
+	"compilerOptions": {
+		"composite": true,
+		"incremental": true,
+	}
 }

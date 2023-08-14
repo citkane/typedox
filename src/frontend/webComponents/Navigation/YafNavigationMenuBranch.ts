@@ -45,7 +45,7 @@ export class YafNavigationMenuBranch extends YafHTMLElement<{
 			this.props.link,
 			'span',
 			drawerTriggerHTMLElement,
-			childCount
+			childCount,
 		);
 		if (childCount) {
 			const drawerHTMLElement = makeElement('ul');
@@ -53,8 +53,8 @@ export class YafNavigationMenuBranch extends YafHTMLElement<{
 				...factory.makeDrawerChildrenArray(
 					drawerTriggerHTMLElement,
 					childCount,
-					this
-				)
+					this,
+				),
 			);
 			this.appendChildren([drawerHeaderHTMLElement, drawerHTMLElement]);
 			this.drawers = new YafElementDrawers(
@@ -62,7 +62,7 @@ export class YafNavigationMenuBranch extends YafHTMLElement<{
 				drawerHTMLElement,
 				drawerTriggerHTMLElement,
 				`menu_${id}`,
-				parentDrawerElement as unknown as DrawerElement
+				parentDrawerElement as unknown as DrawerElement,
 			);
 			/**
 			 * NOTE: `drawers.renderDrawers()` is called from `YafNavigationMenu`.
@@ -71,7 +71,7 @@ export class YafNavigationMenuBranch extends YafHTMLElement<{
 			 */
 
 			drawerHTMLElement.prepend(
-				factory.makeDrawerTagToggles(this.drawers)
+				factory.makeDrawerTagToggles(this.drawers),
 			);
 		} else {
 			this.appendChild(drawerHeaderHTMLElement);
@@ -93,7 +93,7 @@ export class YafNavigationMenuBranch extends YafHTMLElement<{
 		makeDrawerChildrenArray: (
 			drawerTrigger: HTMLElement,
 			childCount: number,
-			self: YafNavigationMenuBranch
+			self: YafNavigationMenuBranch,
 		) => {
 			if (!childCount) return [];
 
@@ -107,14 +107,14 @@ export class YafNavigationMenuBranch extends YafHTMLElement<{
 					link,
 					'li',
 					drawerTrigger,
-					childCount
+					childCount,
 				);
 				if (childCount) {
 					return this.factory.makeBranch(
 						tree[link.id],
 						link,
 						self,
-						menuLiHTMLElement
+						menuLiHTMLElement,
 					);
 				}
 				menuLiHTMLElement.id = `menu_${link.id}`;
@@ -127,7 +127,7 @@ export class YafNavigationMenuBranch extends YafHTMLElement<{
 			branch: treeMenuBranch,
 			link: YAFReflectionLink,
 			self: YafNavigationMenuBranch,
-			liHTMLElement: HTMLElement
+			liHTMLElement: HTMLElement,
 		) => {
 			//const liHTMLElement = makeElement<HTMLLIElement>('li');
 			const branchHTMLElement = makeElement<
@@ -137,7 +137,7 @@ export class YafNavigationMenuBranch extends YafHTMLElement<{
 				'yaf-navigation-menu-branch',
 				normaliseFlags(self.props.link.flags).join(' '),
 				null,
-				{ branch, link, parentDrawerElement: self }
+				{ branch, link, parentDrawerElement: self },
 			);
 
 			liHTMLElement.appendChild(branchHTMLElement);
@@ -148,7 +148,7 @@ export class YafNavigationMenuBranch extends YafHTMLElement<{
 			reflectionLink: YAFReflectionLink,
 			wrapper: string,
 			drawerTriggerHTMLElement: HTMLElement,
-			childCount: number
+			childCount: number,
 		) => {
 			const { query, hash, name, kind, flags } = reflectionLink;
 			const flagClasses = normaliseFlags(flags).join(' ').trim();
@@ -185,14 +185,14 @@ export class YafNavigationMenuBranch extends YafHTMLElement<{
 				? this.factory.extendHeader(
 						headerHTMLElement,
 						drawerTriggerHTMLElement,
-						childCount
+						childCount,
 				  )
 				: headerHTMLElement;
 		},
 		extendHeader: (
 			header: HTMLElement,
 			drawerTrigger: HTMLElement,
-			childCount: number
+			childCount: number,
 		) => {
 			const countWidget = makeElement<
 				YafWidgetCounter,

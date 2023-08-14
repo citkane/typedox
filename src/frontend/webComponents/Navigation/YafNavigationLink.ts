@@ -30,7 +30,7 @@ export class YafNavigationLink extends YafHTMLElement {
 
 			this.setAttribute(
 				'href',
-				hash ? `?page=${query}#${hash}` : `?page=${query}`
+				hash ? `?page=${query}#${hash}` : `?page=${query}`,
 			);
 			targetURL = router.getTargetURL(this);
 		}
@@ -53,14 +53,14 @@ export class YafNavigationLink extends YafHTMLElement {
 		events.on(
 			'click',
 			(e: clickEvent) => router.route(this, e),
-			this.aHTMLElement
+			this.aHTMLElement,
 		);
 	}
 	disconnectedCallback() {
 		events.off(
 			'click',
 			(e: clickEvent) => router.route(this, e),
-			this.aHTMLElement
+			this.aHTMLElement,
 		);
 	}
 }

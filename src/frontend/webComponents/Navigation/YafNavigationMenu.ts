@@ -47,10 +47,10 @@ export class YafNavigationMenu extends YafHTMLElement {
 		(<YafNavigationMenuBranch[]>[...menuHTMLElement.children]).forEach(
 			(menuItem) => {
 				const drawer = [...menuItem.children].find(
-					(child) => 'drawers' in child
+					(child) => 'drawers' in child,
 				);
 				(drawer as YafNavigationMenuBranch)?.drawers.renderDrawers();
-			}
+			},
 		);
 
 		this.scrollTop = appState.scrollTops['menu'] || 0;
@@ -84,7 +84,7 @@ export class YafNavigationMenu extends YafHTMLElement {
 				const reflectionLink = appState.reflectionMap[id];
 				if (!reflectionLink)
 					ErrorHandlers.notFound(
-						`id "${id}" not found on reflectionMap`
+						`id "${id}" not found on reflectionMap`,
 					);
 				return reflectionLink;
 			})

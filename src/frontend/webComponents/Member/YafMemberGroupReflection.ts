@@ -39,13 +39,13 @@ export class YafMemberGroupReflection extends YafHTMLElement<yafMemberGroupRefle
 			title,
 			idPrefix,
 			this.pageId,
-			drawerTriggerHTMLElement
+			drawerTriggerHTMLElement,
 		);
 
 		const groupCountHTMLElement = factory.counterWidget(children.length);
 		const drawerLiHTMLElements = factory.drawerListChildren(
 			children,
-			idPrefix
+			idPrefix,
 		);
 
 		groupHeaderHTMLElement.appendChildren([
@@ -60,7 +60,7 @@ export class YafMemberGroupReflection extends YafHTMLElement<yafMemberGroupRefle
 			this as unknown as DrawerElement,
 			drawerHTMLElement,
 			drawerTriggerHTMLElement,
-			this.id
+			this.id,
 		);
 
 		drawerHTMLElement.prepend(factory.tagToggles(this.drawers));
@@ -79,14 +79,14 @@ export class YafMemberGroupReflection extends YafHTMLElement<yafMemberGroupRefle
 		events.dispatch(
 			action.content.getPageId((pageId) => {
 				id = pageId;
-			})
+			}),
 		);
 		return id;
 	}
 	private static factory = {
 		drawerListChildren: (
 			children: Omit<YAFDataObject & YAFReflectionLink, 'query'>[],
-			idPrefix = ''
+			idPrefix = '',
 		) =>
 			children.map((child) => {
 				const liHTMLElement = this.factory.listItem(child.flags);
@@ -100,13 +100,13 @@ export class YafMemberGroupReflection extends YafHTMLElement<yafMemberGroupRefle
 			makeElement('li', flags ? normaliseFlags(flags).join(' ') : ''),
 		member: (
 			data: Omit<YAFDataObject & YAFReflectionLink, 'query'>,
-			idPrefix: string
+			idPrefix: string,
 		) =>
 			makeElement<YafMember, YafMember['props']>(
 				'yaf-member',
 				null,
 				null,
-				{ data, idPrefix }
+				{ data, idPrefix },
 			),
 		tagToggles: (drawers: YafElementDrawers) => {
 			const toggleHTMLElement = makeElement<
@@ -126,13 +126,13 @@ export class YafMemberGroupReflection extends YafHTMLElement<yafMemberGroupRefle
 				null,
 				{
 					count,
-				}
+				},
 			),
 		makeNestedTitleSpan: (
 			titleString: string,
 			idPrefix: string | undefined,
 			pageId: number,
-			drawerTriggerHTMLElement: HTMLElement & yafHTMLExtension
+			drawerTriggerHTMLElement: HTMLElement & yafHTMLExtension,
 		) => {
 			const { makeDrawerToggle } = this.factory;
 
@@ -140,7 +140,7 @@ export class YafMemberGroupReflection extends YafHTMLElement<yafMemberGroupRefle
 
 			if (!idPrefix) {
 				wrapperHTMLElement.appendChild(
-					makeDrawerToggle(titleString, drawerTriggerHTMLElement)
+					makeDrawerToggle(titleString, drawerTriggerHTMLElement),
 				);
 				return wrapperHTMLElement;
 			}
@@ -150,7 +150,7 @@ export class YafMemberGroupReflection extends YafHTMLElement<yafMemberGroupRefle
 				const linkHTMLElement = makeLinkElement(
 					`#${fragments.slice(0, i + 1).join('.')}`,
 					undefined,
-					fragment
+					fragment,
 				);
 				/*
 				makeElement('a', undefined, fragment);
@@ -172,7 +172,7 @@ export class YafMemberGroupReflection extends YafHTMLElement<yafMemberGroupRefle
 		},
 		makeDrawerToggle: (
 			title: string,
-			drawerTriggerHTMLElement: HTMLElement & yafHTMLExtension
+			drawerTriggerHTMLElement: HTMLElement & yafHTMLExtension,
 		) => {
 			const handleIconHTMLElement = makeIconSpan('expand_less');
 			const iconHTMLElement = makeElement('span', 'icon');
@@ -193,10 +193,10 @@ export class YafMemberGroupReflection extends YafHTMLElement<yafMemberGroupRefle
 	 */
 	static renderDrawersFromRoot = (parent: HTMLElement) => {
 		const drawerHTMLElements = [...parent.children].filter(
-			(child) => 'drawers' in child
+			(child) => 'drawers' in child,
 		);
 		drawerHTMLElements.forEach((drawer) =>
-			(drawer as unknown as YafElementDrawers).drawers.renderDrawers()
+			(drawer as unknown as YafElementDrawers).drawers.renderDrawers(),
 		);
 	};
 }

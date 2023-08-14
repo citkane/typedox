@@ -1,129 +1,180 @@
 import {
-  ClassDeclaration,
-  ExportDeclaration,
-  ImportDeclaration,
-  InterfaceDeclaration,
-  Node,
-  SourceFile,
-  SyntaxKind,
-  TypeAliasDeclaration,
-  VariableDeclarationList,
-  isExportDeclaration,
-} from "typescript";
-import Dox from "./Dox";
-import ExportDeclarationDox from "./doxKinds/ExportDeclarationDox";
-import DoxContext from "./DoxContext";
-import { DoxKind, declarationKinds, declarationMaps, fileMap } from "./types";
+	ExportDeclaration,
+	Node,
+	SyntaxKind,
+	isExportDeclaration,
+	isClassDeclaration,
+	isImportDeclaration,
+	isInterfaceDeclaration,
+	isTypeAliasDeclaration,
+	isExportAssignment,
+	ExportAssignment,
+} from 'typescript';
+import Dox from './Dox';
+import ExportDeclarationDox from './doxKinds/ExportDeclarationDox';
+import DoxContext from './DoxContext';
+import { DoxKind, declarationKinds, declarationMaps, fileMap } from './types';
+import ExportMemberDox from './doxKinds/ExportMemberDox';
+import { Logger } from './Logger';
+
+const logger = new Logger();
 
 export default class DoxPackage extends Dox {
-  kind = DoxKind.Package;
-  declarationsMap: fileMap = new Map();
+	kind = DoxKind.Package;
+	filesMap: fileMap = new Map();
 
-  constructor(context: DoxContext, entryFileList: string[]) {
-    super(context);
+	constructor(context: DoxContext, entryFileList: string[]) {
+		super(context);
+		super.package = this;
 
-    this.addEntryFiles(entryFileList);
-  }
+		this.addEntryFiles(entryFileList);
 
-  public addEntryFile = (fileName: string) => this.addEntryFiles([fileName]);
-  private addEntryFiles = (fileNames: string[]) => {
-    fileNames = this.deDupeFilelist(fileNames);
-    const entrySources = this.getEntrySources(fileNames);
-    const declarations = this.parseForDeclarations(entrySources);
-    this.registerFilesWithSelf(fileNames);
-    this.registerExportDeclarations(declarations.exports);
-  };
+		this.forEachExportMember((member, declaration) => {
+			if (!declaration.exportTargetFile) return;
+			const targetMembers = [
+				...this.filesMap
+					.get(declaration.exportTargetFile)!
+					.exports.values(),
+			]
+				.map((declaration) => declaration.membersMap.get(member.name)!)
+				.filter((member) => !!member);
 
-  private registerFilesWithSelf(fileNames: string[]) {
-    const { declarationsMap } = DoxPackage;
-    fileNames.forEach((fileName) =>
-      this.declarationsMap.set(fileName, declarationsMap())
-    );
-  }
+			targetMembers.forEach((targetMember) =>
+				targetMember.parents.set(member.id, member),
+			);
+		});
 
-  private getEntrySources(fileList: string[]) {
-    const { program } = this.context;
-    return fileList.map((fileName) => program.getSourceFile(fileName));
-  }
-  private deDupeFilelist(fileList: string[]) {
-    return fileList.filter((file) => !this.declarationsMap.has(file));
-  }
-  private registerExportDeclarations = (
-    exportDeclarations: ExportDeclaration[]
-  ) => {
-    const context = { ...this.context, package: this };
-    exportDeclarations.forEach((exportDeclaration) => {
-      new ExportDeclarationDox(context, exportDeclaration);
-    });
-  };
+		const members = [
+			...(this.filesMap
+				.get(
+					'/home/michaeladmin/code/typedox/src/frontend/webComponents/Signature/signatureTypes/index.ts',
+				)
+				?.exports.values() || []),
+		][0].membersMap;
+		[...members.values()][0].getParentMembers();
+	}
 
-  private parseForDeclarations(sources: SourceFile[]) {
-    const { declarationsContainer: declarationContainer } = DoxPackage;
-    const declarations = declarationContainer();
-    const { exports, imports, classes, variables, types, interfaces } =
-      declarations;
-    sources.forEach((source) => parse(source));
+	private forEachExport(
+		callBack: (declaration: ExportDeclarationDox) => void,
+	) {
+		this.filesMap.forEach((declarationMaps) => {
+			declarationMaps.exports.forEach(callBack);
+		});
+	}
+	private forEachExportMember(
+		callBack: (
+			member: ExportMemberDox,
+			declaration: ExportDeclarationDox,
+		) => void,
+	) {
+		this.forEachExport((declaration) =>
+			declaration.membersMap.forEach((member) =>
+				callBack(member, declaration),
+			),
+		);
+	}
+	public registerExportDeclaration(declaration: ExportDeclarationDox) {
+		this.filesMap
+			.get(declaration.exportSourceFile)!
+			.exports.set(declaration.id, declaration);
+	}
+	public addEntryFile = (fileName?: string) =>
+		fileName ? this.addEntryFiles([fileName]) : null;
+	private addEntryFiles = (fileNames: string[]) => {
+		const { declarationsContainer, parseForDeclarations } = DoxPackage;
+		fileNames = this.deDupeFilelist(fileNames);
+		const entrySources = this.getEntrySources(fileNames);
+		const declarations = parseForDeclarations(
+			entrySources,
+			declarationsContainer(),
+		);
+		this.registerFilesWithSelf(fileNames);
+		this.registerExportDeclarations(declarations.exports);
+	};
 
-    return declarations;
+	private static parseForDeclarations = (
+		nodes: Node[],
+		container: ReturnType<typeof this.declarationsContainer>,
+	) => {
+		const { exports, imports, classes, variables, types, interfaces } =
+			container;
+		nodes.forEach((node) => {
+			if (isExportDeclaration(node)) {
+				exports.push(node);
+			} else if (isExportAssignment(node)) {
+				exports.push(node);
+			} else if (isImportDeclaration(node)) {
+				imports.push(node);
+			} else if (isClassDeclaration(node)) {
+				classes.push(node);
+			} else if (isInterfaceDeclaration(node)) {
+				interfaces.push(node);
+			} else if (isTypeAliasDeclaration(node)) {
+				types.push(node);
+			} else if (node.kind === SyntaxKind.FirstStatement) {
+				variables.push(node);
+			} else {
+				logger.debug(
+					`Ts kind ${'SyntaxKind[node.kind]'} was not registered as a declaration.`,
+				);
+				this.parseForDeclarations(node.getChildren(), container);
+			}
+		});
 
-    function parse(node: Node) {
-      switch (node.kind) {
-        case SyntaxKind.ExportDeclaration:
-          exports.push(node as ExportDeclaration);
-          break;
-        case SyntaxKind.ImportDeclaration:
-          imports.push(node as ImportDeclaration);
-          break;
-        case SyntaxKind.ClassDeclaration:
-          classes.push(node as ClassDeclaration);
-          break;
-        case SyntaxKind.VariableDeclarationList:
-          variables.push(node as VariableDeclarationList);
-          break;
-        case SyntaxKind.InterfaceDeclaration:
-          interfaces.push(node as InterfaceDeclaration);
-          break;
-        case SyntaxKind.TypeAliasDeclaration:
-          types.push(node as TypeAliasDeclaration);
-          break;
+		return container;
+	};
 
-        default:
-          const kind = SyntaxKind[node.kind];
-          if (kind.indexOf("Declaration") > 0)
-            console.log(SyntaxKind[node.kind], ":", node.getText());
-          node.forEachChild((child) => parse(child));
-      }
-    }
-  }
-  private static getExportDeclarationsFromNode = (
-    node: Node,
-    exportDeclarations: ExportDeclaration[] = []
-  ) => {
-    node.forEachChild((childNode) => {
-      isExportDeclaration(childNode)
-        ? exportDeclarations.push(childNode as ExportDeclaration)
-        : this.getExportDeclarationsFromNode(childNode, exportDeclarations);
-    });
-    return exportDeclarations;
-  };
-  private static declarationsContainer(): declarationKinds {
-    return {
-      exports: [],
-      imports: [],
-      classes: [],
-      variables: [],
-      types: [],
-      interfaces: [],
-    };
-  }
-  private static declarationsMap(): declarationMaps {
-    return {
-      exports: new Map(),
-      imports: new Map(),
-      classes: new Map(),
-      variables: new Map(),
-      types: new Map(),
-      interfaces: new Map(),
-    };
-  }
+	private registerExportDeclarations = (
+		exportDeclarations: (ExportDeclaration | ExportAssignment)[],
+	) => {
+		const context = { ...this.context, package: this };
+		exportDeclarations.forEach((exportDeclaration) => {
+			new ExportDeclarationDox(context, exportDeclaration);
+		});
+	};
+
+	private registerFilesWithSelf(fileNames: string[]) {
+		const { declarationsMap } = DoxPackage;
+		fileNames.forEach((fileName) =>
+			this.filesMap.set(fileName, declarationsMap()),
+		);
+	}
+
+	private getEntrySources(fileList: string[]) {
+		const { program } = this.context;
+		return fileList
+			.map((fileName) => program.getSourceFile(fileName)!)
+			.filter((source, i) => {
+				if (!source)
+					logger.warn(
+						`No source file was found for "${fileList[i]}"`,
+					);
+
+				return !!source;
+			});
+	}
+	private deDupeFilelist(fileList: string[]) {
+		return fileList.filter((file) => !this.filesMap.has(file));
+	}
+
+	private static declarationsContainer(): declarationKinds {
+		return {
+			exports: [],
+			imports: [],
+			classes: [],
+			variables: [],
+			types: [],
+			interfaces: [],
+		};
+	}
+	private static declarationsMap(): declarationMaps {
+		return {
+			exports: new Map(),
+			imports: new Map(),
+			classes: new Map(),
+			variables: new Map(),
+			types: new Map(),
+			interfaces: new Map(),
+		};
+	}
 }

@@ -6,7 +6,6 @@
 
 ## Packages
 
-|  Package | Description |
-|  --- | --- |
-|  [typedox](./typedox.md) |  |
-
+| Package                 | Description |
+| ----------------------- | ----------- |
+| [typedox](./typedox.md) |             |

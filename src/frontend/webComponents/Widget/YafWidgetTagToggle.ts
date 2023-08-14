@@ -20,14 +20,14 @@ export class YafWidgetTagToggle extends YafHTMLElement<{
 	attributeChangedCallback(
 		name: yafDisplayOptions,
 		oldValue: displayStates,
-		newValue: displayStates
+		newValue: displayStates,
 	) {
 		if (!oldValue || oldValue === newValue) return;
 		const HTMLElement = this.querySelector(`.${name}`);
 		if (HTMLElement?.textContent)
 			HTMLElement.textContent = HTMLElement.textContent.replace(
 				newValue,
-				oldValue
+				oldValue,
 			);
 	}
 	onConnect() {
@@ -44,7 +44,7 @@ export class YafWidgetTagToggle extends YafHTMLElement<{
 			display = display === 'hide' ? 'show' : 'hide';
 
 			this.appendChild(
-				makeElement('span', flag, `${display} [ ${count} ] ${flag}`)
+				makeElement('span', flag, `${display} [ ${count} ] ${flag}`),
 			).onclick = (e) => {
 				const newState = appState.toggleDisplayOption(flag);
 				events.dispatch(action.options.display(flag, newState));

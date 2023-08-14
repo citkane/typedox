@@ -67,7 +67,7 @@ export class YafSignatureReflection extends YafHTMLElement<JSONOutput.Reflection
 		}
 		if (declaration)
 			HTMLElementGroups.push(
-				factory.declarationSignatures(declaration).flat()
+				factory.declarationSignatures(declaration).flat(),
 			);
 
 		if (HTMLElementGroups.length) {
@@ -80,7 +80,7 @@ export class YafSignatureReflection extends YafHTMLElement<JSONOutput.Reflection
 			HTMLElementGroups.forEach((elements) => {
 				const HTMLElements = factory.mapElementGroups(
 					elements,
-					this.tagName
+					this.tagName,
 				);
 				this.appendChildren(HTMLElements.flat());
 			});
@@ -99,7 +99,7 @@ export class YafSignatureReflection extends YafHTMLElement<JSONOutput.Reflection
 				];
 			}),
 		declarationSignatures: (
-			declaration: JSONOutput.DeclarationReflection
+			declaration: JSONOutput.DeclarationReflection,
 		) =>
 			declaration?.signatures?.map((signature) => [
 				makeElement<YafSignatureTitle, YafSignatureTitle['props']>(
@@ -109,7 +109,7 @@ export class YafSignatureReflection extends YafHTMLElement<JSONOutput.Reflection
 					{
 						...(signature as ThisSignatureReflection),
 						hideName: true,
-					}
+					},
 				),
 			]) || [],
 		signatureTitle: (declaration: JSONOutput.DeclarationReflection) =>
@@ -121,7 +121,7 @@ export class YafSignatureReflection extends YafHTMLElement<JSONOutput.Reflection
 					...(declaration.signatures![0] as ThisSignatureReflection),
 					hideName: true,
 					arrowStyle: true,
-				}
+				},
 			),
 		getAndSetSignatures: (child: JSONOutput.DeclarationReflection) => [
 			makeNameSpan(child.name),

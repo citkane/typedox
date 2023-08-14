@@ -60,7 +60,7 @@ export class YafNavigationSearch extends YafHTMLElement {
 		Object.keys(display).forEach((key) => {
 			this.setAttribute(
 				key,
-				appState.options.display[<keyof typeof display>key]
+				appState.options.display[<keyof typeof display>key],
 			);
 		});
 		this.eventsList.forEach((event) => events.on(...event));
@@ -97,7 +97,7 @@ export class YafNavigationSearch extends YafHTMLElement {
 		searchString: string,
 		reflection: YAFReflectionLink,
 		target: 'name' | 'query' = 'name',
-		offset = 0
+		offset = 0,
 	) => {
 		searchString = searchString.trim();
 		let targetString = reflection[target];
@@ -142,7 +142,7 @@ export class YafNavigationSearch extends YafHTMLElement {
 	private static factory = {
 		resultLink: (
 			reflectionLink: YAFReflectionLink,
-			searchString: string
+			searchString: string,
 		) => {
 			const { highlight } = this.factory;
 			const { query, hash, name, kind, flags } = reflectionLink;
@@ -156,7 +156,7 @@ export class YafNavigationSearch extends YafHTMLElement {
 			const nameHTMLElement = highlight(makeNameSpan(name), searchString);
 			const queryHTMLElement = highlight(
 				makeSymbolSpan(query),
-				searchString
+				searchString,
 			);
 			const linkSymbolHTMLElement = makeElement<
 				YafWidgetKind,
@@ -175,7 +175,7 @@ export class YafNavigationSearch extends YafHTMLElement {
 		highlight: (
 			span: HTMLElement & yafHTMLExtension,
 			searchString: string,
-			anycase?: boolean
+			anycase?: boolean,
 		): HTMLElement => {
 			searchString = anycase
 				? searchString.toLocaleLowerCase()
@@ -201,7 +201,7 @@ export class YafNavigationSearch extends YafHTMLElement {
 								searchString
 								? 'lit'
 								: undefined,
-							part
+							part,
 						);
 					});
 				span.innerText = '';
@@ -224,8 +224,8 @@ export class YafNavigationSearch extends YafHTMLElement {
 					'yaf-widget-tag-toggle',
 					undefined,
 					undefined,
-					{ flagCounts }
-				)
+					{ flagCounts },
+				),
 			);
 			return wrapperHTMLElement;
 		},

@@ -51,7 +51,7 @@ export class YafContentHierarchy extends YafHTMLElement<yafContentHierarchyProps
 			this as unknown as DrawerElement,
 			this.drawer,
 			this.drawerTrigger,
-			`hierarchy_${pageId}`
+			`hierarchy_${pageId}`,
 		);
 	};
 
@@ -77,8 +77,8 @@ export class YafContentHierarchy extends YafHTMLElement<yafContentHierarchyProps
 				makeLinkElement(
 					`?page=${linkData.query}#${linkData.hash}`,
 					undefined,
-					item.name
-				)
+					item.name,
+				),
 			);
 			return parentLi;
 		},
@@ -90,7 +90,7 @@ export class YafContentHierarchy extends YafHTMLElement<yafContentHierarchyProps
 				null,
 				{
 					hierarchy: item.children,
-				}
+				},
 			),
 	};
 }

@@ -76,17 +76,10 @@ YafSignatureReflection.factory = {
     declarationSignatures: (declaration) => {
         var _a;
         return ((_a = declaration === null || declaration === void 0 ? void 0 : declaration.signatures) === null || _a === void 0 ? void 0 : _a.map((signature) => [
-            makeElement('yaf-signature-title', null, null, {
-                ...signature,
-                hideName: true,
-            }),
+            makeElement('yaf-signature-title', null, null, Object.assign(Object.assign({}, signature), { hideName: true })),
         ])) || [];
     },
-    signatureTitle: (declaration) => makeElement('yaf-signature-title', null, null, {
-        ...declaration.signatures[0],
-        hideName: true,
-        arrowStyle: true,
-    }),
+    signatureTitle: (declaration) => makeElement('yaf-signature-title', null, null, Object.assign(Object.assign({}, declaration.signatures[0]), { hideName: true, arrowStyle: true })),
     getAndSetSignatures: (child) => [
         makeNameSpan(child.name),
         makeSymbolSpan(': '),
@@ -118,11 +111,7 @@ YafSignatureReflection.factory = {
             return [
                 makeNameSpan(!i ? child.name : `\n${child.name}`),
                 makeSymbolSpan(child.flags.isOptional ? '?: ' : ': '),
-                makeElement('yaf-signature-title', null, null, {
-                    ...signature,
-                    hideName: true,
-                    arrowStyle: false,
-                }),
+                makeElement('yaf-signature-title', null, null, Object.assign(Object.assign({}, signature), { hideName: true, arrowStyle: false })),
             ];
         })
             .flat();

@@ -23,5 +23,5 @@ export class YafSignatureNamedTupleMember extends YafHTMLElement<JSONOutput.Name
 const yafSignatureNamedTupleMember = 'yaf-signature-named-tuple-member';
 customElements.define(
 	yafSignatureNamedTupleMember,
-	YafSignatureNamedTupleMember
+	YafSignatureNamedTupleMember,
 );
