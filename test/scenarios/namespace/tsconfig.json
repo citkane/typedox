@@ -1,0 +1,8 @@
+{
+	"extends": "@typedox/tsconfig/commonJs.json",
+	"files":["./index.ts"],
+	"compilerOptions": {
+		"outDir": "./dist",
+		"target":"es6"
+	}
+}
