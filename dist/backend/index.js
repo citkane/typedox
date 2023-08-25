@@ -41,7 +41,6 @@ if (configFile)
 function parseConfig(configFile, baseDir) {
     var _a;
     const config = dox.lib.loadConfigFromFile(configFile, baseDir);
-    //dox.log.info(config);
     config.options.types = [];
     //config.options.noLib = true;
     (_a = config.projectReferences) === null || _a === void 0 ? void 0 : _a.forEach((reference) => {

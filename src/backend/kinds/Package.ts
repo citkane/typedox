@@ -5,17 +5,17 @@ export default class Package extends dox.lib.Dox {
 	version = 'todo';
 	kind = dox.Kind.Package;
 	filesMap: dox.fileMap = new Map();
-	tree: dox.tree.Tree;
 
 	constructor(context: dox.lib.Context, entryFileList: string[]) {
 		super(context);
 		super.package = this;
 
 		this.addEntryFiles(entryFileList);
-		this.filesMap.forEach((file) => file.buildRelationships());
-		this.tree = new dox.tree.Tree(this);
 
-		//dox.log.info(this.tree.toObject());
+		this.filesMap.forEach((file) => file.triggerRelationships());
+		const rootDeclarations = Package.getDeclarationRoots(this);
+		const tree = new dox.tree.Root(rootDeclarations, this);
+		dox.log.info(JSON.stringify(tree.toObject(), null, 4));
 	}
 
 	public addEntryFiles = (fileNames: string[]) => {
@@ -27,22 +27,33 @@ export default class Package extends dox.lib.Dox {
 		const context = { ...this.context, package: this };
 		const { program } = context;
 
-		const fileSources = fileList
-			.map((fileName) => program.getSourceFile(fileName)!)
-			.filter((source, i) => (!!source ? source : warning(i)));
-		fileSources.forEach((source) => {
-			const sourceFile = new dox.SourceFile(context, source);
-			this.filesMap.set(sourceFile.fileName, sourceFile);
-			this.addEntryFiles(sourceFile.childFiles);
+		fileList.forEach((fileName) => {
+			if (this.filesMap.has(fileName)) return;
+			const fileSource = program.getSourceFile(fileName);
+			if (!fileSource) {
+				dox.log.warn('No source file was found:', fileName);
+				return;
+			}
+			const sourceFile = new dox.SourceFile(context, fileSource);
+			this.filesMap.set(fileName, sourceFile);
+			this.addEntryFiles([...sourceFile.childFiles]);
 		});
+	}
+	private deDupeFilelist = (fileList: string[]) =>
+		fileList
+			.filter((value, index, array) => array.indexOf(value) === index)
+			.filter((value) => !this.filesMap.has(value));
 
-		function warning(i: number) {
-			const message = `No source file was found for "${fileList[i]}"`;
-			dox.log.warn(message);
-			return false;
-		}
-	}
-	private deDupeFilelist(fileList: string[]) {
-		return fileList.filter((file) => !this.filesMap.has(file));
-	}
+	private static getDeclarationRoots = (pack: dox.Package) =>
+		this.getAllDeclarations(pack).filter(
+			(declaration) => !declaration.parents.length,
+		);
+
+	private static getAllDeclarations = (pack: dox.Package) =>
+		[...this.getAllFileSources(pack)]
+			.map((fileSource) => [...fileSource.declarationsMap.values()])
+			.flat();
+
+	private static getAllFileSources = (pack: dox.Package) =>
+		pack.filesMap.values();
 }

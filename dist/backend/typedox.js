@@ -29,8 +29,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Kind = exports.Package = exports.log = exports.serialiser = exports.tree = exports.lib = void 0;
+exports.Kind = exports.Package = exports.log = exports.serialiser = exports.tree = exports.relationships = exports.lib = void 0;
 exports.lib = __importStar(require("./lib/_namespace"));
+exports.relationships = __importStar(require("./relationships/_namespace"));
 exports.tree = __importStar(require("./tree/_namespace"));
 exports.serialiser = __importStar(require("./serialiser/_namespace"));
 var _namespace_1 = require("./lib/_namespace");

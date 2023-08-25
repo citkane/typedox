@@ -31,38 +31,39 @@ const dox = __importStar(require("../typedox"));
 const ts = __importStar(require("typescript"));
 const Branch_1 = __importDefault(require("./Branch"));
 class Tree extends Branch_1.default {
-    constructor(pack) {
+    constructor(doxPackage) {
         super();
-        this.makeTree = (declarations, branch, specifierAlias) => {
+        this.makeTree = (declarations, branch) => {
             declarations.forEach((declaration) => {
-                var _b, _c, _d;
-                const { getChildDeclarations } = Tree;
-                let { alias, name, nameSpace, children, tsKind, type, symbol } = declaration;
-                name = specifierAlias || name;
+                var _b, _c;
+                const { nameSpace, children, tsKind, name } = declaration;
                 switch (tsKind) {
+                    case ts.SyntaxKind.ModuleDeclaration:
                     case ts.SyntaxKind.NamespaceExport:
-                        (_b = branch.nameSpaces) === null || _b === void 0 ? void 0 : _b.set(nameSpace, this.makeTree(getChildDeclarations(children), new dox.tree.Branch()));
-                        break;
-                    case ts.SyntaxKind.ExportSpecifier:
-                        const aliasName = (_c = alias === null || alias === void 0 ? void 0 : alias.name) === null || _c === void 0 ? void 0 : _c.getText();
-                        const child = children.get(aliasName || name);
-                        const childArray = child ? [child] : [];
-                        !!alias
-                            ? this.makeTree(childArray, branch, name)
-                            : this.makeTree(childArray, branch);
-                        break;
-                    case ts.SyntaxKind.ExportDeclaration:
-                        this.makeTree(getChildDeclarations(children), branch);
+                        const childDecs = Tree.getChildDeclarations(children);
+                        const newBranch = new dox.tree.Branch();
+                        (_b = branch.nameSpaces) === null || _b === void 0 ? void 0 : _b.set(nameSpace, this.makeTree(childDecs, newBranch));
                         break;
                     default:
-                        (_d = branch.declarations) === null || _d === void 0 ? void 0 : _d.set(name, declaration);
+                        //dox.log.info(declaration.name, name, declaration.tsKind);
+                        (_c = branch.declarations) === null || _c === void 0 ? void 0 : _c.set(name, declaration);
                 }
             });
             return branch;
         };
-        this.packageName = pack.name;
-        this.version = pack.version;
-        const declarations = Tree.getDeclarationRoots(pack);
+        this.packageName = doxPackage.name;
+        this.version = doxPackage.version;
+        const { getDeclarationRoots } = Tree;
+        const declarations = getDeclarationRoots(doxPackage);
+        declarations.forEach((declaration) => {
+            const { tsKind } = declaration;
+            switch (tsKind) {
+                case ts.SyntaxKind.ModuleDeclaration:
+                case ts.SyntaxKind.NamespaceExport:
+                    break;
+                default:
+            }
+        });
         this.makeTree(declarations, this);
     }
     toObject() {

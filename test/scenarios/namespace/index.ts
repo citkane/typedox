@@ -1,12 +1,42 @@
-import { isExported } from './children';
+import * as children from './children';
+export { children };
+export module moduleDeclaration {
+	export const one = 1;
+	export const two = 2;
+}
 
+declare namespace nameSpaceDeclaration {
+	const farts = 'clean';
+	export const one = 1;
+	export { farts };
+}
+export { nameSpaceDeclaration };
+
+/*
 const larry = 'larry';
-const marta = 'marta';
-const localOnly = 'localOnly';
+const marta = 1;
 
-export { larry as otherLarry, marta, isExported };
-export * as children from './children';
-export { Mary } from './grandchildren';
+export function farts() {}
+
+export { larry as otherLarry, marta };
+
+import isExported from './children';
+
+declare namespace nameSpaceDeclaration {
+	const farts = 'clean';
+	export { isExported };
+	export const one = 1;
+	export { farts };
+}
+export { nameSpaceDeclaration };
+
+export module moduleDeclaration {
+	export const one = 1;
+	export const two = 2;
+}
+
+export const poop = () => {};
+
 export { default as Bob } from './grandchildren/classes';
 
 export type isString = string;
@@ -20,10 +50,4 @@ export enum isEnumerator {
 export const a = 1,
 	b = 2,
 	c = 3;
-
-export module moduleDeclaration {
-	export const one = 1;
-}
-export namespace nameSpaceDeclarartion {
-	export const one = 1;
-}
+*/

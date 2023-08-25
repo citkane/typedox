@@ -91,18 +91,20 @@ class RelationshipTriggers {
         this.context = context;
         (_a = exportSymbol.getDeclarations()) === null || _a === void 0 ? void 0 : _a.forEach((declaration) => {
             ts.isNamespaceExport(declaration)
-                ? this.nameSpaceExport(declaration)
+                ? this.isNameSpaceExport(declaration)
                 : ts.isExportSpecifier(declaration)
-                    ? this.exportSpecifier(declaration)
+                    ? this.isExportSpecifier(declaration)
                     : ts.isExportDeclaration(declaration)
-                        ? this.exportDeclaration(declaration)
-                        : (() => {
-                            dox.log.warn('Declaration not implemented', ':', ts.SyntaxKind[declaration.kind]);
-                            dox.log.debug(declaration.parent.getText());
-                        })();
+                        ? this.isExportDeclaration(declaration)
+                        : ts.isVariableDeclaration(declaration)
+                            ? this.isVariableDeclaration(declaration)
+                            : (() => {
+                                dox.log.warn('Declaration not implemented in dox.RelationshipTriggers', ':', ts.SyntaxKind[declaration.kind]);
+                                dox.log.debug(declaration.parent.getText());
+                            })();
         });
     }
-    nameSpaceExport(tsDeclaration) {
+    isNameSpaceExport(tsDeclaration) {
         const target = tsDeclaration.parent.moduleSpecifier;
         const { targetFile, targetType } = this.targetHelper(target);
         this.childFiles.push(targetFile);
@@ -118,15 +120,15 @@ class RelationshipTriggers {
         };
         this.relationshipTriggers.push(trigger);
     }
-    exportSpecifier(tsDeclaration) {
+    isExportSpecifier(tsDeclaration) {
         var _a;
         const target = tsDeclaration.parent.parent.moduleSpecifier;
         if (!target)
             return;
-        const { targetFile, targetType } = this.targetHelper(target);
-        this.childFiles.push(targetFile);
         const name = tsDeclaration.name.getText();
         const alias = (_a = tsDeclaration.propertyName) === null || _a === void 0 ? void 0 : _a.getText();
+        const { targetFile, targetType } = this.targetHelper(target);
+        this.childFiles.push(targetFile);
         const trigger = () => {
             const declaration = this.getDeclaration(name);
             const map = this.getRemoteDeclarationsMap(targetType.getSymbol());
@@ -136,7 +138,7 @@ class RelationshipTriggers {
         };
         this.relationshipTriggers.push(trigger);
     }
-    exportDeclaration(declaration) {
+    isExportDeclaration(declaration) {
         const target = declaration.moduleSpecifier;
         const { targetFile, targetType } = this.targetHelper(target);
         this.childFiles.push(targetFile);
@@ -151,6 +153,9 @@ class RelationshipTriggers {
         };
         this.relationshipTriggers.push(trigger);
     }
+    isVariableDeclaration(declaration) {
+        //dox.log.info(declaration.name.getText());
+    }
     getDeclaration(name) {
         var _a;
         const declarationsMap = (_a = this.context.sourceFile) === null || _a === void 0 ? void 0 : _a.declarationsMap;
@@ -158,10 +163,6 @@ class RelationshipTriggers {
     }
     getRemoteSymbols(remoteType) {
         return remoteType.getProperties().filter((symbol) => {
-            /*
-            if (!symbol.valueDeclaration)
-                dox.log.info(symbol.declarations![0].getText());
-            */
             return !!symbol.valueDeclaration && symbol.name !== 'default';
         });
     }

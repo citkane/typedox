@@ -22,6 +22,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const dox = __importStar(require("../typedox"));
 class Package extends dox.lib.Dox {
@@ -35,32 +36,38 @@ class Package extends dox.lib.Dox {
             fileNames = this.deDupeFilelist(fileNames);
             this.makeSourceFiles(fileNames);
         };
+        this.deDupeFilelist = (fileList) => fileList
+            .filter((value, index, array) => array.indexOf(value) === index)
+            .filter((value) => !this.filesMap.has(value));
         super.package = this;
         this.addEntryFiles(entryFileList);
-        this.filesMap.forEach((file) => file.buildRelationships());
-        this.tree = new dox.tree.Tree(this);
-        //dox.log.info(this.tree.toObject());
+        this.filesMap.forEach((file) => file.triggerRelationships());
+        const rootDeclarations = Package.getDeclarationRoots(this);
+        const tree = new dox.tree.Root(rootDeclarations, this);
+        dox.log.info(JSON.stringify(tree.toObject(), null, 4));
     }
     makeSourceFiles(fileList) {
         const context = Object.assign(Object.assign({}, this.context), { package: this });
         const { program } = context;
-        const fileSources = fileList
-            .map((fileName) => program.getSourceFile(fileName))
-            .filter((source, i) => (!!source ? source : warning(i)));
-        fileSources.forEach((source) => {
-            const sourceFile = new dox.SourceFile(context, source);
-            this.filesMap.set(sourceFile.fileName, sourceFile);
-            this.addEntryFiles(sourceFile.childFiles);
+        fileList.forEach((fileName) => {
+            if (this.filesMap.has(fileName))
+                return;
+            const fileSource = program.getSourceFile(fileName);
+            if (!fileSource) {
+                dox.log.warn('No source file was found:', fileName);
+                return;
+            }
+            const sourceFile = new dox.SourceFile(context, fileSource);
+            this.filesMap.set(fileName, sourceFile);
+            this.addEntryFiles([...sourceFile.childFiles]);
         });
-        function warning(i) {
-            const message = `No source file was found for "${fileList[i]}"`;
-            dox.log.warn(message);
-            return false;
-        }
-    }
-    deDupeFilelist(fileList) {
-        return fileList.filter((file) => !this.filesMap.has(file));
     }
 }
+_a = Package;
+Package.getDeclarationRoots = (pack) => _a.getAllDeclarations(pack).filter((declaration) => !declaration.parents.length);
+Package.getAllDeclarations = (pack) => [..._a.getAllFileSources(pack)]
+    .map((fileSource) => [...fileSource.declarationsMap.values()])
+    .flat();
+Package.getAllFileSources = (pack) => pack.filesMap.values();
 exports.default = Package;
 //# sourceMappingURL=Package.js.map

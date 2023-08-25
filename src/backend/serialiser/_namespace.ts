@@ -1,1 +1,1 @@
-export { default as Serialiser } from './Serialiser';
+export { default as Serialise } from './Serialiser';

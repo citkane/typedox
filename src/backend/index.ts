@@ -21,8 +21,6 @@ if (configFile) parseConfig(configFile, path.dirname(configFile));
 function parseConfig(configFile: string, baseDir: string) {
 	const config = dox.lib.loadConfigFromFile(configFile, baseDir);
 
-	//dox.log.info(config);
-
 	config.options.types = [];
 	//config.options.noLib = true;
 

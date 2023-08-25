@@ -1,5 +1,14 @@
-import { isExported } from '../grandchildren';
+const child = 'child';
+export default child;
 
-export * as grandchildren from '../grandchildren/index';
-export const child = 'child';
-export { isExported };
+export const fart = 'childfart';
+export const poop = 'childpoop';
+
+/*
+import { somethingExported } from '../grandchildren';
+import * as grandChildren from '../grandchildren';
+
+export { grandChildren };
+
+export { somethingExported as isExported };
+*/
