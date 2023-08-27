@@ -23,163 +23,75 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const dox = __importStar(require("../typedox"));
+const Dox_1 = require("../lib/Dox");
 const ts = __importStar(require("typescript"));
-class Declaration extends dox.lib.Dox {
+class Declaration extends Dox_1.Dox {
     constructor(context, symbol) {
-        var _a, _b;
         super(context);
-        this.kind = dox.Kind.Declaration;
         this.parents = [];
         this.children = new Map();
-        /*
-        private parseModuleDeclaration(self: dox.Declaration = this) {
-            self.nameSpace = self.symbol.name;
-            self.tsKind = ts.SyntaxKind.ModuleDeclaration;
-        }
-        */
-        this.parseNamespaceImport = (declaration) => {
-            this.nameSpace = this.name;
-            this.tsKind = declaration.kind;
-        };
         this.parseNamespaceExport = (declaration) => {
             this.nameSpace = this.name;
             this.tsKind = declaration.kind;
         };
-        const { checker } = context;
-        this.symbol = symbol;
+        this.parseNamespaceImport = (declaration) => {
+            this.nameSpace = this.name;
+            this.tsKind = declaration.kind;
+        };
+        this.parseImportClause = (declaration) => {
+            this.tsKind = declaration.kind;
+        };
+        Dox_1.Dox.class.bind(this);
+        this.get = this.getter(symbol);
+        this.tsSymbol = symbol;
         this.name = symbol.getName();
-        this.fileName = (_a = this.sourceFile) === null || _a === void 0 ? void 0 : _a.fileName;
-        this.node = symbol.valueDeclaration;
-        this.type = this.checker.getTypeOfSymbol(symbol);
-        this.tsKind = (_b = this.node) === null || _b === void 0 ? void 0 : _b.kind;
-        if (Declaration.isIgnored(this.node))
+        this.tsNode = this.get.tsNode;
+        this.tsType = this.checker.getTypeOfSymbol(symbol);
+        this.tsKind = this.tsNode.kind;
+        this.aliasName = this.get.alias;
+        if (Declaration.isDeclared(this.tsNode))
             return;
-        this.node && ts.isExportSpecifier(this.node)
-            ? this.parseExportSpecifier(this.node)
-            : this.node && ts.isModuleDeclaration(this.node)
-                ? this.parseModuleDeclaration(this.node)
-                : !!this.node
-                    ? dox.log.object(this).warn('Unexpected node in a dox.Declaration:')
-                    : this.symbol.flags === ts.SymbolFlags.AliasExcludes
-                        ? this.parseAlias()
-                        : dox.log
-                            .object(this)
-                            .warn('Unexpected dox.Declaration was not processed:');
-        /*
-        if (this.symbol.flags === ts.SymbolFlags.AliasExcludes) {
-            const aliasSymbol = this.checker.getAliasedSymbol(this.symbol);
-            const node = aliasSymbol.valueDeclaration;
-
-            node && ts.isModuleDeclaration(node)
-                ? this.parseAliasModuleDeclaration(aliasSymbol)
-                : this.parseAlias();
-        } else {
-            this.node && ts.isModuleDeclaration(this.node)
-                ? this.parseModuleDeclaration()
-                : Declaration.isIgnored(this.node)
-                ? null
-                : dox.log
-                        .object(this)
-                        .error('Unknown kind encountered in a dox.Declaration');
-        }
-        */
+        ts.isModuleDeclaration(this.tsNode)
+            ? this.parseModuleDeclaration(this.tsNode)
+            : ts.isNamespaceExport(this.tsNode)
+                ? this.parseNamespaceExport(this.tsNode)
+                : ts.isExportSpecifier(this.tsNode)
+                    ? this.parseExportSpecifier(this.tsNode)
+                    : ts.isExportAssignment(this.tsNode)
+                        ? this.parseExportAssignment(this.tsNode)
+                        : this.warn(this.class, 'Did not parse a node into dox.Declaration', this.get.report);
     }
-    parseAlias() {
-        var _a;
-        //dox.log.object(this).info();
-        (_a = this.symbol.getDeclarations()) === null || _a === void 0 ? void 0 : _a.forEach((declaration) => {
-            ts.isExportSpecifier(declaration)
-                ? this.parseExportSpecifier(declaration)
-                : null;
-        });
-        /*
-        const { getLocalNamespace } = dox.SourceFile;
-        //const localNamespace = getLocalNamespace(this.checker, )
-        const declaration = Declaration.findAliasDeclarationFromSymbol(
-            this.symbol,
-        );
-
-        if (!declaration)
-            return dox.log.warn(
-                'Did not find an alias in dox.Declaration:',
-                this.symbol.name,
-            );
-
-        ts.isNamespaceExport(declaration)
-            ? this.parseNamespaceExport(declaration)
-            : ts.isExportSpecifier(declaration)
-            ? this.parseExportSpecifier(declaration)
-            : ts.isExportDeclaration(declaration)
-            ? this.parseExportDeclaration(declaration)
-            : dox.log.error(
-                    'Unknown alias encounter in a dox.Declaration: ',
-                    declaration,
-              );
-              */
+    parseExportAssignment(declaration) {
+        this.tsKind = declaration.kind;
     }
-    /*
-    private parseAliasModuleDeclaration(aliasSymbol: ts.Symbol) {
-        this.nameSpace = this.name;
-        this.tsKind = ts.SyntaxKind.ModuleDeclaration;
-        //this._alias = new Declaration(this.context, aliasSymbol);
-        //this.parseModuleDeclaration(this._alias);
+    parseExportDeclaration(declaration) {
+        this.tsKind = declaration.kind;
     }
-    */
     parseModuleDeclaration(module) {
         this.nameSpace = module.name.getText();
         this.tsKind = module.kind;
     }
     parseExportSpecifier(declaration) {
-        var _a;
-        const { getLocalTargetSymbol } = dox.SourceFile;
-        const localTarget = getLocalTargetSymbol(this.checker, declaration);
-        this.aliasName = (_a = declaration.propertyName) === null || _a === void 0 ? void 0 : _a.getText();
-        if (localTarget) {
-            ts.isModuleDeclaration(localTarget)
-                ? this.parseModuleDeclaration(localTarget)
-                : localTarget && ts.isNamespaceImport(localTarget)
-                    ? this.parseNamespaceImport(localTarget)
-                    : (this.tsKind = localTarget.kind);
-        }
-        else {
-            dox.log
-                .object(this)
-                .warn('Unprocessed ts.ExportSpecifier in dox.Declaration');
-        }
-    }
-    parseExportDeclaration(declaration) {
-        this.tsKind = declaration.kind;
-    }
-    static findAliasDeclarationFromSymbol(symbol) {
-        var _a;
-        const name = symbol.getName();
-        return (_a = symbol.getDeclarations()) === null || _a === void 0 ? void 0 : _a.find((declaration) => {
-            var _a;
-            return ((ts.isExportSpecifier(declaration) ||
-                ts.isNamespaceExport(declaration) ||
-                ts.isExportDeclaration(declaration) ||
-                ts.isModuleDeclaration(declaration)) &&
-                ((_a = declaration.name) === null || _a === void 0 ? void 0 : _a.getText()) === name);
-        });
+        const localTarget = this.get.localTargetDeclaration;
+        if (!localTarget)
+            return this.error(this.class, 'No local target found:', this.get.report);
+        if (Declaration.isNotNeeded(localTarget))
+            return;
+        ts.isModuleDeclaration(localTarget)
+            ? this.parseModuleDeclaration(localTarget)
+            : ts.isNamespaceImport(localTarget)
+                ? this.parseNamespaceImport(localTarget)
+                : ts.isImportClause(localTarget)
+                    ? this.parseImportClause(localTarget)
+                    : this.warn(this.class, 'Did not parse a local target:', this.getter(localTarget).report);
     }
 }
-/*
-public get alias(): Declaration | undefined {
-    if (this._alias) return this._alias;
-    if (!!this.node) return undefined;
-    if (this.aliasName && this.children.has(this.aliasName))
-        return this.children.get(this.aliasName);
-    const aliasSymbol = this.checker.getAliasedSymbol(this.symbol);
-    this._alias = new Declaration(this.context, aliasSymbol);
-    return this._alias;
-}
-*/
-Declaration.isIgnored = (node) => node &&
+Declaration.isDeclared = (node) => node &&
     (ts.isEnumDeclaration(node) ||
         ts.isClassDeclaration(node) ||
         ts.isVariableDeclaration(node) ||
         ts.isSourceFile(node) ||
         ts.isFunctionDeclaration(node));
+Declaration.isNotNeeded = Declaration.isDeclared;
 exports.default = Declaration;
 //# sourceMappingURL=Declaration.js.map

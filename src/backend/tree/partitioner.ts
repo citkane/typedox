@@ -20,7 +20,7 @@ export const partitionDeclarations = (declarations: dox.Declaration[]) => {
 const partitionAliasDeclarations = (declarations: dox.Declaration[]) => {
 	const remainder: dox.Declaration[] = [];
 	const aliasDeclarations = declarations.filter((declaration) => {
-		const { symbol } = declaration;
+		const { tsSymbol: symbol } = declaration;
 		const isAlias = symbol.flags === ts.SymbolFlags.AliasExcludes;
 		if (!isAlias) remainder.push(declaration);
 		return isAlias;
@@ -62,7 +62,7 @@ const partitionEnumDeclarations = (declarations: dox.Declaration[]) => {
 const partitionFunctionDeclarations = (declarations: dox.Declaration[]) => {
 	const remainder: dox.Declaration[] = [];
 	const functionDeclarations = declarations.filter((declaration) => {
-		const { type } = declaration;
+		const { tsType: type } = declaration;
 		const isFunction = !!type.getCallSignatures().length;
 		if (!isFunction) remainder.push(declaration);
 		return isFunction;

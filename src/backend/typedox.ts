@@ -8,19 +8,9 @@ export * as tree from './tree/_namespace';
 export * as serialiser from './serialiser/_namespace';
 export { log } from './lib/_namespace';
 export * from './kinds/_namespace';
+export { default as Reference } from './kinds/Reference';
+export { default as Config } from './Config';
 export { default as Package } from './kinds/Package';
-
-export enum Kind {
-	Unknown,
-	Package,
-	SourceFile,
-	Declaration,
-	NameSpaceExport,
-	ExportSpecifier,
-	ExportDeclaration,
-	VariableDeclaration,
-	ClassDeclaration,
-}
 
 export type fileMap = Map<string, SourceFile>;
 export type declarationMap = Map<string, Declaration>;
@@ -34,3 +24,5 @@ export type localDeclaration = ts.VariableDeclaration | ts.ClassDeclaration;
 export type declaration = referencedExport | localDeclaration;
 
 export type logableObjects = Declaration;
+
+export type whatIsIt = ts.Node | ts.Symbol | ts.Type;

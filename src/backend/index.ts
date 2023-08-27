@@ -1,7 +1,25 @@
 import * as ts from 'typescript';
 import * as path from 'path';
 import * as dox from './typedox';
+const { Config, Package } = dox;
+const nodePackages = [
+	{ name: 'typedox', version: 'v0.0.0', basePath: '../../' },
+];
 
+nodePackages.forEach((nodePackage) => {
+	const config = new Config(nodePackage.basePath);
+	const { name, version } = nodePackage;
+	const doxPackage = new Package(name, version);
+	config.referenceConfigs.forEach(doxPackage.makeReference);
+	doxPackage.references.forEach((doxReference) => {
+		doxReference.discoverFiles();
+		doxReference.discoverDeclarations();
+		doxReference.discoverRelationships();
+		//dox.log.info(doxReference.filesMap.keys());
+	});
+});
+
+/*
 //const inputFile = 'test/scenarios/locals/index.ts';
 //const configFolder = 'test/scenarios/locals';
 
@@ -45,17 +63,10 @@ function parseConfig(configFile: string, baseDir: string) {
 		program,
 		config,
 		id,
-		undefined as unknown as dox.Package,
+		undefined as unknown as dox.Reference,
 	);
 	// new DoxPackage(context, config.fileNames);
-	new dox.Package(context, [inputPath]);
-	/*
-  
-  const program = ts.createProgram([inputFilename],);
-  const entrySourceFile = program.getSourceFile(inputFilename);
-  const checker = program.getTypeChecker();
-  const doxContext = new DoxContext(checker, program);
-  
-  new DoxPackage(doxContext, [entrySourceFile]);
-  */
+	new dox.Reference(context, [inputPath]);
+
 }
+*/

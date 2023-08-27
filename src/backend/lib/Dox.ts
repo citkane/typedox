@@ -2,31 +2,29 @@ import * as ts from 'typescript';
 import * as dox from '../typedox';
 import Logger from './Logger';
 
-export class Dox {
+export class Dox extends Logger {
 	protected context: dox.lib.Context;
 	checker: ts.TypeChecker;
-	protected package?: dox.Package;
+	protected reference?: dox.Reference;
+	protected package: dox.Package;
 	sourceFile?: dox.SourceFile;
+	fileName?: string;
 	protected exportDeclaration?: dox.Declaration;
 	id: number;
 	constructor(context: dox.lib.Context) {
+		super();
 		this.context = context;
 		this.checker = context.checker;
 		this.id = context.id.uid;
 		this.package = context.package;
+		this.reference = context.reference;
 		this.sourceFile = context.sourceFile;
+		this.fileName = context.sourceFile?.fileName;
 		this.exportDeclaration = context.exportDeclaration;
 	}
-}
-export function loadConfigFromFile(filePath: string, baseDir: string) {
-	const configObject = ts.readConfigFile(filePath, ts.sys.readFile).config;
-	const config = ts.parseJsonConfigFileContent(
-		configObject,
-		ts.sys,
-		baseDir,
-		{},
-	);
-	return config;
+
+	public getter = (item?: dox.whatIsIt) =>
+		new dox.lib.WhatIsIt(this.checker, item);
 }
 
 export const log = new Logger();

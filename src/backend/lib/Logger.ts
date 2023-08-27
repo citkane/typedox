@@ -1,7 +1,5 @@
-import * as dox from '../typedox';
-import * as ts from 'typescript';
-
 export default class Logger {
+	protected class: string;
 	public logLevel: keyof typeof this.logLevels = 'info';
 
 	private logLevels = {
@@ -11,57 +9,48 @@ export default class Logger {
 		error: 3,
 	};
 
+	constructor() {
+		this.class = `[${Logger.initLowerCamel(this.constructor.name)}]`;
+	}
+
 	debug = (...args: any) =>
 		this.emit('debug')
-			? console.error(Logger.colorise('Bright', '[debug]'), ...args)
+			? console.error(colorise('Bright', '[debug]'), ...args)
 			: null;
 	info = (...args: any) =>
 		this.emit('info') ? console.info('[info]', ...args) : null;
 	warn = (...args: any) =>
 		this.emit('warning')
-			? console.warn(Logger.colorise('FgYellow', '[warning]'), ...args)
+			? console.warn(colorise('FgYellow', '[warning]'), ...args)
 			: null;
 	error = (...args: any) =>
 		this.emit('error')
-			? console.error(Logger.colorise('FgRed', '[error]'), ...args)
+			? console.error(colorise('FgRed', '[error]'), ...args)
 			: null;
 
-	object = (object?: dox.logableObjects) => {
-		const objectMessage = object
-			? getObjectMessage(object)
-			: 'No object found to log.';
-		return {
-			debug: (message?: string) => this.debug(message, objectMessage),
-			info: (message?: string) => this.info(message, objectMessage),
-			warn: (message?: string) => this.warn(message, objectMessage),
-			error: (message?: string) => this.error(message, objectMessage),
-		};
+	throwError = (...args: any) => {
+		this.error(...args);
+		throw new Error();
 	};
-	kind = (object?: ts.Node | ts.Symbol | ts.Type) => {
-		const log = this.info;
-		if (!object) return log(undefined);
-		const objectClass = object.constructor.name;
-		const flag = 'kind' in object ? object.kind : object.flags;
-
-		['NodeObject', 'SourceFileObject'].includes(objectClass)
-			? log('ts.Node:', ts.SyntaxKind[flag])
-			: objectClass === 'TypeObject'
-			? log('ts.Type:', ts.TypeFlags[flag])
-			: objectClass === 'SymbolObject'
-			? log('ts.Symbol:', ts.SymbolFlags[flag])
-			: this.warn(
-					'Could not find kind of constructor: ',
-					object.constructor.name,
-			  );
-	};
-
 	private emit = (type: keyof typeof this.logLevels) =>
 		this.logLevels[type] >= this.logLevels[this.logLevel];
 
-	private static colorise = (color: keyof typeof c, text: string) =>
-		c[color] + text + c.Reset;
-}
+	public static initLowerCamel(word: string) {
+		return word[0].toLocaleLowerCase() + word.slice(1);
+	}
+	public static class() {
+		return `[${this.name}]`;
+	}
 
+	private static logger = new Logger();
+	public static debug = this.logger.debug;
+	public static info = this.logger.info;
+	public static warn = this.logger.warn;
+	public static error = this.logger.error;
+	public static throwError = this.logger.throwError;
+}
+const colorise = (color: keyof typeof c, text: string) =>
+	c[color] + text + c.Reset;
 const c = {
 	Reset: '\x1b[0m',
 	Bright: '\x1b[1m',
@@ -91,28 +80,3 @@ const c = {
 	BgWhite: '\x1b[47m',
 	BgGray: '\x1b[100m',
 };
-
-function getObjectMessage(object: dox.logableObjects) {
-	if (object instanceof dox.Declaration) {
-		const {
-			aliasName,
-			tsKind,
-			symbol,
-			node,
-			type,
-			name,
-			fileName,
-			nameSpace,
-		} = object;
-		return {
-			name,
-			aliasName,
-			nameSpace,
-			tsKind: ts.SyntaxKind[tsKind!],
-			symbolFlag: ts.SymbolFlags[symbol.flags],
-			typeFlag: ts.TypeFlags[type.flags],
-			node: node?.getText(),
-			fileName,
-		};
-	}
-}

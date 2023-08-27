@@ -1,18 +1,24 @@
 import * as ts from 'typescript';
 import * as dox from '../typedox';
+const { Logger, WhatIsIt } = dox.lib;
 
-export default class RelationshipTriggers {
+export default class RelationshipTriggers extends Logger {
 	public relationshipTriggers: (() => void)[] = [];
 	context: dox.lib.Context;
 	symbol: ts.Symbol;
 	checker: ts.TypeChecker;
 
 	constructor(context: dox.lib.Context, symbol: ts.Symbol) {
+		super();
+		Logger.class.bind(this);
 		this.context = context;
 		this.checker = this.context.checker;
 		this.symbol = symbol;
 
 		symbol.getDeclarations()?.forEach((declaration) => {
+			const get = new WhatIsIt(this.context.checker, declaration);
+
+			this.info(get.report);
 			/*
 			if (ts.isExportSpecifier(declaration)) {
 				const target =
@@ -30,7 +36,7 @@ export default class RelationshipTriggers {
 
 			const exportSymbol = checker.getSymbolAtLocation(moduleSpecifier)!;
 			const exportType = checker.getTypeOfSymbol(exportSymbol)!;
-*/
+
 			ts.isNamespaceExport(declaration)
 				? this.registerNameSpaceExport(declaration)
 				: ts.isExportSpecifier(declaration)
@@ -39,17 +45,21 @@ export default class RelationshipTriggers {
 				? this.registerExportDeclaration(declaration)
 				: ts.isModuleDeclaration(declaration)
 				? this.registerModuleDeclaration(declaration)
+				: ts.isExportAssignment(declaration)
+				? this.registerExportAssignment(declaration)
 				: (() => {
-						dox.log.warn(
+						this.warn(
+							this.class,
 							'Declaration not implemented in dox.RelationshipTriggers',
 							':',
 							ts.SyntaxKind[declaration.kind],
 						);
-						dox.log.debug(declaration.parent.getText());
+						this.info(declaration.getText());
 				  })();
+				  */
 		});
 	}
-
+	/*
 	private registerNameSpaceImport(tsDeclaration: ts.ExportSpecifier) {
 		const { getModuleSpecifier, getFilenameFromType } = dox.SourceFile;
 
@@ -121,10 +131,8 @@ export default class RelationshipTriggers {
 		const { getLocalTargetSymbol: getLocalNamespace } = dox.SourceFile;
 
 		const localNamespace = getLocalNamespace(this.checker, tsDeclaration);
-
 		if (localNamespace && ts.isNamespaceImport(localNamespace))
 			return this.registerNameSpaceImport(tsDeclaration);
-
 		if (localNamespace && ts.isModuleDeclaration(localNamespace))
 			return this.registerModuleDeclaration(
 				//tsDeclaration,
@@ -167,7 +175,15 @@ export default class RelationshipTriggers {
 		};
 		this.relationshipTriggers.push(trigger);
 	}
+	private registerExportAssignment(exportAssignment: ts.ExportAssignment) {
+		const targetSymbol = this.checker.getSymbolAtLocation(
+			exportAssignment.expression,
+		);
 
+		this.info(exportAssignment.isExportEquals);
+		const trigger = () => {};
+		this.relationshipTriggers.push(trigger);
+	}
 	private getDeclaration(name: string) {
 		const declarationsMap = this.context.sourceFile?.declarationsMap;
 		return declarationsMap!.get(name)!;
@@ -178,8 +194,9 @@ export default class RelationshipTriggers {
 		});
 	}
 	private getRemoteDeclaration(fileName: string, name: string) {
-		const { filesMap } = this.context.package!;
+		const { filesMap } = this.context.reference!;
 		const remoteSourceFile = filesMap.get(fileName)!;
 		return remoteSourceFile.declarationsMap.get(name);
 	}
+	*/
 }

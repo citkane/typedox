@@ -3,7 +3,7 @@ import * as dox from '../typedox';
 
 export default class Serialiser {
 	public static root(tree: dox.tree.Root) {
-		const { packageName, version } = tree;
+		const { referenceName: packageName, version } = tree;
 		const branch = Serialiser.branch(tree);
 		return { packageName, version, ...branch };
 	}

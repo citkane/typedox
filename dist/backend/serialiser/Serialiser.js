@@ -26,7 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ts = __importStar(require("typescript"));
 class Serialiser {
     static root(tree) {
-        const { packageName, version } = tree;
+        const { referenceName: packageName, version } = tree;
         const branch = Serialiser.branch(tree);
         return Object.assign({ packageName, version }, branch);
     }

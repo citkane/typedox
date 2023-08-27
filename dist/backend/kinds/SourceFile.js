@@ -22,27 +22,27 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
+const Dox_1 = require("../lib/Dox");
 const dox = __importStar(require("../typedox"));
-class SourceFile extends dox.lib.Dox {
+class SourceFile extends Dox_1.Dox {
     constructor(context, source) {
-        var _b, _c;
+        var _a;
         super(context);
         this.relationshipTriggers = [];
         this.childFiles = [];
-        this.kind = dox.Kind.SourceFile;
         this.declarationsMap = new Map();
-        this.triggerRelationships = () => {
-            this.relationshipTriggers.forEach((trigger) => trigger());
+        this.discoverDeclarations = () => {
+            var _a;
+            this.fileType = this.checker.getTypeOfSymbol(this.fileSymbol);
+            (_a = this.fileType.getProperties()) === null || _a === void 0 ? void 0 : _a.forEach((symbol) => {
+                const declaration = new dox.Declaration(this.context, symbol);
+                this.declarationsMap.set(declaration.name, declaration);
+            });
         };
-        this.registerDoxDeclarations = (symbol) => {
-            const declaration = new dox.Declaration(this.context, symbol);
-            this.declarationsMap.set(declaration.name, declaration);
-        };
-        this.mergeNewFiles = (symbol) => {
-            const files = new dox.relationships.FileFinder(this.context, symbol);
-            this.childFiles = [...this.childFiles, ...files.childFiles];
+        this.discoverRelationships = () => {
+            var _a;
+            (_a = this.fileSymbol.exports) === null || _a === void 0 ? void 0 : _a.forEach((exported) => this.mergeTriggers(exported));
         };
         this.mergeTriggers = (symbol) => {
             const triggers = new dox.relationships.RelationshipTriggers(this.context, symbol);
@@ -51,56 +51,34 @@ class SourceFile extends dox.lib.Dox {
                 ...triggers.relationshipTriggers,
             ];
         };
-        this.context = Object.assign(Object.assign({}, this.context), { sourceFile: this });
-        const { checker } = this.context;
+        this.triggerRelationships = () => {
+            this.relationshipTriggers.forEach((trigger) => trigger());
+        };
+        //Dox.class.bind(this);
+        //this.context = { ...this.context, sourceFile: this };
         this.source = source;
         this.fileName = source.fileName;
-        this.fileSymbol = checker.getSymbolAtLocation(source);
-        if (!this.fileSymbol)
-            return;
-        this.fileType = checker.getTypeOfSymbol(this.fileSymbol);
-        (_b = this.fileType.getProperties()) === null || _b === void 0 ? void 0 : _b.forEach(this.registerDoxDeclarations);
-        (_c = this.fileSymbol.exports) === null || _c === void 0 ? void 0 : _c.forEach((exported) => {
+        this.fileSymbol = this.checker.getSymbolAtLocation(source);
+        (_a = this.fileSymbol.exports) === null || _a === void 0 ? void 0 : _a.forEach((symbol) => {
+            var _a;
+            let get = this.getter(symbol);
+            const localTarget = get.localTargetDeclaration;
+            if (localTarget)
+                get = this.getter(localTarget);
+            if (!get.moduleSpecifier)
+                return;
+            const moduleSymbol = this.checker.getSymbolAtLocation(get.moduleSpecifier);
+            const targetFile = (_a = moduleSymbol === null || moduleSymbol === void 0 ? void 0 : moduleSymbol.valueDeclaration) === null || _a === void 0 ? void 0 : _a.getSourceFile().fileName;
+            if (targetFile && !this.childFiles.includes(targetFile))
+                this.childFiles.push(targetFile);
+        });
+        /*
+        this.fileSymbol.exports?.forEach((exported) => {
             this.mergeNewFiles(exported);
             this.mergeTriggers(exported);
         });
-    }
-    static getFilenameFromType(type) {
-        var _b, _c;
-        return (_c = (_b = type.getSymbol()) === null || _b === void 0 ? void 0 : _b.valueDeclaration) === null || _c === void 0 ? void 0 : _c.getSourceFile().fileName;
-    }
-    static getLocalTargetSymbol(checker, declaration) {
-        var _b;
-        const declarations = (_b = checker
-            .getExportSpecifierLocalTargetSymbol(declaration)) === null || _b === void 0 ? void 0 : _b.getDeclarations();
-        return declarations && declarations.length > 1
-            ? dox.log.warn('Expected only one declaration in a local target symbol')
-            : declarations
-                ? declarations[0]
-                : undefined;
-        /*
-            .find((declaration) => {
-                dox.log.kind(declaration);
-                return [
-                    ts.SyntaxKind.NamespaceExport,
-                    ts.SyntaxKind.ModuleDeclaration,
-                    ts.SyntaxKind.Declar,
-                ].includes(declaration.kind);
-            }) as
-            | ts.NamespaceImport
-            | ts.ModuleDeclaration
-            | ts.ExportDeclaration
-            | undefined;
-            */
+        */
     }
 }
-_a = SourceFile;
-SourceFile.getModuleSpecifier = (node) => {
-    if ('moduleSpecifier' in node)
-        return node.moduleSpecifier;
-    if (!!node.parent)
-        return _a.getModuleSpecifier(node.parent);
-    return undefined;
-};
 exports.default = SourceFile;
 //# sourceMappingURL=SourceFile.js.map

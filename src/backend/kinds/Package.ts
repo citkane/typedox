@@ -1,59 +1,44 @@
 import * as dox from '../typedox';
+import * as ts from 'typescript';
+const { Logger } = dox.lib;
 
-export default class Package extends dox.lib.Dox {
-	name = 'todo';
-	version = 'todo';
-	kind = dox.Kind.Package;
-	filesMap: dox.fileMap = new Map();
-
-	constructor(context: dox.lib.Context, entryFileList: string[]) {
-		super(context);
-		super.package = this;
-
-		this.addEntryFiles(entryFileList);
-
-		this.filesMap.forEach((file) => file.triggerRelationships());
-		const rootDeclarations = Package.getDeclarationRoots(this);
-		const tree = new dox.tree.Root(rootDeclarations, this);
-		dox.log.info(JSON.stringify(tree.toObject(), null, 4));
+export default class Package extends Logger {
+	version: string;
+	name: string;
+	references: Map<string, dox.Reference> = new Map();
+	constructor(name: string, version: string) {
+		super();
+		Package.class.bind(this);
+		this.version = version;
+		this.name = name;
 	}
+	public makeReference = (config: ts.ParsedCommandLine, name: string) => {
+		config.options.types = [];
 
-	public addEntryFiles = (fileNames: string[]) => {
-		fileNames = this.deDupeFilelist(fileNames);
-		this.makeSourceFiles(fileNames);
-	};
+		const program = ts.createProgram(config.fileNames, config.options);
+		const diagnostics = ts.getPreEmitDiagnostics(program);
 
-	private makeSourceFiles(fileList: string[]) {
-		const context = { ...this.context, package: this };
-		const { program } = context;
+		if (diagnostics.length) {
+			diagnostics.forEach((diagnosis) => {
+				this.warn(this.class, diagnosis.messageText);
+				this.debug(diagnosis.relatedInformation);
+			});
+			this.throwError(this.class, 'TSC diagnostics failed.');
+		}
 
-		fileList.forEach((fileName) => {
-			if (this.filesMap.has(fileName)) return;
-			const fileSource = program.getSourceFile(fileName);
-			if (!fileSource) {
-				dox.log.warn('No source file was found:', fileName);
-				return;
-			}
-			const sourceFile = new dox.SourceFile(context, fileSource);
-			this.filesMap.set(fileName, sourceFile);
-			this.addEntryFiles([...sourceFile.childFiles]);
-		});
-	}
-	private deDupeFilelist = (fileList: string[]) =>
-		fileList
-			.filter((value, index, array) => array.indexOf(value) === index)
-			.filter((value) => !this.filesMap.has(value));
-
-	private static getDeclarationRoots = (pack: dox.Package) =>
-		this.getAllDeclarations(pack).filter(
-			(declaration) => !declaration.parents.length,
+		const checker = program.getTypeChecker();
+		const id = new dox.lib.Id();
+		const context = new dox.lib.Context(
+			checker,
+			program,
+			config,
+			id,
+			this,
+			undefined as unknown as dox.Reference,
 		);
-
-	private static getAllDeclarations = (pack: dox.Package) =>
-		[...this.getAllFileSources(pack)]
-			.map((fileSource) => [...fileSource.declarationsMap.values()])
-			.flat();
-
-	private static getAllFileSources = (pack: dox.Package) =>
-		pack.filesMap.values();
+		this.references.set(
+			name,
+			new dox.Reference(context, name, config.fileNames),
+		);
+	};
 }

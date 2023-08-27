@@ -1,15 +1,13 @@
 import * as dox from '../typedox';
-import * as ts from 'typescript';
 import Branch from './Branch';
 
 export default class Root extends Branch {
-	packageName: string;
+	referenceName: string;
 	version?: string;
 
-	constructor(declarations: dox.Declaration[], doxPackage: dox.Package) {
+	constructor(declarations: dox.Declaration[], Reference: dox.Reference) {
 		super(declarations);
-		this.packageName = doxPackage.name;
-		this.version = doxPackage.version;
+		this.referenceName = Reference.name;
 	}
 	public toObject() {
 		return dox.serialiser.Serialise.root(this);

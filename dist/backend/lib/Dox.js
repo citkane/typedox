@@ -26,25 +26,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.log = exports.loadConfigFromFile = exports.Dox = void 0;
-const ts = __importStar(require("typescript"));
+exports.log = exports.Dox = void 0;
+const dox = __importStar(require("../typedox"));
 const Logger_1 = __importDefault(require("./Logger"));
-class Dox {
+class Dox extends Logger_1.default {
     constructor(context) {
+        var _a;
+        super();
+        this.getter = (item) => new dox.lib.WhatIsIt(this.checker, item);
         this.context = context;
         this.checker = context.checker;
         this.id = context.id.uid;
         this.package = context.package;
+        this.reference = context.reference;
         this.sourceFile = context.sourceFile;
+        this.fileName = (_a = context.sourceFile) === null || _a === void 0 ? void 0 : _a.fileName;
         this.exportDeclaration = context.exportDeclaration;
     }
 }
 exports.Dox = Dox;
-function loadConfigFromFile(filePath, baseDir) {
-    const configObject = ts.readConfigFile(filePath, ts.sys.readFile).config;
-    const config = ts.parseJsonConfigFileContent(configObject, ts.sys, baseDir, {});
-    return config;
-}
-exports.loadConfigFromFile = loadConfigFromFile;
 exports.log = new Logger_1.default();
 //# sourceMappingURL=Dox.js.map

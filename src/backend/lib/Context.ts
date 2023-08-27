@@ -6,7 +6,8 @@ export default class DoxContext {
 	program: ts.Program;
 	config: ts.ParsedCommandLine;
 	id: dox.lib.Id;
-	package?: dox.Package;
+	package: dox.Package;
+	reference?: dox.Reference;
 	sourceFile?: dox.SourceFile;
 	exportDeclaration?: dox.Declaration;
 
@@ -15,7 +16,8 @@ export default class DoxContext {
 		program: ts.Program,
 		config: ts.ParsedCommandLine,
 		id: dox.lib.Id,
-		doxPackage?: dox.Package,
+		doxPackage: dox.Package,
+		reference?: dox.Reference,
 		sourceFile?: dox.SourceFile,
 		exportDeclaration?: dox.Declaration,
 	) {
@@ -24,6 +26,7 @@ export default class DoxContext {
 		this.config = config;
 		this.id = id;
 		this.package = doxPackage;
+		this.reference = reference;
 		this.sourceFile = sourceFile;
 		this.exportDeclaration = exportDeclaration;
 	}

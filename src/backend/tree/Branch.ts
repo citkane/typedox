@@ -1,13 +1,15 @@
 import * as dox from '../typedox';
 import * as ts from 'typescript';
+const { Logger } = dox.lib;
 
-export default class Branch {
+export default class Branch extends Logger {
 	nameSpaces: Map<string, Branch> = new Map();
 	classes: Map<string, dox.Declaration> = new Map();
 	variables: Map<string, dox.Declaration> = new Map();
 	functions: Map<string, dox.Declaration> = new Map();
 	enums: Map<string, dox.Declaration> = new Map();
 	constructor(declarations: dox.Declaration[]) {
+		super();
 		const {
 			nameSpaceDeclarations,
 			functionDeclarations,
@@ -24,17 +26,23 @@ export default class Branch {
 		classDeclarations.forEach((d) => this.registerClass(d));
 		functionDeclarations.forEach((d) => this.registerFunction(d));
 
-		remainder.forEach(Branch.logRemainderError);
+		remainder.forEach((declaration) =>
+			this.error(
+				this.class,
+				'A declaration was not registered:',
+				declaration.name,
+			),
+		);
 	}
 	private registerAlias = (declaration: dox.Declaration) => {
 		//const { alias } = declaration;
 		const alias = declaration;
 		if (!alias)
-			return dox.log
-				.object(declaration)
-				.error(
-					'Could not find an alias for a declaration in dox.Branch:',
-				);
+			return this.error(
+				this.class,
+				'Could not find an alias for a declaration.',
+			);
+
 		alias.tsKind === ts.SyntaxKind.ModuleDeclaration
 			? this.registerNameSpace(alias, declaration.name)
 			: alias.tsKind === ts.SyntaxKind.VariableDeclaration
@@ -43,9 +51,7 @@ export default class Branch {
 			? this.registerFunction(alias, declaration.name)
 			: alias.tsKind === ts.SyntaxKind.ClassDeclaration
 			? this.registerClass(alias, declaration.name)
-			: dox.log
-					.object(alias)
-					.error('Did not register an alias in dox.Branch:');
+			: this.error(this.class, 'Did not register an alias');
 	};
 	private registerNameSpace = (
 		declaration: dox.Declaration,
@@ -54,10 +60,9 @@ export default class Branch {
 		const { children } = declaration;
 		nameSpace = nameSpace ? nameSpace : declaration.nameSpace;
 
-		if (!nameSpace) {
-			dox.log.error('Namespace string was not found :', nameSpace);
-			return;
-		}
+		if (!nameSpace)
+			return this.error('Namespace string was not found :', nameSpace);
+
 		const newBranch = new Branch(Branch.getChildDeclarations(children));
 		this.nameSpaces.set(nameSpace, newBranch);
 	};
@@ -84,9 +89,4 @@ export default class Branch {
 		const values = children.values();
 		return !!values ? [...values] : [];
 	}
-
-	private static logRemainderError = (declaration: dox.Declaration) =>
-		dox.log
-			.object(declaration)
-			.error('A declaration was not registered in the dox.tree.Branch:');
 }

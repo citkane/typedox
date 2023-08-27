@@ -23,50 +23,72 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const ts = __importStar(require("typescript"));
-const path = __importStar(require("path"));
 const dox = __importStar(require("./typedox"));
+const { Config, Package } = dox;
+const nodePackages = [
+    { name: 'typedox', version: 'v0.0.0', basePath: '../../' },
+];
+nodePackages.forEach((nodePackage) => {
+    const config = new Config(nodePackage.basePath);
+    const { name, version } = nodePackage;
+    const doxPackage = new Package(name, version);
+    config.referenceConfigs.forEach(doxPackage.makeReference);
+    doxPackage.references.forEach((doxReference) => {
+        doxReference.discoverFiles();
+        doxReference.discoverDeclarations();
+        doxReference.discoverRelationships();
+        //dox.log.info(doxReference.filesMap.keys());
+    });
+});
+/*
 //const inputFile = 'test/scenarios/locals/index.ts';
 //const configFolder = 'test/scenarios/locals';
+
 const inputFile = 'test/scenarios/namespace/index.ts';
 const configFolder = 'test/scenarios/namespace';
+
 //const inputFile = 'src/frontend/index.ts';
 //const configFolder = 'src';
+
 const projectRoot = path.join(__dirname, '../../');
 const configDir = path.join(projectRoot, configFolder);
 const inputPath = path.join(projectRoot, inputFile);
 const configFile = ts.findConfigFile(configDir, ts.sys.fileExists);
-if (configFile)
-    parseConfig(configFile, path.dirname(configFile));
-function parseConfig(configFile, baseDir) {
-    var _a;
+
+if (configFile) parseConfig(configFile, path.dirname(configFile));
+
+function parseConfig(configFile: string, baseDir: string) {
     const config = dox.lib.loadConfigFromFile(configFile, baseDir);
+
     config.options.types = [];
     //config.options.noLib = true;
-    (_a = config.projectReferences) === null || _a === void 0 ? void 0 : _a.forEach((reference) => {
+
+    config.projectReferences?.forEach((reference) => {
         if (reference.originalPath === './src/tsconfig.frontend.json')
             parseConfig(reference.path, path.dirname(reference.path));
     });
-    if (!config.fileNames.length)
-        return;
+
+    if (!config.fileNames.length) return;
+
     const program = ts.createProgram(config.fileNames, config.options);
     const diagnostics = ts.getPreEmitDiagnostics(program);
+
     diagnostics.forEach((diagnosis) => {
         dox.log.error(diagnosis.messageText);
     });
+
     const checker = program.getTypeChecker();
     const id = new dox.lib.Id();
-    const context = new dox.lib.Context(checker, program, config, id, undefined);
+    const context = new dox.lib.Context(
+        checker,
+        program,
+        config,
+        id,
+        undefined as unknown as dox.Reference,
+    );
     // new DoxPackage(context, config.fileNames);
-    new dox.Package(context, [inputPath]);
-    /*
-  
-  const program = ts.createProgram([inputFilename],);
-  const entrySourceFile = program.getSourceFile(inputFilename);
-  const checker = program.getTypeChecker();
-  const doxContext = new DoxContext(checker, program);
-  
-  new DoxPackage(doxContext, [entrySourceFile]);
-  */
+    new dox.Reference(context, [inputPath]);
+
 }
+*/
 //# sourceMappingURL=index.js.map

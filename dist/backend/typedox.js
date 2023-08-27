@@ -29,7 +29,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Kind = exports.Package = exports.log = exports.serialiser = exports.tree = exports.relationships = exports.lib = void 0;
+exports.Package = exports.Config = exports.Reference = exports.log = exports.serialiser = exports.tree = exports.relationships = exports.lib = void 0;
 exports.lib = __importStar(require("./lib/_namespace"));
 exports.relationships = __importStar(require("./relationships/_namespace"));
 exports.tree = __importStar(require("./tree/_namespace"));
@@ -37,18 +37,10 @@ exports.serialiser = __importStar(require("./serialiser/_namespace"));
 var _namespace_1 = require("./lib/_namespace");
 Object.defineProperty(exports, "log", { enumerable: true, get: function () { return _namespace_1.log; } });
 __exportStar(require("./kinds/_namespace"), exports);
+var Reference_1 = require("./kinds/Reference");
+Object.defineProperty(exports, "Reference", { enumerable: true, get: function () { return __importDefault(Reference_1).default; } });
+var Config_1 = require("./Config");
+Object.defineProperty(exports, "Config", { enumerable: true, get: function () { return __importDefault(Config_1).default; } });
 var Package_1 = require("./kinds/Package");
 Object.defineProperty(exports, "Package", { enumerable: true, get: function () { return __importDefault(Package_1).default; } });
-var Kind;
-(function (Kind) {
-    Kind[Kind["Unknown"] = 0] = "Unknown";
-    Kind[Kind["Package"] = 1] = "Package";
-    Kind[Kind["SourceFile"] = 2] = "SourceFile";
-    Kind[Kind["Declaration"] = 3] = "Declaration";
-    Kind[Kind["NameSpaceExport"] = 4] = "NameSpaceExport";
-    Kind[Kind["ExportSpecifier"] = 5] = "ExportSpecifier";
-    Kind[Kind["ExportDeclaration"] = 6] = "ExportDeclaration";
-    Kind[Kind["VariableDeclaration"] = 7] = "VariableDeclaration";
-    Kind[Kind["ClassDeclaration"] = 8] = "ClassDeclaration";
-})(Kind || (exports.Kind = Kind = {}));
 //# sourceMappingURL=typedox.js.map

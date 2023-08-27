@@ -1,8 +1,8 @@
 const child = 'child';
 export default child;
 
-export const fart = 'childfart';
-export const poop = 'childpoop';
+//export const fart = 'childfart';
+//export const poop = 'childpoop';
 
 /*
 import { somethingExported } from '../grandchildren';

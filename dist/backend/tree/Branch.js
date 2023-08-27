@@ -25,8 +25,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const dox = __importStar(require("../typedox"));
 const ts = __importStar(require("typescript"));
-class Branch {
+const { Logger } = dox.lib;
+class Branch extends Logger {
     constructor(declarations) {
+        super();
         this.nameSpaces = new Map();
         this.classes = new Map();
         this.variables = new Map();
@@ -36,9 +38,7 @@ class Branch {
             //const { alias } = declaration;
             const alias = declaration;
             if (!alias)
-                return dox.log
-                    .object(declaration)
-                    .error('Could not find an alias for a declaration in dox.Branch:');
+                return this.error(this.class, 'Could not find an alias for a declaration.');
             alias.tsKind === ts.SyntaxKind.ModuleDeclaration
                 ? this.registerNameSpace(alias, declaration.name)
                 : alias.tsKind === ts.SyntaxKind.VariableDeclaration
@@ -47,17 +47,13 @@ class Branch {
                         ? this.registerFunction(alias, declaration.name)
                         : alias.tsKind === ts.SyntaxKind.ClassDeclaration
                             ? this.registerClass(alias, declaration.name)
-                            : dox.log
-                                .object(alias)
-                                .error('Did not register an alias in dox.Branch:');
+                            : this.error(this.class, 'Did not register an alias');
         };
         this.registerNameSpace = (declaration, nameSpace) => {
             const { children } = declaration;
             nameSpace = nameSpace ? nameSpace : declaration.nameSpace;
-            if (!nameSpace) {
-                dox.log.error('Namespace string was not found :', nameSpace);
-                return;
-            }
+            if (!nameSpace)
+                return this.error('Namespace string was not found :', nameSpace);
             const newBranch = new Branch(Branch.getChildDeclarations(children));
             this.nameSpaces.set(nameSpace, newBranch);
         };
@@ -79,15 +75,12 @@ class Branch {
         variableDeclarations.forEach((d) => this.registerVariable(d));
         classDeclarations.forEach((d) => this.registerClass(d));
         functionDeclarations.forEach((d) => this.registerFunction(d));
-        remainder.forEach(Branch.logRemainderError);
+        remainder.forEach((declaration) => this.error(this.class, 'A declaration was not registered:', declaration.name));
     }
     static getChildDeclarations(children) {
         const values = children.values();
         return !!values ? [...values] : [];
     }
 }
-Branch.logRemainderError = (declaration) => dox.log
-    .object(declaration)
-    .error('A declaration was not registered in the dox.tree.Branch:');
 exports.default = Branch;
 //# sourceMappingURL=Branch.js.map
