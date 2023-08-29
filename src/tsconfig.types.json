@@ -1,7 +1,0 @@
-{
-	"extends": "@typedox/tsconfig/commonJs.json",
-	"include": ["./types"],
-	"compilerOptions": {
-		"outDir": "../dist"
-	}
-}

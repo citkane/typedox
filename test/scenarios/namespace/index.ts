@@ -1,10 +1,13 @@
+/*
 export const variableDeclaration = 'variableDeclaration';
 export module moduleDeclaration {
 	export const one = 1;
 	export const two = 2;
 }
-
+*/
+export * from './grandchildren';
 export * from './children';
+/*
 export * as namespaceExport from './grandchildren';
 import * as exportSpecifier from './children';
 export { exportSpecifier };
@@ -24,3 +27,4 @@ import importClause from './children';
 export { importClause as isExported };
 
 export { default as DefaultClass } from './grandchildren/classes';
+*/

@@ -12,13 +12,14 @@ export default class Declaration extends Dox {
 	tsType: ts.Type;
 	tsNode: ts.Node;
 	aliasName?: string;
-	private get: dox.lib.WhatIsIt;
+	get: dox.lib.WhatIsIt;
 
 	constructor(context: dox.lib.Context, symbol: ts.Symbol) {
 		super(context);
 		Dox.class.bind(this);
 
 		this.get = this.getter(symbol);
+
 		this.tsSymbol = symbol;
 		this.name = symbol.getName();
 		this.tsNode = this.get.tsNode;
@@ -26,20 +27,33 @@ export default class Declaration extends Dox {
 		this.tsKind = this.tsNode.kind;
 		this.aliasName = this.get.alias;
 
-		if (Declaration.isDeclared(this.tsNode)) return;
+		this.parser(this.tsNode);
 
-		ts.isModuleDeclaration(this.tsNode)
-			? this.parseModuleDeclaration(this.tsNode)
-			: ts.isNamespaceExport(this.tsNode)
-			? this.parseNamespaceExport(this.tsNode)
-			: ts.isExportSpecifier(this.tsNode)
-			? this.parseExportSpecifier(this.tsNode)
-			: ts.isExportAssignment(this.tsNode)
-			? this.parseExportAssignment(this.tsNode)
-			: this.warn(
+		this.debug(this.class, this.get.nodeDeclarationText);
+	}
+	public get parent() {
+		return this.reference;
+	}
+	private parser(node: ts.Node, get = this.get, isLocalTarget = false) {
+		if (Declaration.isDeclaredEnough(node)) return;
+
+		ts.isModuleDeclaration(node)
+			? this.parseModuleDeclaration(node)
+			: ts.isNamespaceExport(node)
+			? this.parseNamespaceExport(node)
+			: ts.isExportSpecifier(node)
+			? this.parseExportSpecifier(node)
+			: ts.isExportAssignment(node)
+			? this.parseExportAssignment(node)
+			: dox.lib.Relationships.fullReport(
+					'error',
+					this,
 					this.class,
-					'Did not parse a node into dox.Declaration',
-					this.get.report,
+					`Did not parse a ${
+						isLocalTarget ? 'localTargetNode' : 'node'
+					}`,
+					get,
+					isLocalTarget,
 			  );
 	}
 	private parseExportAssignment(declaration: ts.ExportAssignment) {
@@ -71,7 +85,9 @@ export default class Declaration extends Dox {
 				'No local target found:',
 				this.get.report,
 			);
-
+		const get = this.getter(localTarget);
+		this.parser(get.tsNode, get, true);
+		/*
 		if (Declaration.isNotNeeded(localTarget)) return;
 
 		ts.isModuleDeclaration(localTarget)
@@ -85,14 +101,11 @@ export default class Declaration extends Dox {
 					'Did not parse a local target:',
 					this.getter(localTarget).report,
 			  );
+			  */
 	}
 
-	private static isDeclared = (node?: ts.Node) =>
-		node &&
-		(ts.isEnumDeclaration(node) ||
-			ts.isClassDeclaration(node) ||
-			ts.isVariableDeclaration(node) ||
-			ts.isSourceFile(node) ||
-			ts.isFunctionDeclaration(node));
-	private static isNotNeeded = Declaration.isDeclared;
+	private static isDeclaredEnough = (node: ts.Node) =>
+		Dox.canBeIgnored(node) ||
+		ts.isNamespaceImport(node) ||
+		ts.isImportClause(node);
 }

@@ -2,10 +2,12 @@ import * as ts from 'typescript';
 import * as dox from '../typedox';
 
 export default class Serialiser {
-	public static root(tree: dox.tree.Root) {
+	public static root(tree: dox.tree.treePackage) {
+		/*
 		const { referenceName: packageName, version } = tree;
 		const branch = Serialiser.branch(tree);
 		return { packageName, version, ...branch };
+		*/
 	}
 	public static branch(branch: dox.tree.Branch): {
 		nameSpaces: Record<string, ReturnType<typeof Serialiser.branch>>;

@@ -17,14 +17,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WhatIsIt = exports.Id = exports.Context = exports.Logger = void 0;
+exports.Relationships = exports.WhatIsIt = exports.Id = exports.Context = exports.logLevels = exports.Logger = void 0;
 var Logger_1 = require("./Logger");
 Object.defineProperty(exports, "Logger", { enumerable: true, get: function () { return __importDefault(Logger_1).default; } });
+Object.defineProperty(exports, "logLevels", { enumerable: true, get: function () { return Logger_1.logLevels; } });
 var Context_1 = require("./Context");
 Object.defineProperty(exports, "Context", { enumerable: true, get: function () { return __importDefault(Context_1).default; } });
 var Id_1 = require("./Id");
 Object.defineProperty(exports, "Id", { enumerable: true, get: function () { return __importDefault(Id_1).default; } });
 var WhatIsIt_1 = require("./WhatIsIt");
 Object.defineProperty(exports, "WhatIsIt", { enumerable: true, get: function () { return __importDefault(WhatIsIt_1).default; } });
+var Relationships_1 = require("./Relationships");
+Object.defineProperty(exports, "Relationships", { enumerable: true, get: function () { return __importDefault(Relationships_1).default; } });
 __exportStar(require("./Dox"), exports);
 //# sourceMappingURL=_namespace.js.map

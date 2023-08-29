@@ -24,31 +24,23 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const dox = __importStar(require("../typedox"));
-const ts = __importStar(require("typescript"));
 const { Logger } = dox.lib;
 class Package extends Logger {
-    constructor(name, version) {
+    constructor(config) {
         super();
         this.references = new Map();
-        this.makeReference = (config, name) => {
-            config.options.types = [];
-            const program = ts.createProgram(config.fileNames, config.options);
-            const diagnostics = ts.getPreEmitDiagnostics(program);
-            if (diagnostics.length) {
-                diagnostics.forEach((diagnosis) => {
-                    this.warn(this.class, diagnosis.messageText);
-                    this.debug(diagnosis.relatedInformation);
-                });
-                this.throwError(this.class, 'TSC diagnostics failed.');
-            }
+        this.makeContext = (name, program, config) => {
             const checker = program.getTypeChecker();
             const id = new dox.lib.Id();
             const context = new dox.lib.Context(checker, program, config, id, this, undefined);
-            this.references.set(name, new dox.Reference(context, name, config.fileNames));
+            return context;
         };
         Package.class.bind(this);
-        this.version = version;
-        this.name = name;
+        this.doxConfig = config;
+        const { projectName, projectVersion, projectRoot } = config;
+        this.version = projectVersion;
+        this.name = projectName;
+        this.packageRoot = projectRoot;
     }
 }
 exports.default = Package;

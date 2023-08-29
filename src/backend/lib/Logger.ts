@@ -1,50 +1,64 @@
+import * as ts from 'typescript';
+export enum logLevels {
+	debug = 0,
+	info = 1,
+	warn = 2,
+	error = 3,
+}
+
 export default class Logger {
-	protected class: string;
-	public logLevel: keyof typeof this.logLevels = 'info';
+	protected logLevel = logLevels.debug;
 
-	private logLevels = {
-		debug: 0,
-		info: 1,
-		warning: 2,
-		error: 3,
-	};
-
-	constructor() {
-		this.class = `[${Logger.initLowerCamel(this.constructor.name)}]`;
+	protected get class() {
+		return `[${Logger.initLowerCamel(this.constructor.name)}]`;
 	}
 
-	debug = (...args: any) =>
-		this.emit('debug')
+	protected debug = (...args: any) =>
+		this.shouldEmit(logLevels.debug)
 			? console.error(colorise('Bright', '[debug]'), ...args)
 			: null;
-	info = (...args: any) =>
-		this.emit('info') ? console.info('[info]', ...args) : null;
-	warn = (...args: any) =>
-		this.emit('warning')
+
+	protected info = (...args: any) =>
+		this.shouldEmit(logLevels.info)
+			? console.info('[info]', ...args)
+			: null;
+	protected infoKind = (kind: ts.SyntaxKind) =>
+		this.info(ts.SyntaxKind[kind]);
+	protected infoFlagSymbol = (flag: ts.SymbolFlags) =>
+		this.info(ts.SymbolFlags[flag]);
+	protected infoFlagType = (flag: ts.TypeFlags) =>
+		this.info(ts.TypeFlags[flag]);
+
+	protected warn = (...args: any) =>
+		this.shouldEmit(logLevels.warn)
 			? console.warn(colorise('FgYellow', '[warning]'), ...args)
 			: null;
-	error = (...args: any) =>
-		this.emit('error')
+
+	protected error = (...args: any) =>
+		this.shouldEmit(logLevels.error)
 			? console.error(colorise('FgRed', '[error]'), ...args)
 			: null;
 
-	throwError = (...args: any) => {
+	protected throwError = (...args: any) => {
 		this.error(...args);
 		throw new Error();
 	};
-	private emit = (type: keyof typeof this.logLevels) =>
-		this.logLevels[type] >= this.logLevels[this.logLevel];
+
+	private shouldEmit = (logLevel: logLevels) => logLevel >= this.logLevel;
 
 	public static initLowerCamel(word: string) {
 		return word[0].toLocaleLowerCase() + word.slice(1);
 	}
-	public static class() {
+	protected static class() {
 		return `[${this.name}]`;
 	}
 
 	private static logger = new Logger();
 	public static debug = this.logger.debug;
 	public static info = this.logger.info;
+	public static infoKind = this.logger.infoKind;
+	public static infoFlagSymbol = this.logger.infoFlagSymbol;
+	public static infoFlagType = this.logger.infoFlagType;
 	public static warn = this.logger.warn;
 	public static error = this.logger.error;
 	public static throwError = this.logger.throwError;

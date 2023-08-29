@@ -5,27 +5,24 @@ const { Logger } = dox.lib;
 export default class Package extends Logger {
 	version: string;
 	name: string;
+	packageRoot: string;
 	references: Map<string, dox.Reference> = new Map();
-	constructor(name: string, version: string) {
+	doxConfig: dox.Config;
+
+	constructor(config: dox.Config) {
 		super();
 		Package.class.bind(this);
-		this.version = version;
-		this.name = name;
+		this.doxConfig = config;
+		const { projectName, projectVersion, projectRoot } = config;
+		this.version = projectVersion;
+		this.name = projectName;
+		this.packageRoot = projectRoot;
 	}
-	public makeReference = (config: ts.ParsedCommandLine, name: string) => {
-		config.options.types = [];
-
-		const program = ts.createProgram(config.fileNames, config.options);
-		const diagnostics = ts.getPreEmitDiagnostics(program);
-
-		if (diagnostics.length) {
-			diagnostics.forEach((diagnosis) => {
-				this.warn(this.class, diagnosis.messageText);
-				this.debug(diagnosis.relatedInformation);
-			});
-			this.throwError(this.class, 'TSC diagnostics failed.');
-		}
-
+	public makeContext = (
+		name: string,
+		program: ts.Program,
+		config: ts.ParsedCommandLine,
+	) => {
 		const checker = program.getTypeChecker();
 		const id = new dox.lib.Id();
 		const context = new dox.lib.Context(
@@ -36,9 +33,7 @@ export default class Package extends Logger {
 			this,
 			undefined as unknown as dox.Reference,
 		);
-		this.references.set(
-			name,
-			new dox.Reference(context, name, config.fileNames),
-		);
+
+		return context;
 	};
 }

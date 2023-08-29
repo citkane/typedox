@@ -23,8 +23,31 @@ export class Dox extends Logger {
 		this.exportDeclaration = context.exportDeclaration;
 	}
 
-	public getter = (item?: dox.whatIsIt) =>
+	public getter = (item: dox.whatIsIt) =>
 		new dox.lib.WhatIsIt(this.checker, item);
-}
+	public static canBeIgnored = (node: ts.Node) =>
+		ts.isEnumDeclaration(node) ||
+		ts.isClassDeclaration(node) ||
+		ts.isVariableDeclaration(node) ||
+		ts.isSourceFile(node) ||
+		ts.isFunctionDeclaration(node);
 
-export const log = new Logger();
+	public static fullReport(
+		logLevel: keyof typeof dox.logLevels,
+		self: dox.Declaration | dox.lib.Relationships,
+		classDescription: string,
+		message: string,
+		get: dox.lib.WhatIsIt,
+		isLocalTarget: boolean,
+	) {
+		self[logLevel](classDescription, message, {
+			filename: self.get.fileName,
+			sourceReport: self.get.report,
+			sourceDeclaration: self.get.nodeDeclarationText,
+			targetReport: isLocalTarget ? get.report : undefined,
+			targetDeclaration: isLocalTarget
+				? get.nodeDeclarationText
+				: undefined,
+		});
+	}
+}

@@ -29,13 +29,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Package = exports.Config = exports.Reference = exports.log = exports.serialiser = exports.tree = exports.relationships = exports.lib = void 0;
+exports.Package = exports.Config = exports.Reference = exports.logLevels = exports.serialiser = exports.tree = exports.lib = exports.tsEntryRefs = exports.packages = exports.nodePackage = void 0;
+const path = __importStar(require("path"));
+exports.nodePackage = {
+    name: 'typedox',
+    version: 'v0.0.0',
+    packageRoot: path.join(__dirname, '../../'),
+};
+exports.packages = [exports.nodePackage];
+exports.tsEntryRefs = [
+    'test/scenarios/namespace/tsconfig.json',
+];
 exports.lib = __importStar(require("./lib/_namespace"));
-exports.relationships = __importStar(require("./relationships/_namespace"));
 exports.tree = __importStar(require("./tree/_namespace"));
 exports.serialiser = __importStar(require("./serialiser/_namespace"));
 var _namespace_1 = require("./lib/_namespace");
-Object.defineProperty(exports, "log", { enumerable: true, get: function () { return _namespace_1.log; } });
+Object.defineProperty(exports, "logLevels", { enumerable: true, get: function () { return _namespace_1.logLevels; } });
 __exportStar(require("./kinds/_namespace"), exports);
 var Reference_1 = require("./kinds/Reference");
 Object.defineProperty(exports, "Reference", { enumerable: true, get: function () { return __importDefault(Reference_1).default; } });

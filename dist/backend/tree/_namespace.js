@@ -17,10 +17,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Branch = exports.Root = void 0;
-var Root_1 = require("./Root");
-Object.defineProperty(exports, "Root", { enumerable: true, get: function () { return __importDefault(Root_1).default; } });
+exports.treeRoot = exports.Branch = exports.treeReference = exports.treePackage = void 0;
+var treePackage_1 = require("./treePackage");
+Object.defineProperty(exports, "treePackage", { enumerable: true, get: function () { return __importDefault(treePackage_1).default; } });
+var treeReference_1 = require("./treeReference");
+Object.defineProperty(exports, "treeReference", { enumerable: true, get: function () { return __importDefault(treeReference_1).default; } });
 var Branch_1 = require("./Branch");
 Object.defineProperty(exports, "Branch", { enumerable: true, get: function () { return __importDefault(Branch_1).default; } });
+var treeRoot_1 = require("./treeRoot");
+Object.defineProperty(exports, "treeRoot", { enumerable: true, get: function () { return __importDefault(treeRoot_1).default; } });
 __exportStar(require("./partitioner"), exports);
 //# sourceMappingURL=_namespace.js.map

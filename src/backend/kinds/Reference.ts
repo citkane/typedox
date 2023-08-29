@@ -24,45 +24,45 @@ export default class Reference extends Dox {
 		dox.log.info(JSON.stringify(tree.toObject(), null, 4));
 		*/
 	}
-
-	public discoverFiles = this.makeSourceFiles;
-	public discoverDeclarations = () => {
+	public get parent() {
+		return this.package;
+	}
+	public get declarationRoots() {
+		return Reference.getDeclarationRoots([...this.filesMap.values()]);
+	}
+	public discoverFiles = this.recurseFiles;
+	public discoverDeclarations = () =>
 		this.filesMap.forEach((file) => file.discoverDeclarations());
-	};
-	public discoverRelationships = () => {
+	public discoverRelationships = () =>
 		this.filesMap.forEach((file) => file.discoverRelationships());
-	};
 
-	private makeSourceFiles(fileList = this.entryFileList) {
+	private recurseFiles(fileList = this.entryFileList) {
 		const { program } = this.context;
-		fileList = this.deDupeFilelist(fileList);
 		fileList.forEach((fileName) => {
 			if (this.filesMap.has(fileName)) return;
 			const fileSource = program.getSourceFile(fileName);
-			if (!fileSource) {
-				this.warn(this.class, 'No source file was found:', fileName);
-				return;
-			}
-			const sourceFile = new dox.SourceFile(this.context, fileSource);
-			this.filesMap.set(fileName, sourceFile);
-			this.makeSourceFiles([...sourceFile.childFiles]);
+
+			if (!fileSource)
+				return this.error(
+					this.class,
+					'No source file was found:',
+					fileName,
+				);
+
+			const doxSourceFile = new dox.SourceFile(this.context, fileSource);
+			this.filesMap.set(fileName, doxSourceFile);
+
+			this.recurseFiles(doxSourceFile.childFiles);
 		});
 	}
-	private deDupeFilelist = (fileList: string[]) =>
-		fileList
-			.filter((value, index, array) => array.indexOf(value) === index)
-			.filter((value) => !this.filesMap.has(value));
 
-	private static getDeclarationRoots = (pack: dox.Reference) =>
-		this.getAllDeclarations(pack).filter(
+	public static getDeclarationRoots = (sourceFiles: dox.SourceFile[]) =>
+		this.getAllDeclarations(sourceFiles).filter(
 			(declaration) => !declaration.parents.length,
 		);
 
-	private static getAllDeclarations = (pack: dox.Reference) =>
-		[...this.getAllFileSources(pack)]
+	private static getAllDeclarations = (sourceFiles: dox.SourceFile[]) =>
+		sourceFiles
 			.map((fileSource) => [...fileSource.declarationsMap.values()])
 			.flat();
-
-	private static getAllFileSources = (pack: dox.Reference) =>
-		pack.filesMap.values();
 }

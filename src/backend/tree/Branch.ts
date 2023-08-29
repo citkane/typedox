@@ -10,10 +10,10 @@ export default class Branch extends Logger {
 	enums: Map<string, dox.Declaration> = new Map();
 	constructor(declarations: dox.Declaration[]) {
 		super();
+
 		const {
 			nameSpaceDeclarations,
 			functionDeclarations,
-			enumDeclarations,
 			variableDeclarations,
 			classDeclarations,
 			aliasDeclarations,
@@ -51,7 +51,11 @@ export default class Branch extends Logger {
 			? this.registerFunction(alias, declaration.name)
 			: alias.tsKind === ts.SyntaxKind.ClassDeclaration
 			? this.registerClass(alias, declaration.name)
-			: this.error(this.class, 'Did not register an alias');
+			: this.error(
+					this.class,
+					'Did not register an alias',
+					declaration.get.report,
+			  );
 	};
 	private registerNameSpace = (
 		declaration: dox.Declaration,

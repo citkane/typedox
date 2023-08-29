@@ -47,7 +47,7 @@ class Branch extends Logger {
                         ? this.registerFunction(alias, declaration.name)
                         : alias.tsKind === ts.SyntaxKind.ClassDeclaration
                             ? this.registerClass(alias, declaration.name)
-                            : this.error(this.class, 'Did not register an alias');
+                            : this.error(this.class, 'Did not register an alias', declaration.get.report);
         };
         this.registerNameSpace = (declaration, nameSpace) => {
             const { children } = declaration;
@@ -69,7 +69,7 @@ class Branch extends Logger {
             name = name ? name : declaration.name;
             this.functions.set(name, declaration);
         };
-        const { nameSpaceDeclarations, functionDeclarations, enumDeclarations, variableDeclarations, classDeclarations, aliasDeclarations, remainder, } = dox.tree.partitionDeclarations(declarations);
+        const { nameSpaceDeclarations, functionDeclarations, variableDeclarations, classDeclarations, aliasDeclarations, remainder, } = dox.tree.partitionDeclarations(declarations);
         aliasDeclarations.forEach((d) => this.registerAlias(d));
         nameSpaceDeclarations.forEach((d) => this.registerNameSpace(d));
         variableDeclarations.forEach((d) => this.registerVariable(d));

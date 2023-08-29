@@ -23,72 +23,99 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const ts = __importStar(require("typescript"));
 const dox = __importStar(require("./typedox"));
-const { Config, Package } = dox;
-const nodePackages = [
-    { name: 'typedox', version: 'v0.0.0', basePath: '../../' },
-];
-nodePackages.forEach((nodePackage) => {
-    const config = new Config(nodePackage.basePath);
-    const { name, version } = nodePackage;
-    const doxPackage = new Package(name, version);
-    config.referenceConfigs.forEach(doxPackage.makeReference);
-    doxPackage.references.forEach((doxReference) => {
-        doxReference.discoverFiles();
-        doxReference.discoverDeclarations();
-        doxReference.discoverRelationships();
-        //dox.log.info(doxReference.filesMap.keys());
+const log = dox.lib.Logger;
+const DocumentsRoot = new dox.tree.treeRoot();
+getDocumentPackageRoots()
+    .map(makePackageConfigs)
+    .map(makePackagePrograms)
+    .map(auditPrograms)
+    .map(makePackages)
+    .map(makeReferences)
+    .map(discoverReferenceFiles)
+    .map(discoverReferenceDeclarations)
+    .map(discoverDeclarationRelationships)
+    .map(growBranches);
+serialiseTree(DocumentsRoot);
+function getDocumentPackageRoots() {
+    return dox.Config.getNodePackages();
+}
+function makePackageConfigs(nodePackage) {
+    const customOverrides = { options: { types: [] } };
+    const { name, version, packageRoot } = nodePackage;
+    const tsEntryRefs = dox.Config.getTsEntryRefs();
+    const config = new dox.Config(tsEntryRefs, name, version, packageRoot, customOverrides);
+    return config;
+}
+function makePackagePrograms(doxConfig) {
+    doxConfig.referenceConfigs.forEach((config, name) => {
+        config.options.types = [];
+        const program = ts.createProgram(config.fileNames, config.options);
+        doxConfig.programs.set(name, program);
     });
-});
+    return doxConfig;
+}
+function auditPrograms(doxConfig) {
+    doxConfig.programs.forEach((program) => {
+        const diagnostics = ts.getPreEmitDiagnostics(program);
+        if (diagnostics.length) {
+            diagnostics.forEach((diagnosis) => {
+                log.warn(['index'], diagnosis.messageText);
+                log.debug(diagnosis.relatedInformation);
+            });
+            log.throwError(['index'], 'TSC diagnostics failed.');
+        }
+    });
+    return doxConfig;
+}
+function makePackages(doxConfig) {
+    const doxPackage = new dox.Package(doxConfig);
+    const treePackage = new dox.tree.treePackage(DocumentsRoot, doxPackage);
+    DocumentsRoot.treePackages.set(treePackage.name, treePackage);
+    return treePackage;
+}
+function makeReferences(treePackage) {
+    const { doxPackage } = treePackage;
+    const { doxConfig } = doxPackage;
+    doxConfig.programs.forEach((program, key) => {
+        const config = doxConfig.referenceConfigs.get(key);
+        const doxContext = doxPackage.makeContext(key, program, config);
+        const doxReference = new dox.Reference(doxContext, key, config.fileNames);
+        doxPackage.references.set(key, doxReference);
+        treePackage.treeReferences.set(key, new dox.tree.treeReference(doxReference));
+    });
+    return treePackage;
+}
+function discoverReferenceFiles(treePackage) {
+    treePackage.treeReferences.forEach((treeReference) => treeReference.doxReference.discoverFiles());
+    return treePackage;
+}
+function discoverReferenceDeclarations(treePackage) {
+    treePackage.treeReferences.forEach((treeReference) => treeReference.doxReference.discoverDeclarations());
+    return treePackage;
+}
+function discoverDeclarationRelationships(treePackage) {
+    treePackage.treeReferences.forEach((treeReference) => treeReference.doxReference.discoverRelationships());
+    return treePackage;
+}
+function growBranches(treePackage) {
+    treePackage.treeReferences.forEach((treeReference, key) => {
+        const sourceFiles = treeReference.doxReference.filesMap.values();
+        const rootDeclarations = dox.Reference.getDeclarationRoots([
+            ...sourceFiles,
+        ]);
+        treeReference.treeBranches.set(key, new dox.tree.Branch(rootDeclarations));
+    });
+}
+function serialiseTree(root) {
+    console
+        .log();
+}
 /*
-//const inputFile = 'test/scenarios/locals/index.ts';
-//const configFolder = 'test/scenarios/locals';
-
-const inputFile = 'test/scenarios/namespace/index.ts';
-const configFolder = 'test/scenarios/namespace';
-
-//const inputFile = 'src/frontend/index.ts';
-//const configFolder = 'src';
-
-const projectRoot = path.join(__dirname, '../../');
-const configDir = path.join(projectRoot, configFolder);
-const inputPath = path.join(projectRoot, inputFile);
-const configFile = ts.findConfigFile(configDir, ts.sys.fileExists);
-
-if (configFile) parseConfig(configFile, path.dirname(configFile));
-
-function parseConfig(configFile: string, baseDir: string) {
-    const config = dox.lib.loadConfigFromFile(configFile, baseDir);
-
-    config.options.types = [];
-    //config.options.noLib = true;
-
-    config.projectReferences?.forEach((reference) => {
-        if (reference.originalPath === './src/tsconfig.frontend.json')
-            parseConfig(reference.path, path.dirname(reference.path));
-    });
-
-    if (!config.fileNames.length) return;
-
-    const program = ts.createProgram(config.fileNames, config.options);
-    const diagnostics = ts.getPreEmitDiagnostics(program);
-
-    diagnostics.forEach((diagnosis) => {
-        dox.log.error(diagnosis.messageText);
-    });
-
-    const checker = program.getTypeChecker();
-    const id = new dox.lib.Id();
-    const context = new dox.lib.Context(
-        checker,
-        program,
-        config,
-        id,
-        undefined as unknown as dox.Reference,
-    );
-    // new DoxPackage(context, config.fileNames);
-    new dox.Reference(context, [inputPath]);
-
+function makeTree(doxPackage: dox.Package) {
+    const tree = new dox.tree.Root(doxPackage.declarationRoots, doxPackage);
+    dox.lib.Logger.info(JSON.stringify(tree.toObject(), null, 4));
 }
 */
 //# sourceMappingURL=index.js.map

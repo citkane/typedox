@@ -1,31 +1,64 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.logLevels = void 0;
+const ts = __importStar(require("typescript"));
+var logLevels;
+(function (logLevels) {
+    logLevels[logLevels["debug"] = 0] = "debug";
+    logLevels[logLevels["info"] = 1] = "info";
+    logLevels[logLevels["warn"] = 2] = "warn";
+    logLevels[logLevels["error"] = 3] = "error";
+})(logLevels || (exports.logLevels = logLevels = {}));
 class Logger {
     constructor() {
-        this.logLevel = 'info';
-        this.logLevels = {
-            debug: 0,
-            info: 1,
-            warning: 2,
-            error: 3,
-        };
-        this.debug = (...args) => this.emit('debug')
+        this.logLevel = logLevels.debug;
+        this.debug = (...args) => this.shouldEmit(logLevels.debug)
             ? console.error(colorise('Bright', '[debug]'), ...args)
             : null;
-        this.info = (...args) => this.emit('info') ? console.info('[info]', ...args) : null;
-        this.warn = (...args) => this.emit('warning')
+        this.info = (...args) => this.shouldEmit(logLevels.info)
+            ? console.info('[info]', ...args)
+            : null;
+        this.infoKind = (kind) => this.info(ts.SyntaxKind[kind]);
+        this.infoFlagSymbol = (flag) => this.info(ts.SymbolFlags[flag]);
+        this.infoFlagType = (flag) => this.info(ts.TypeFlags[flag]);
+        this.warn = (...args) => this.shouldEmit(logLevels.warn)
             ? console.warn(colorise('FgYellow', '[warning]'), ...args)
             : null;
-        this.error = (...args) => this.emit('error')
+        this.error = (...args) => this.shouldEmit(logLevels.error)
             ? console.error(colorise('FgRed', '[error]'), ...args)
             : null;
         this.throwError = (...args) => {
             this.error(...args);
             throw new Error();
         };
-        this.emit = (type) => this.logLevels[type] >= this.logLevels[this.logLevel];
-        this.class = `[${Logger.initLowerCamel(this.constructor.name)}]`;
+        this.shouldEmit = (logLevel) => logLevel >= this.logLevel;
+    }
+    get class() {
+        return `[${Logger.initLowerCamel(this.constructor.name)}]`;
     }
     static initLowerCamel(word) {
         return word[0].toLocaleLowerCase() + word.slice(1);
@@ -38,6 +71,9 @@ _a = Logger;
 Logger.logger = new Logger();
 Logger.debug = _a.logger.debug;
 Logger.info = _a.logger.info;
+Logger.infoKind = _a.logger.infoKind;
+Logger.infoFlagSymbol = _a.logger.infoFlagSymbol;
+Logger.infoFlagType = _a.logger.infoFlagType;
 Logger.warn = _a.logger.warn;
 Logger.error = _a.logger.error;
 Logger.throwError = _a.logger.throwError;

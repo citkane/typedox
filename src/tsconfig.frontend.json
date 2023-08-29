@@ -1,9 +1,0 @@
-{
-	"extends": "@typedox/tsconfig/es6.json",
-	"include": ["./frontend", "./types/types.ts", "./types/frontendTypes.ts"],
-	"exclude": ["./frontend/assets"],
-	"compilerOptions": {
-		"outDir": "../dist",
-		"target": "es6"
-	}
-}

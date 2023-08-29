@@ -25,13 +25,20 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const Dox_1 = require("../lib/Dox");
 const dox = __importStar(require("../typedox"));
+const ts = __importStar(require("typescript"));
 class SourceFile extends Dox_1.Dox {
     constructor(context, source) {
         var _a;
         super(context);
-        this.relationshipTriggers = [];
-        this.childFiles = [];
         this.declarationsMap = new Map();
+        this.discoverFiles = (fileSymbols) => {
+            return fileSymbols
+                .map((symbol) => symbol.flags === ts.SymbolFlags.ExportStar
+                ? this.parseExportStars(symbol).map((expression) => this.getter(expression).targetFileName)
+                : this.getter(symbol).targetFileName)
+                .flat()
+                .filter((value, index, array) => !!value && array.indexOf(value) === index);
+        };
         this.discoverDeclarations = () => {
             var _a;
             this.fileType = this.checker.getTypeOfSymbol(this.fileSymbol);
@@ -42,42 +49,35 @@ class SourceFile extends Dox_1.Dox {
         };
         this.discoverRelationships = () => {
             var _a;
-            (_a = this.fileSymbol.exports) === null || _a === void 0 ? void 0 : _a.forEach((exported) => this.mergeTriggers(exported));
+            return (_a = this.fileSymbol.exports) === null || _a === void 0 ? void 0 : _a.forEach((symbol) => {
+                symbol.flags === ts.SymbolFlags.ExportStar
+                    ? this.parseExportStars(symbol).forEach((expression) => {
+                        return;
+                        new dox.lib.Relationships(this.context, this.checker.getSymbolAtLocation(expression));
+                    })
+                    : new dox.lib.Relationships(this.context, symbol);
+            });
         };
-        this.mergeTriggers = (symbol) => {
-            const triggers = new dox.relationships.RelationshipTriggers(this.context, symbol);
-            this.relationshipTriggers = [
-                ...this.relationshipTriggers,
-                ...triggers.relationshipTriggers,
-            ];
-        };
-        this.triggerRelationships = () => {
-            this.relationshipTriggers.forEach((trigger) => trigger());
-        };
-        //Dox.class.bind(this);
-        //this.context = { ...this.context, sourceFile: this };
+        SourceFile.class.bind(this);
+        this.context = Object.assign(Object.assign({}, this.context), { sourceFile: this });
         this.source = source;
         this.fileName = source.fileName;
         this.fileSymbol = this.checker.getSymbolAtLocation(source);
-        (_a = this.fileSymbol.exports) === null || _a === void 0 ? void 0 : _a.forEach((symbol) => {
-            var _a;
-            let get = this.getter(symbol);
-            const localTarget = get.localTargetDeclaration;
-            if (localTarget)
-                get = this.getter(localTarget);
-            if (!get.moduleSpecifier)
-                return;
-            const moduleSymbol = this.checker.getSymbolAtLocation(get.moduleSpecifier);
-            const targetFile = (_a = moduleSymbol === null || moduleSymbol === void 0 ? void 0 : moduleSymbol.valueDeclaration) === null || _a === void 0 ? void 0 : _a.getSourceFile().fileName;
-            if (targetFile && !this.childFiles.includes(targetFile))
-                this.childFiles.push(targetFile);
-        });
-        /*
-        this.fileSymbol.exports?.forEach((exported) => {
-            this.mergeNewFiles(exported);
-            this.mergeTriggers(exported);
-        });
-        */
+        const fileExports = (_a = this.fileSymbol.exports) === null || _a === void 0 ? void 0 : _a.values();
+        this.childFiles = this.discoverFiles([...(fileExports || [])]);
+        this.debug(this.class, this.fileName);
+    }
+    parseExportStars(symbol) {
+        return symbol
+            .declarations.map((declaration) => {
+            return ts.isExportDeclaration(declaration)
+                ? declaration.moduleSpecifier
+                : logError(this, declaration);
+        })
+            .filter((symbol) => !!symbol);
+        function logError(self, declaration) {
+            self.error(self.class, `Expected a ts.ExportDeclaration but got ts.${ts.SyntaxKind[declaration.kind]}`);
+        }
     }
 }
 exports.default = SourceFile;

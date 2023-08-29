@@ -26,7 +26,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.log = exports.Dox = void 0;
+exports.Dox = void 0;
+const ts = __importStar(require("typescript"));
 const dox = __importStar(require("../typedox"));
 const Logger_1 = __importDefault(require("./Logger"));
 class Dox extends Logger_1.default {
@@ -43,7 +44,22 @@ class Dox extends Logger_1.default {
         this.fileName = (_a = context.sourceFile) === null || _a === void 0 ? void 0 : _a.fileName;
         this.exportDeclaration = context.exportDeclaration;
     }
+    static fullReport(logLevel, self, classDescription, message, get, isLocalTarget) {
+        self[logLevel](classDescription, message, {
+            filename: self.get.fileName,
+            sourceReport: self.get.report,
+            sourceDeclaration: self.get.nodeDeclarationText,
+            targetReport: isLocalTarget ? get.report : undefined,
+            targetDeclaration: isLocalTarget
+                ? get.nodeDeclarationText
+                : undefined,
+        });
+    }
 }
 exports.Dox = Dox;
-exports.log = new Logger_1.default();
+Dox.canBeIgnored = (node) => ts.isEnumDeclaration(node) ||
+    ts.isClassDeclaration(node) ||
+    ts.isVariableDeclaration(node) ||
+    ts.isSourceFile(node) ||
+    ts.isFunctionDeclaration(node);
 //# sourceMappingURL=Dox.js.map

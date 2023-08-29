@@ -1,7 +1,7 @@
-const child = 'child';
-export default child;
+//import { childVariable } from './variables';
+//export default childVariable;
 
-//export const fart = 'childfart';
+export const fart = 'childfart';
 //export const poop = 'childpoop';
 
 /*
