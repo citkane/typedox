@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logLevels = void 0;
+exports.Logger = exports.logLevels = void 0;
 const ts = __importStar(require("typescript"));
 var logLevels;
 (function (logLevels) {
@@ -57,16 +57,28 @@ class Logger {
         };
         this.shouldEmit = (logLevel) => logLevel >= this.logLevel;
     }
-    get class() {
+    get classIdentifier() {
         return `[${Logger.initLowerCamel(this.constructor.name)}]`;
     }
     static initLowerCamel(word) {
         return word[0].toLocaleLowerCase() + word.slice(1);
     }
-    static class() {
+    static classString() {
         return `[${this.name}]`;
     }
+    static deepReport(logLevel, message, get, isLocalTarget) {
+        this[logLevel](this.classIdentifier, message, {
+            filename: this.get.fileName,
+            sourceReport: this.get.report,
+            sourceDeclaration: this.get.nodeDeclarationText,
+            targetReport: isLocalTarget ? get.report : undefined,
+            targetDeclaration: isLocalTarget
+                ? get.nodeDeclarationText
+                : undefined,
+        });
+    }
 }
+exports.Logger = Logger;
 _a = Logger;
 Logger.logger = new Logger();
 Logger.debug = _a.logger.debug;
@@ -77,7 +89,6 @@ Logger.infoFlagType = _a.logger.infoFlagType;
 Logger.warn = _a.logger.warn;
 Logger.error = _a.logger.error;
 Logger.throwError = _a.logger.throwError;
-exports.default = Logger;
 const colorise = (color, text) => c[color] + text + c.Reset;
 const c = {
     Reset: '\x1b[0m',

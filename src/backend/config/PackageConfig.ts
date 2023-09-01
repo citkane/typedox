@@ -3,58 +3,59 @@
  * Build a parser to get node packages
  */
 
-import * as dox from './typedox';
+import * as dox from '../typedox';
 import * as ts from 'typescript';
 import * as path from 'path';
 import * as fs from 'fs-extra';
-const { Logger, Dox } = dox.lib;
+import { Logger } from '../lib/Logger';
 
-export default class Config extends Logger {
-	public projectName: string;
-	public projectVersion: string;
-	public projectRoot: string;
+export class PackageConfig extends Logger {
+	public npmPackageName: string;
+	public npmPackageVersion: string;
+	public npmPackageRootDir: string;
 
-	public referenceConfigs: Map<string, ts.ParsedCommandLine> = new Map();
-	public programs: Map<string, ts.Program> = new Map();
+	public tsReferenceConfigs: Map<string, ts.ParsedCommandLine> = new Map();
+	public tsPrograms: Map<string, ts.Program> = new Map();
 
 	constructor(
-		tsEntryRefs: dox.tsEntryDef[],
-		projectName: string,
-		projectVersion: string,
-		projectRoot: string,
+		tsEntryDefs: dox.tsEntryDef[],
+		npmProjectName: string,
+		npmProjectVersion: string,
+		npmProjectRootDir: string,
 		optionOverrides: Partial<ts.ParsedCommandLine> = {},
 	) {
 		super();
-		Config.class.bind(this);
-		this.projectName = projectName;
-		this.projectVersion = projectVersion;
-		this.projectRoot = projectRoot;
-		tsEntryRefs.forEach((entryDef) =>
-			this.parseTsEntryRef(entryDef, optionOverrides),
+		PackageConfig.classString.bind(this);
+
+		this.npmPackageName = npmProjectName;
+		this.npmPackageVersion = npmProjectVersion;
+		this.npmPackageRootDir = npmProjectRootDir;
+		tsEntryDefs.forEach((entryDef) =>
+			this.parseTsEntryDef(entryDef, optionOverrides),
 		);
 	}
 
-	private parseTsEntryRef = (
+	private parseTsEntryDef = (
 		entryDef: dox.tsEntryDef,
 		optionOverrides: Partial<ts.ParsedCommandLine>,
 	) => {
 		const fileName = typeof entryDef === 'string' ? entryDef : entryDef[1];
-		const filePath = path.join(this.projectRoot, fileName);
+		const filePath = path.join(this.npmPackageRootDir, fileName);
 		const basePath = path.dirname(filePath);
-		const config = Config.getConfigFromFile(
+		const config = PackageConfig.getConfigFromFile(
 			filePath,
 			basePath,
 			optionOverrides,
 		);
 		const referenceName =
 			typeof entryDef === 'string'
-				? Config.getReferenceName(basePath, config)
+				? PackageConfig.getReferenceName(basePath, config)
 				: entryDef[0];
 
-		this.referenceConfigs.set(referenceName, config);
+		this.tsReferenceConfigs.set(referenceName, config);
 	};
-	public static getTsEntryRefs() {
-		return dox.tsEntryRefs;
+	public static findTsEntryDefs() {
+		return dox.tsEntryRefsStub;
 	}
 	private static getReferenceName = (
 		basePath: string,
@@ -68,7 +69,11 @@ export default class Config extends Logger {
 		optionOverrides: Partial<ts.ParsedCommandLine>,
 	) {
 		if (!fs.existsSync(filePath))
-			Dox.throwError(Config.class(), 'Entry file not found:', filePath);
+			PackageConfig.throwError(
+				PackageConfig.classString(),
+				'Entry file not found:',
+				filePath,
+			);
 		const configObject = ts.readConfigFile(
 			filePath,
 			ts.sys.readFile,
@@ -87,8 +92,5 @@ export default class Config extends Logger {
 			};
 		});
 		return parsedOptions;
-	}
-	public static getNodePackages() {
-		return dox.packages;
 	}
 }

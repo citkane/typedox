@@ -6,7 +6,7 @@
 	"scripts": {
 		"build:watch": "npx tsc -b -w",
 		"backend": "node -r source-map-support/register ./dist/backend/index.js",
-		"typedoc": "npx typedoc --tsconfig test/scenarios/namespace/tsconfig.json test/scenarios/namespace/index.ts"
+		"typedoc": "npx typedoc --tsconfig test/scenarios/testNamespaces/tsconfig.json test/scenarios/testNamespaces/index.ts"
 	},
 	"repository": {
 		"type": "git",

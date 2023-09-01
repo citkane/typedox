@@ -35,7 +35,7 @@ class Package extends Logger {
             const context = new dox.lib.Context(checker, program, config, id, this, undefined);
             return context;
         };
-        Package.class.bind(this);
+        Package.classString.bind(this);
         this.doxConfig = config;
         const { projectName, projectVersion, projectRoot } = config;
         this.version = projectVersion;

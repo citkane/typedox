@@ -22,44 +22,51 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Dox = void 0;
 const ts = __importStar(require("typescript"));
 const dox = __importStar(require("../typedox"));
-const Logger_1 = __importDefault(require("./Logger"));
-class Dox extends Logger_1.default {
+const Logger_1 = require("./Logger");
+class Dox extends Logger_1.Logger {
     constructor(context) {
         var _a;
         super();
-        this.getter = (item) => new dox.lib.WhatIsIt(this.checker, item);
+        this.tsWrap = (item) => new dox.TscWrapper(this.checker, item);
         this.context = context;
         this.checker = context.checker;
-        this.id = context.id.uid;
-        this.package = context.package;
-        this.reference = context.reference;
-        this.sourceFile = context.sourceFile;
-        this.fileName = (_a = context.sourceFile) === null || _a === void 0 ? void 0 : _a.fileName;
-        this.exportDeclaration = context.exportDeclaration;
+        this.package = context.npmPackage;
+        this.reference = context.tsReference;
+        this.sourceFile = context.tsSourceFile;
+        this.fileName = (_a = context.tsSourceFile) === null || _a === void 0 ? void 0 : _a.fileName;
     }
-    static fullReport(logLevel, self, classDescription, message, get, isLocalTarget) {
-        self[logLevel](classDescription, message, {
-            filename: self.get.fileName,
-            sourceReport: self.get.report,
-            sourceDeclaration: self.get.nodeDeclarationText,
-            targetReport: isLocalTarget ? get.report : undefined,
-            targetDeclaration: isLocalTarget
-                ? get.nodeDeclarationText
-                : undefined,
-        });
+    static parseExportStars(symbol) {
+        const _this = this;
+        return symbol
+            .declarations.map((declaration) => {
+            return ts.isExportDeclaration(declaration)
+                ? declaration.moduleSpecifier
+                : logError(declaration);
+        })
+            .filter((symbol) => !!symbol);
+        function logError(declaration) {
+            Dox.error(_this.classIdentifier, `Expected a ts.ExportDeclaration but got ts.${ts.SyntaxKind[declaration.kind]}`);
+        }
     }
 }
 exports.Dox = Dox;
-Dox.canBeIgnored = (node) => ts.isEnumDeclaration(node) ||
-    ts.isClassDeclaration(node) ||
-    ts.isVariableDeclaration(node) ||
-    ts.isSourceFile(node) ||
-    ts.isFunctionDeclaration(node);
+Dox.isStarExport = (symbol) => symbol.flags === ts.SymbolFlags.ExportStar;
+Dox.isSpecifierKind = (kind) => {
+    const { NamespaceExport, NamespaceImport, ModuleDeclaration, ExportDeclaration, ExportSpecifier, ExportAssignment, ImportClause, ImportSpecifier, } = ts.SyntaxKind;
+    const specifiers = [
+        NamespaceExport,
+        NamespaceImport,
+        ModuleDeclaration,
+        ExportDeclaration,
+        ExportSpecifier,
+        ExportAssignment,
+        ImportClause,
+        ImportSpecifier,
+    ];
+    return specifiers.includes(kind);
+};
 //# sourceMappingURL=Dox.js.map

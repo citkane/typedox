@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+import * as dox from '../typedox';
 export enum logLevels {
 	debug = 0,
 	info = 1,
@@ -6,12 +7,11 @@ export enum logLevels {
 	error = 3,
 }
 
-export default class Logger {
-	protected logLevel = logLevels.debug;
-
-	protected get class() {
+export class Logger {
+	public get classIdentifier() {
 		return `[${Logger.initLowerCamel(this.constructor.name)}]`;
 	}
+	protected logLevel = logLevels.debug;
 
 	protected debug = (...args: any) =>
 		this.shouldEmit(logLevels.debug)
@@ -46,13 +46,29 @@ export default class Logger {
 
 	private shouldEmit = (logLevel: logLevels) => logLevel >= this.logLevel;
 
-	public static initLowerCamel(word: string) {
+	private static initLowerCamel(word: string) {
 		return word[0].toLocaleLowerCase() + word.slice(1);
 	}
-	protected static class() {
+	protected static classString() {
 		return `[${this.name}]`;
 	}
-
+	public static deepReport(
+		this: dox.TsDeclaration | dox.lib.Relation,
+		logLevel: keyof typeof logLevels,
+		message: string,
+		get: dox.TscWrapper,
+		isLocalTarget: boolean,
+	) {
+		this[logLevel](this.classIdentifier, message, {
+			filename: this.get.fileName,
+			sourceReport: this.get.report,
+			sourceDeclaration: this.get.nodeDeclarationText,
+			targetReport: isLocalTarget ? get.report : undefined,
+			targetDeclaration: isLocalTarget
+				? get.nodeDeclarationText
+				: undefined,
+		});
+	}
 	private static logger = new Logger();
 	public static debug = this.logger.debug;
 	public static info = this.logger.info;

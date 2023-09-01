@@ -27,63 +27,77 @@ const Dox_1 = require("../lib/Dox");
 const dox = __importStar(require("../typedox"));
 const ts = __importStar(require("typescript"));
 class Declaration extends Dox_1.Dox {
-    constructor(context, symbol) {
+    constructor(context, item) {
         super(context);
         this.parents = [];
         this.children = new Map();
-        this.parseNamespaceExport = (declaration) => {
+        this.parseNamespaceExport = () => {
             this.nameSpace = this.name;
-            this.tsKind = declaration.kind;
         };
-        this.parseNamespaceImport = (declaration) => {
+        this.parseNamespaceImport = () => {
             this.nameSpace = this.name;
-            this.tsKind = declaration.kind;
         };
-        this.parseImportClause = (declaration) => {
-            this.tsKind = declaration.kind;
-        };
-        Dox_1.Dox.class.bind(this);
-        this.get = this.getter(symbol);
-        this.tsSymbol = symbol;
-        this.name = symbol.getName();
+        Dox_1.Dox.classString.bind(this);
+        this.get = this.tsWrap(item);
+        this.name = this.get.name;
+        this.tsKind = this.get.kind;
         this.tsNode = this.get.tsNode;
-        this.tsType = this.checker.getTypeOfSymbol(symbol);
-        this.tsKind = this.tsNode.kind;
-        this.aliasName = this.get.alias;
-        this.parser(this.tsNode);
-        this.debug(this.class, this.get.nodeDeclarationText);
+        this.tsSymbol = this.get.tsSymbol;
+        this.tsType = this.get.tsType;
+        if (!this.get.isExportStarChild &&
+            !Declaration.isSpecifierKind(this.tsKind))
+            return;
+        this.debug(this.classIdentifier, this.get.nodeDeclarationText);
+        this.parser(this.get.tsNode);
     }
     get parent() {
-        return this.reference;
+        return this.sourceFile;
+    }
+    get kind() {
+        const { SyntaxKind } = ts;
+        const { DeclarationKind } = dox;
+        if (this.get.isExportStarChild)
+            return DeclarationKind.ExportStar;
+        const tsKind = Declaration.resolveTsKind(this);
+        const isModule = tsKind === SyntaxKind.ModuleDeclaration ||
+            tsKind === SyntaxKind.NamespaceExport;
+        const kind = tsKind === SyntaxKind.VariableDeclaration
+            ? DeclarationKind.Variable
+            : isModule
+                ? DeclarationKind.Module
+                : tsKind === SyntaxKind.ClassDeclaration
+                    ? DeclarationKind.Class
+                    : tsKind === SyntaxKind.FunctionDeclaration
+                        ? DeclarationKind.Function
+                        : tsKind === SyntaxKind.EnumDeclaration
+                            ? DeclarationKind.Enum
+                            : DeclarationKind.unknown;
+        if (kind === dox.DeclarationKind.unknown)
+            this.error(this.classIdentifier, 'Did not discover a kind:', SyntaxKind[tsKind], this.get.report);
+        return kind;
     }
     parser(node, get = this.get, isLocalTarget = false) {
-        if (Declaration.isDeclaredEnough(node))
-            return;
         ts.isModuleDeclaration(node)
             ? this.parseModuleDeclaration(node)
             : ts.isNamespaceExport(node)
-                ? this.parseNamespaceExport(node)
+                ? this.parseNamespaceExport()
                 : ts.isExportSpecifier(node)
-                    ? this.parseExportSpecifier(node)
-                    : ts.isExportAssignment(node)
-                        ? this.parseExportAssignment(node)
-                        : dox.lib.Relationships.fullReport('error', this, this.class, `Did not parse a ${isLocalTarget ? 'localTargetNode' : 'node'}`, get, isLocalTarget);
+                    ? this.parseExportSpecifier()
+                    : get.isExportStarChild
+                        ? this.parseReExporter(get)
+                        : Declaration.deepReport.call(this, 'error', `Did not parse a ${isLocalTarget ? 'localTargetNode' : 'node'}`, get, isLocalTarget);
     }
-    parseExportAssignment(declaration) {
-        this.tsKind = declaration.kind;
-    }
-    parseExportDeclaration(declaration) {
-        this.tsKind = declaration.kind;
+    parseReExporter(get) {
+        //this.info(get.tsSymbol.exports);
     }
     parseModuleDeclaration(module) {
         this.nameSpace = module.name.getText();
-        this.tsKind = module.kind;
     }
-    parseExportSpecifier(declaration) {
+    parseExportSpecifier() {
         const localTarget = this.get.localTargetDeclaration;
         if (!localTarget)
-            return this.error(this.class, 'No local target found:', this.get.report);
-        const get = this.getter(localTarget);
+            return this.error(this.classIdentifier, 'No local target found:', this.get.report);
+        const get = this.tsWrap(localTarget);
         this.parser(get.tsNode, get, true);
         /*
         if (Declaration.isNotNeeded(localTarget)) return;
@@ -101,9 +115,19 @@ class Declaration extends Dox_1.Dox {
               );
               */
     }
+    static resolveTsKind(declaration) {
+        let tsKind = declaration.tsKind;
+        let { get } = declaration;
+        if (get.localTargetDeclaration) {
+            get = declaration.tsWrap(get.localTargetDeclaration);
+            tsKind = get.tsNode.kind;
+        }
+        if (tsKind === ts.SyntaxKind.VariableDeclaration &&
+            get.callSignatures.length) {
+            tsKind = ts.SyntaxKind.FunctionDeclaration;
+        }
+        return tsKind;
+    }
 }
-Declaration.isDeclaredEnough = (node) => Dox_1.Dox.canBeIgnored(node) ||
-    ts.isNamespaceImport(node) ||
-    ts.isImportClause(node);
 exports.default = Declaration;
 //# sourceMappingURL=Declaration.js.map

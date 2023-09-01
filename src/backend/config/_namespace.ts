@@ -1,0 +1,1 @@
+export { PackageConfig } from './PackageConfig';

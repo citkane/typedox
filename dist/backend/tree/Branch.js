@@ -24,58 +24,88 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const dox = __importStar(require("../typedox"));
-const ts = __importStar(require("typescript"));
 const { Logger } = dox.lib;
 class Branch extends Logger {
-    constructor(declarations) {
+    constructor(parent, declarations) {
         super();
+        this._declarationBundle = new Map();
+        this._exportStarBundle = new Map();
         this.nameSpaces = new Map();
         this.classes = new Map();
         this.variables = new Map();
         this.functions = new Map();
         this.enums = new Map();
-        this.registerAlias = (declaration) => {
-            //const { alias } = declaration;
-            const alias = declaration;
-            if (!alias)
-                return this.error(this.class, 'Could not find an alias for a declaration.');
-            alias.tsKind === ts.SyntaxKind.ModuleDeclaration
-                ? this.registerNameSpace(alias, declaration.name)
-                : alias.tsKind === ts.SyntaxKind.VariableDeclaration
-                    ? this.registerVariable(alias, declaration.name)
-                    : alias.tsKind === ts.SyntaxKind.FunctionDeclaration
-                        ? this.registerFunction(alias, declaration.name)
-                        : alias.tsKind === ts.SyntaxKind.ClassDeclaration
-                            ? this.registerClass(alias, declaration.name)
-                            : this.error(this.class, 'Did not register an alias', declaration.get.report);
+        this.bundleDeclaration = (declaration) => {
+            const { kind, name } = declaration;
+            const { DeclarationKind } = dox;
+            kind === DeclarationKind.ExportStar
+                ? this.bundleExportStar(declaration)
+                : this._declarationBundle.set(declaration.name, declaration);
         };
-        this.registerNameSpace = (declaration, nameSpace) => {
-            const { children } = declaration;
-            nameSpace = nameSpace ? nameSpace : declaration.nameSpace;
-            if (!nameSpace)
-                return this.error('Namespace string was not found :', nameSpace);
-            const newBranch = new Branch(Branch.getChildDeclarations(children));
-            this.nameSpaces.set(nameSpace, newBranch);
+        this.mergeReExportIntoDeclarations = (declaration) => {
+            if (this._declarationBundle.has(declaration.name))
+                return;
+            this._declarationBundle.set(declaration.name, declaration);
         };
-        this.registerVariable = (declaration, name) => {
-            name = name ? name : declaration.name;
-            this.variables.set(name, declaration);
+        this.registerDeclaration = (declaration) => {
+            const { kind, name } = declaration;
+            const { DeclarationKind } = dox;
+            kind === DeclarationKind.Module
+                ? this.registerNameSpace(declaration)
+                : kind === DeclarationKind.Class
+                    ? this.classes.set(name, declaration)
+                    : kind === DeclarationKind.Function
+                        ? this.functions.set(name, declaration)
+                        : kind === DeclarationKind.Variable
+                            ? this.variables.set(name, declaration)
+                            : kind === DeclarationKind.Enum
+                                ? this.enums.set(name, declaration)
+                                : this.error(this.classIdentifier, 'Did not find a kind for a declaration: ', `${DeclarationKind[kind]}\n`, declaration.get.report);
         };
-        this.registerClass = (declaration, name) => {
-            name = name ? name : declaration.name;
-            this.classes.set(name, declaration);
+        this.bundleExportStar = (declaration) => {
+            [...(declaration.children.values() || [])].forEach((declaration) => {
+                if (this._exportStarBundle.has(declaration.name))
+                    return;
+                this._exportStarBundle.set(declaration.name, declaration);
+            });
         };
-        this.registerFunction = (declaration, name) => {
-            name = name ? name : declaration.name;
-            this.functions.set(name, declaration);
+        this.registerNameSpace = (declaration) => {
+            if (this.nameSpaces.has(declaration.name))
+                return;
+            const children = Branch.getChildDeclarations(declaration.children);
+            const newBranch = new Branch(this, children);
+            this.nameSpaces.set(declaration.name, newBranch);
         };
-        const { nameSpaceDeclarations, functionDeclarations, variableDeclarations, classDeclarations, aliasDeclarations, remainder, } = dox.tree.partitionDeclarations(declarations);
-        aliasDeclarations.forEach((d) => this.registerAlias(d));
-        nameSpaceDeclarations.forEach((d) => this.registerNameSpace(d));
-        variableDeclarations.forEach((d) => this.registerVariable(d));
-        classDeclarations.forEach((d) => this.registerClass(d));
-        functionDeclarations.forEach((d) => this.registerFunction(d));
-        remainder.forEach((declaration) => this.error(this.class, 'A declaration was not registered:', declaration.name));
+        this.parent = parent;
+        /*
+        declarations.forEach((declaration) => {
+            this.info(
+                declaration.name,
+                declaration.fileName,
+                declaration.children.keys(),
+            );
+        });
+        */
+        declarations.forEach(this.bundleDeclaration);
+        this.reExports.forEach(this.mergeReExportIntoDeclarations);
+        this.declarationBundle.forEach(this.registerDeclaration);
+        /*
+        this.info({
+            declarations: declarations.map((declaration) => ({
+                name: declaration.name,
+                parents: declaration.parents.length,
+                children: declaration.children,
+            })),
+            declare: this._declarationBundle.keys(),
+            star: this._exportStarBundle.keys(),
+        });
+        */
+    }
+    get reExports() {
+        return [...this._exportStarBundle.values()];
+    }
+    get declarationBundle() {
+        return [...this._declarationBundle.values()];
     }
     static getChildDeclarations(children) {
         const values = children.values();

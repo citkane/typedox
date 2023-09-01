@@ -1,12 +1,20 @@
-/*
-export const variableDeclaration = 'variableDeclaration';
-export module moduleDeclaration {
-	export const one = 1;
-	export const two = 2;
-}
-*/
+export * as grandchildren from './grandchildren';
+
+export * as children from './children';
+export module rootModule {}
+declare namespace rootNameSpace {}
+export { rootNameSpace };
+
 export * from './grandchildren';
+
 export * from './children';
+
+export class rootClass {}
+export const rootConst = 'rootConst';
+export function rootFunction() {}
+export const rootArrowFunction = () => {};
+export enum rootEnum {}
+
 /*
 export * as namespaceExport from './grandchildren';
 import * as exportSpecifier from './children';

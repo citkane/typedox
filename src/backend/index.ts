@@ -2,123 +2,101 @@ import * as ts from 'typescript';
 import * as dox from './typedox';
 
 const log = dox.lib.Logger;
-const DocumentsRoot = new dox.tree.treeRoot();
 
-getDocumentPackageRoots()
-	.map(makePackageConfigs)
-	.map(makePackagePrograms)
-	.map(auditPrograms)
-	.map(makePackages)
-	.map(makeReferences)
-	.map(discoverReferenceFiles)
-	.map(discoverReferenceDeclarations)
-	.map(discoverDeclarationRelationships)
-	.map(growBranches);
+const doxOptions = getDoxOptions();
+const doxProject = bootStrapEnv(doxOptions);
+const tsReferences = makeTsReferences(doxProject);
 
-serialiseTree(DocumentsRoot);
+discoverFilesAndDeclarations(tsReferences);
+buildRelationShips(tsReferences);
+growDocumentBranches(tsReferences);
 
-function getDocumentPackageRoots() {
-	return dox.Config.getNodePackages();
-}
+log.info(JSON.stringify(doxProject.toObject, null, 4));
 
-function makePackageConfigs(nodePackage: dox.nodePackage) {
-	const customOverrides = { options: { types: [] } };
-	const { name, version, packageRoot } = nodePackage;
-	const tsEntryRefs = dox.Config.getTsEntryRefs();
-	const config = new dox.Config(
-		tsEntryRefs,
-		name,
-		version,
-		packageRoot,
-		customOverrides,
-	);
-	return config;
+function getDoxOptions() {
+	return dox.doxOptionsStub;
 }
-function makePackagePrograms(doxConfig: dox.Config) {
-	doxConfig.referenceConfigs.forEach((config, name) => {
-		config.options.types = [];
-		const program = ts.createProgram(config.fileNames, config.options);
-		doxConfig.programs.set(name, program);
-	});
-	return doxConfig;
-}
-function auditPrograms(doxConfig: dox.Config) {
-	doxConfig.programs.forEach((program) => {
-		const diagnostics = ts.getPreEmitDiagnostics(program);
-		if (diagnostics.length) {
-			diagnostics.forEach((diagnosis) => {
-				log.warn(['index'], diagnosis.messageText);
-				log.debug(diagnosis.relatedInformation);
-			});
-			log.throwError(['index'], 'TSC diagnostics failed.');
-		}
-	});
-	return doxConfig;
-}
-function makePackages(doxConfig: dox.Config) {
-	const doxPackage = new dox.Package(doxConfig);
-	const treePackage = new dox.tree.treePackage(DocumentsRoot, doxPackage);
-	DocumentsRoot.treePackages.set(treePackage.name, treePackage);
-	return treePackage;
-}
-function makeReferences(treePackage: dox.tree.treePackage) {
-	const { doxPackage } = treePackage;
-	const { doxConfig } = doxPackage;
-	doxConfig.programs.forEach((program, key) => {
-		const config = doxConfig.referenceConfigs.get(key)!;
-		const doxContext = doxPackage.makeContext(key, program, config);
-		const doxReference = new dox.Reference(
-			doxContext,
-			key,
-			config.fileNames,
+function bootStrapEnv(doxOptions: dox.doxOptions) {
+	const doxProject = new dox.DoxProject(doxOptions);
+	const { tsOverrides } = doxOptions;
+
+	getNpmPackages()
+		.map(makeProjectConfig)
+		.map(registerTsProgramsToConfig)
+		.map(diagnoseTsPrograms)
+		.map(doxProject.makeNpmPackage)
+		.forEach(doxProject.registerNpmPackage);
+
+	return doxProject;
+
+	function getNpmPackages() {
+		return dox.npmPackagesStub;
+	}
+	function makeProjectConfig(npmPackageDef: dox.npmPackageDef) {
+		const { name, version, packageRootDir } = npmPackageDef;
+		const tsEntryRefs = dox.config.PackageConfig.findTsEntryDefs();
+		const config = new dox.config.PackageConfig(
+			tsEntryRefs,
+			name,
+			version,
+			packageRootDir,
+			tsOverrides,
 		);
-		doxPackage.references.set(key, doxReference);
-		treePackage.treeReferences.set(
-			key,
-			new dox.tree.treeReference(doxReference),
-		);
+		return config;
+	}
+	function registerTsProgramsToConfig(
+		packageConfig: dox.config.PackageConfig,
+	) {
+		packageConfig.tsReferenceConfigs.forEach((config, name) => {
+			const program = ts.createProgram(config.fileNames, config.options);
+			packageConfig.tsPrograms.set(name, program);
+		});
+		return packageConfig;
+	}
+	function diagnoseTsPrograms(projectConfig: dox.config.PackageConfig) {
+		projectConfig.tsPrograms.forEach((program) => {
+			const diagnostics = ts.getPreEmitDiagnostics(program);
+			if (diagnostics.length) {
+				diagnostics.forEach((diagnosis) => {
+					log.warn(['index'], diagnosis.messageText);
+					log.debug(diagnosis.relatedInformation);
+				});
+				log.throwError(['index'], 'TSC diagnostics failed.');
+			}
+		});
+		return projectConfig;
+	}
+}
+function makeTsReferences(doxProject: dox.DoxProject) {
+	return [...(doxProject.npmPackages.values() || [])]
+		.map(dox.NpmPackage.makeTsReferences)
+		.flat()
+		.map(registerReference);
+
+	function registerReference(tsReference: dox.TsReference) {
+		tsReference.parent.registerTsReference(tsReference);
+		return tsReference;
+	}
+}
+function discoverFilesAndDeclarations(tsReferences: dox.TsReference[]) {
+	tsReferences.forEach((tsReference) => {
+		tsReference.discoverFiles();
+		tsReference.discoverDeclarations();
 	});
-	return treePackage;
 }
-function discoverReferenceFiles(treePackage: dox.tree.treePackage) {
-	treePackage.treeReferences.forEach((treeReference) =>
-		treeReference.doxReference.discoverFiles(),
-	);
-	return treePackage;
+function buildRelationShips(tsReferences: dox.TsReference[]) {
+	tsReferences.forEach((tsReference) => tsReference.buildRelationships());
 }
-function discoverReferenceDeclarations(treePackage: dox.tree.treePackage) {
-	treePackage.treeReferences.forEach((treeReference) =>
-		treeReference.doxReference.discoverDeclarations(),
-	);
-	return treePackage;
-}
-function discoverDeclarationRelationships(treePackage: dox.tree.treePackage) {
-	treePackage.treeReferences.forEach((treeReference) =>
-		treeReference.doxReference.discoverRelationships(),
-	);
-	return treePackage;
-}
-function growBranches(treePackage: dox.tree.treePackage) {
-	treePackage.treeReferences.forEach((treeReference, key) => {
-		const sourceFiles = treeReference.doxReference.filesMap.values();
-		const rootDeclarations = dox.Reference.getDeclarationRoots([
-			...sourceFiles,
-		]);
-		treeReference.treeBranches.set(
-			key,
-			new dox.tree.Branch(rootDeclarations),
-		);
+function growDocumentBranches(tsReferences: dox.TsReference[]) {
+	tsReferences.forEach((tsReference) => {
+		const fileSources = getSourceFiles(tsReference);
+		const rootDeclarations =
+			dox.TsReference.getDeclarationRoots(fileSources);
+		const treeBranch = new dox.Branch(tsReference, rootDeclarations);
+		tsReference.treeBranches.set(tsReference.name, treeBranch);
 	});
+
+	function getSourceFiles(tsReference: dox.TsReference) {
+		return [...tsReference.filesMap.values()];
+	}
 }
-function serialiseTree(root: dox.tree.treeRoot) {
-	console
-		.log
-		//root.treePackages.get('typedox')?.treeReferences.get('namespace'),
-		();
-}
-/*
-function makeTree(doxPackage: dox.Package) {
-	const tree = new dox.tree.Root(doxPackage.declarationRoots, doxPackage);
-	dox.lib.Logger.info(JSON.stringify(tree.toObject(), null, 4));
-}
-*/

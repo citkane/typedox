@@ -25,31 +25,32 @@ var __importStar = (this && this.__importStar) || function (mod) {
 var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Package = exports.Config = exports.Reference = exports.logLevels = exports.serialiser = exports.tree = exports.lib = exports.tsEntryRefs = exports.packages = exports.nodePackage = void 0;
+exports.TscWrapper = exports.config = exports.lib = exports.DeclarationKind = exports.tsEntryRefsStub = exports.npmPackagesStub = exports.doxOptionsStub = exports.npmPackageStub = void 0;
 const path = __importStar(require("path"));
-exports.nodePackage = {
+exports.npmPackageStub = {
     name: 'typedox',
     version: 'v0.0.0',
-    packageRoot: path.join(__dirname, '../../'),
+    packageRootDir: path.join(__dirname, '../../'),
 };
-exports.packages = [exports.nodePackage];
-exports.tsEntryRefs = [
-    'test/scenarios/namespace/tsconfig.json',
+exports.doxOptionsStub = { tsOverrides: { options: { types: [] } } };
+exports.npmPackagesStub = [exports.npmPackageStub];
+exports.tsEntryRefsStub = [
+    'test/scenarios/testNamespaces/tsconfig.json',
 ];
+var DeclarationKind;
+(function (DeclarationKind) {
+    DeclarationKind[DeclarationKind["unknown"] = 0] = "unknown";
+    DeclarationKind[DeclarationKind["ExportStar"] = 1] = "ExportStar";
+    DeclarationKind[DeclarationKind["Module"] = 2] = "Module";
+    DeclarationKind[DeclarationKind["Variable"] = 3] = "Variable";
+    DeclarationKind[DeclarationKind["Function"] = 4] = "Function";
+    DeclarationKind[DeclarationKind["Class"] = 5] = "Class";
+    DeclarationKind[DeclarationKind["Enum"] = 6] = "Enum";
+})(DeclarationKind || (exports.DeclarationKind = DeclarationKind = {}));
 exports.lib = __importStar(require("./lib/_namespace"));
-exports.tree = __importStar(require("./tree/_namespace"));
-exports.serialiser = __importStar(require("./serialiser/_namespace"));
-var _namespace_1 = require("./lib/_namespace");
-Object.defineProperty(exports, "logLevels", { enumerable: true, get: function () { return _namespace_1.logLevels; } });
-__exportStar(require("./kinds/_namespace"), exports);
-var Reference_1 = require("./kinds/Reference");
-Object.defineProperty(exports, "Reference", { enumerable: true, get: function () { return __importDefault(Reference_1).default; } });
-var Config_1 = require("./Config");
-Object.defineProperty(exports, "Config", { enumerable: true, get: function () { return __importDefault(Config_1).default; } });
-var Package_1 = require("./kinds/Package");
-Object.defineProperty(exports, "Package", { enumerable: true, get: function () { return __importDefault(Package_1).default; } });
+exports.config = __importStar(require("./config/_namespace"));
+var TsWrapper_1 = require("./tscApi/TsWrapper");
+Object.defineProperty(exports, "TscWrapper", { enumerable: true, get: function () { return TsWrapper_1.TscWrapper; } });
+__exportStar(require("./projectStructure/_namespace"), exports);
 //# sourceMappingURL=typedox.js.map

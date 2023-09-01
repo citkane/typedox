@@ -23,42 +23,68 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const ts = __importStar(require("typescript"));
-class Serialiser {
-    static root(tree) {
-        /*
-        const { referenceName: packageName, version } = tree;
-        const branch = Serialiser.branch(tree);
-        return { packageName, version, ...branch };
-        */
-    }
-    static branch(branch) {
-        const nameSpaces = Serialiser.nameSpaces(branch);
-        const variables = Serialiser.variables(branch);
-        const functions = Serialiser.functions(branch);
-        return { nameSpaces, variables, functions };
-    }
-    static nameSpaces(branch) {
-        const nameSpaces = {};
-        branch.nameSpaces.forEach((branch, name) => {
-            nameSpaces[name] = Serialiser.branch(branch);
-        });
-        return nameSpaces;
-    }
-    static variables(branch) {
-        const variables = {};
-        branch.variables.forEach((declaration, name) => {
-            variables[name] = ts.SyntaxKind[declaration.tsKind];
-        });
-        return variables;
-    }
-    static functions(branch) {
-        const functions = {};
-        branch.functions.forEach((declaration, name) => {
-            functions[name] = ts.SyntaxKind[declaration.tsKind];
-        });
-        return functions;
-    }
+exports.enumsGroup = exports.functionsGroup = exports.variablesGroup = exports.classesGroup = exports.nameSpacesGroup = exports.branch = exports.tsReference = exports.npmPackage = exports.project = void 0;
+const dox = __importStar(require("../typedox"));
+const log = dox.lib.Logger;
+function project(root) {
+    const packages = mapToObject(root.npmPackages, npmPackage);
+    return {
+        packages,
+    };
 }
-exports.default = Serialiser;
+exports.project = project;
+function npmPackage(npmPackage) {
+    const { version, name, tsReferences } = npmPackage;
+    const references = mapToObject(tsReferences, tsReference);
+    return {
+        name,
+        version,
+        references,
+    };
+}
+exports.npmPackage = npmPackage;
+function tsReference(reference) {
+    const branches = mapToObject(reference.treeBranches, branch);
+    const branchName = reference.name;
+    return Object.assign({}, branches[branchName]);
+}
+exports.tsReference = tsReference;
+function branch(treeBranch) {
+    const { nameSpaces, functions, variables, classes, enums } = treeBranch;
+    return {
+        namespaces: mapToObject(nameSpaces, nameSpacesGroup),
+        classes: mapToObject(classes, classesGroup),
+        functions: mapToObject(functions, functionsGroup),
+        enums: mapToObject(enums, enumsGroup),
+        variables: mapToObject(variables, variablesGroup),
+    };
+}
+exports.branch = branch;
+function nameSpacesGroup(nameSpace) {
+    return Object.assign({}, branch(nameSpace));
+}
+exports.nameSpacesGroup = nameSpacesGroup;
+function classesGroup() {
+    return {};
+}
+exports.classesGroup = classesGroup;
+function variablesGroup() {
+    return {};
+}
+exports.variablesGroup = variablesGroup;
+function functionsGroup() {
+    return {};
+}
+exports.functionsGroup = functionsGroup;
+function enumsGroup() {
+    return {};
+}
+exports.enumsGroup = enumsGroup;
+function mapToObject(sourceMap, targetFunction) {
+    const sourceObject = Object.fromEntries(sourceMap);
+    Object.keys(sourceObject).forEach((key) => {
+        sourceObject[key] = targetFunction(sourceObject[key]);
+    });
+    return sourceObject;
+}
 //# sourceMappingURL=Serialiser.js.map
