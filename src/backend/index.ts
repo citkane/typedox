@@ -1,28 +1,67 @@
+import { ProjectConfig } from './config/ProjectConfig';
+import { logger as log, config } from './typedox';
+
 import * as ts from 'typescript';
-import * as dox from './typedox';
 
-const log = dox.lib.Logger;
+main(log.isRequestForHelp());
+function main(helpRequest: boolean) {
+	if (helpRequest) return log.logApplicationHelp();
 
-const doxOptions = getDoxOptions();
+	const projectConfig = configureProject();
+	const packageConfigs = configurePackages(projectConfig);
+}
+
+/*
 const doxProject = bootStrapEnv(doxOptions);
+
 const tsReferences = makeTsReferences(doxProject);
 
 discoverFilesAndDeclarations(tsReferences);
 buildRelationShips(tsReferences);
 growDocumentBranches(tsReferences);
+*/
+//projectLogger.info(JSON.stringify(doxProject.toObject, null, 4));
 
-log.info(JSON.stringify(doxProject.toObject, null, 4));
+function configureProject() {
+	const projectOptions = config.getDoxOptions(config.confApi);
+	const tscCommandlineOptions = config.getTscClOptions(projectOptions);
+	const projectConfig = new ProjectConfig(
+		projectOptions,
+		tscCommandlineOptions,
+	);
 
-function getDoxOptions() {
-	return dox.doxOptionsStub;
+	config.auditOptions.call(projectConfig);
+	log.setLogLevel(projectConfig.logLevel);
+
+	return projectConfig;
 }
-function bootStrapEnv(doxOptions: dox.doxOptions) {
-	const doxProject = new dox.DoxProject(doxOptions);
-	const { tsOverrides } = doxOptions;
+function configurePackages(projectConfig: ProjectConfig) {
+	const {
+		initTsconfigPathToConfig,
+		discoverTscRawConfigs,
+		discoverNpmPackages,
+		registerNpmPackageDefs,
+	} = config;
+	const { tsConfigs } = projectConfig;
+	const filenamesToConfigs = initTsconfigPathToConfig.bind(projectConfig);
+	const discoverConfigs = discoverTscRawConfigs.bind(projectConfig);
+	const discoverPackages = discoverNpmPackages.bind(projectConfig);
+	const registerPackages = registerNpmPackageDefs.bind(projectConfig);
+
+	const initialTscConfigs = tsConfigs.map(filenamesToConfigs);
+	const tscConfigs = discoverConfigs(initialTscConfigs);
+	const npmPackageDefs = discoverPackages(tscConfigs);
+	const doxPackageConfigs = registerPackages(npmPackageDefs);
+
+	log.inspect(doxPackageConfigs);
+}
+/*
+function bootStrapEnv(projectConfig: dox.config.ProjectConfig) {
+	const doxProject = new dox.DoxProject(projectConfig);
 
 	getNpmPackages()
 		.map(makeProjectConfig)
-		.map(registerTsProgramsToConfig)
+		.map(registerTscProgramsToConfig)
 		.map(diagnoseTsPrograms)
 		.map(doxProject.makeNpmPackage)
 		.forEach(doxProject.registerNpmPackage);
@@ -40,33 +79,38 @@ function bootStrapEnv(doxOptions: dox.doxOptions) {
 			name,
 			version,
 			packageRootDir,
-			tsOverrides,
+			options,
 		);
 		return config;
 	}
-	function registerTsProgramsToConfig(
+	function registerTscProgramsToConfig(
 		packageConfig: dox.config.PackageConfig,
 	) {
-		packageConfig.tsReferenceConfigs.forEach((config, name) => {
-			const program = ts.createProgram(config.fileNames, config.options);
-			packageConfig.tsPrograms.set(name, program);
+		packageConfig.tscReferenceConfigs.forEach((tscConfig, name) => {
+			const tscProgram = ts.createProgram(
+				tscConfig.fileNames,
+				tscConfig.options,
+			);
+			packageConfig.tscPrograms.set(name, tscProgram);
 		});
 		return packageConfig;
 	}
-	function diagnoseTsPrograms(projectConfig: dox.config.PackageConfig) {
-		projectConfig.tsPrograms.forEach((program) => {
-			const diagnostics = ts.getPreEmitDiagnostics(program);
+	function diagnoseTsPrograms(packageConfig: dox.config.PackageConfig) {
+		packageConfig.tscPrograms.forEach((tscProgram) => {
+			const diagnostics = ts.getPreEmitDiagnostics(tscProgram);
 			if (diagnostics.length) {
 				diagnostics.forEach((diagnosis) => {
 					log.warn(['index'], diagnosis.messageText);
-					log.debug(diagnosis.relatedInformation);
+					if (diagnosis.relatedInformation)
+						log.debug(diagnosis.relatedInformation);
 				});
 				log.throwError(['index'], 'TSC diagnostics failed.');
 			}
 		});
-		return projectConfig;
+		return packageConfig;
 	}
 }
+
 function makeTsReferences(doxProject: dox.DoxProject) {
 	return [...(doxProject.npmPackages.values() || [])]
 		.map(dox.NpmPackage.makeTsReferences)
@@ -100,3 +144,4 @@ function growDocumentBranches(tsReferences: dox.TsReference[]) {
 		return [...tsReference.filesMap.values()];
 	}
 }
+*/

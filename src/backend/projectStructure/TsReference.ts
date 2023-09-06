@@ -1,36 +1,46 @@
 import * as dox from '../typedox';
-import { Dox } from './Dox';
+import * as ts from 'typescript';
 
-export class TsReference extends Dox {
-	parent: dox.NpmPackage;
+const log = dox.logger;
+
+/**
+ * A container for a typescript compiler reference. This could be the only one in a npm package, or one of many if
+ * the typescript `references` option is used. Each reference will have a corresponding `tsconfig`.
+ *
+ * &emsp;DoxProject\
+ * &emsp;&emsp;|\
+ * &emsp;&emsp;--- NpmPackage[]\
+ * &emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;--- **TsReference**[]\
+ * &emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;--- TsSourceFile[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;--- TsDeclaration[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;--- Branch[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
+ *
+ */
+export class TsReference extends dox.DoxContext {
+	private context: dox.DoxContext;
 	name: string;
 	filesMap: dox.fileMap = new Map();
 	treeBranches: Map<string, dox.Branch> = new Map();
 	entryFileList: string[];
-	constructor(
-		parent: dox.NpmPackage,
-		context: dox.lib.DoxContext,
-		name: string,
-	) {
-		super(context);
-		this.context = { ...this.context, tsReference: this };
 
-		this.parent = parent;
+	constructor(context: dox.DoxContext, name: string) {
+		super(context);
+		this.context = this.registerTsReferenceContext(this);
+
 		this.name = name;
 		this.entryFileList = context.tsConfig.fileNames;
-
-		//this.discoverFiles(entryFileList);
-
-		/*
-		this.filesMap.forEach((file) => file.triggerRelationships());
-		const rootDeclarations = Package.getDeclarationRoots(this);
-		const tree = new dox.tree.Root(rootDeclarations, this);
-		dox.log.info(JSON.stringify(tree.toObject(), null, 4));
-		*/
 	}
-
+	public get parent() {
+		return this.context.npmPackage;
+	}
 	public get toObject() {
-		return dox.lib.serialiseTsReference(this);
+		return dox.serialise.serialiseTsReference(this);
 	}
 
 	public discoverDeclarations = () =>
@@ -47,8 +57,8 @@ export class TsReference extends Dox {
 			const fileSource = program.getSourceFile(fileName);
 
 			if (!fileSource)
-				return this.error(
-					this.classIdentifier,
+				return log.error(
+					log.identifier(this),
 					'No source file was found:',
 					fileName,
 				);

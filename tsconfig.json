@@ -1,7 +1,9 @@
 {
+	/* This is a comment */
 	"extends": "@typedox/tsconfig/base.json",
 	"references": [
 		{ "path": "./src/tsconfig.backend.json" },
+		{"path": "./test/scenarios/namespaces"}
 		//{ "path": "./src/tsconfig.frontend.json" },
 		//{ "path": "./src/tsconfig.types.json" }
 	],

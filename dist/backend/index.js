@@ -1,109 +1,133 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const ts = __importStar(require("typescript"));
-const dox = __importStar(require("./typedox"));
-const log = dox.lib.Logger;
-const doxOptions = getDoxOptions();
+const ProjectConfig_1 = require("./config/ProjectConfig");
+const typedox_1 = require("./typedox");
+main(typedox_1.logger.isRequestForHelp());
+function main(helpRequest) {
+    if (helpRequest)
+        return typedox_1.logger.logApplicationHelp();
+    const projectConfig = configureProject();
+    const packageConfigs = configurePackages(projectConfig);
+}
+/*
 const doxProject = bootStrapEnv(doxOptions);
+
 const tsReferences = makeTsReferences(doxProject);
+
 discoverFilesAndDeclarations(tsReferences);
 buildRelationShips(tsReferences);
 growDocumentBranches(tsReferences);
-log.info(JSON.stringify(doxProject.toObject, null, 4));
-function getDoxOptions() {
-    return dox.doxOptionsStub;
+*/
+//projectLogger.info(JSON.stringify(doxProject.toObject, null, 4));
+function configureProject() {
+    const projectOptions = typedox_1.config.getDoxOptions(typedox_1.config.confApi);
+    const tscCommandlineOptions = typedox_1.config.getTscClOptions(projectOptions);
+    const projectConfig = new ProjectConfig_1.ProjectConfig(projectOptions, tscCommandlineOptions);
+    typedox_1.config.auditOptions.call(projectConfig);
+    typedox_1.logger.setLogLevel(projectConfig.logLevel);
+    return projectConfig;
 }
-function bootStrapEnv(doxOptions) {
-    const doxProject = new dox.DoxProject(doxOptions);
-    const { tsOverrides } = doxOptions;
+function configurePackages(projectConfig) {
+    const { initTsconfigPathToConfig, discoverTscRawConfigs, discoverNpmPackages, registerNpmPackageDefs, } = typedox_1.config;
+    const { tsConfigs } = projectConfig;
+    const filenamesToConfigs = initTsconfigPathToConfig.bind(projectConfig);
+    const discoverConfigs = discoverTscRawConfigs.bind(projectConfig);
+    const discoverPackages = discoverNpmPackages.bind(projectConfig);
+    const registerPackages = registerNpmPackageDefs.bind(projectConfig);
+    const initialTscConfigs = tsConfigs.map(filenamesToConfigs);
+    const tscConfigs = discoverConfigs(initialTscConfigs);
+    const npmPackageDefs = discoverPackages(tscConfigs);
+    const doxPackageConfigs = registerPackages(npmPackageDefs);
+    typedox_1.logger.inspect(doxPackageConfigs);
+}
+/*
+function bootStrapEnv(projectConfig: dox.config.ProjectConfig) {
+    const doxProject = new dox.DoxProject(projectConfig);
+
     getNpmPackages()
         .map(makeProjectConfig)
-        .map(registerTsProgramsToConfig)
+        .map(registerTscProgramsToConfig)
         .map(diagnoseTsPrograms)
         .map(doxProject.makeNpmPackage)
         .forEach(doxProject.registerNpmPackage);
+
     return doxProject;
+
     function getNpmPackages() {
         return dox.npmPackagesStub;
     }
-    function makeProjectConfig(npmPackageDef) {
+    function makeProjectConfig(npmPackageDef: dox.npmPackageDef) {
         const { name, version, packageRootDir } = npmPackageDef;
         const tsEntryRefs = dox.config.PackageConfig.findTsEntryDefs();
-        const config = new dox.config.PackageConfig(tsEntryRefs, name, version, packageRootDir, tsOverrides);
+        const config = new dox.config.PackageConfig(
+            tsEntryRefs,
+            name,
+            version,
+            packageRootDir,
+            options,
+        );
         return config;
     }
-    function registerTsProgramsToConfig(packageConfig) {
-        packageConfig.tsReferenceConfigs.forEach((config, name) => {
-            const program = ts.createProgram(config.fileNames, config.options);
-            packageConfig.tsPrograms.set(name, program);
+    function registerTscProgramsToConfig(
+        packageConfig: dox.config.PackageConfig,
+    ) {
+        packageConfig.tscReferenceConfigs.forEach((tscConfig, name) => {
+            const tscProgram = ts.createProgram(
+                tscConfig.fileNames,
+                tscConfig.options,
+            );
+            packageConfig.tscPrograms.set(name, tscProgram);
         });
         return packageConfig;
     }
-    function diagnoseTsPrograms(projectConfig) {
-        projectConfig.tsPrograms.forEach((program) => {
-            const diagnostics = ts.getPreEmitDiagnostics(program);
+    function diagnoseTsPrograms(packageConfig: dox.config.PackageConfig) {
+        packageConfig.tscPrograms.forEach((tscProgram) => {
+            const diagnostics = ts.getPreEmitDiagnostics(tscProgram);
             if (diagnostics.length) {
                 diagnostics.forEach((diagnosis) => {
                     log.warn(['index'], diagnosis.messageText);
-                    log.debug(diagnosis.relatedInformation);
+                    if (diagnosis.relatedInformation)
+                        log.debug(diagnosis.relatedInformation);
                 });
                 log.throwError(['index'], 'TSC diagnostics failed.');
             }
         });
-        return projectConfig;
+        return packageConfig;
     }
 }
-function makeTsReferences(doxProject) {
+
+function makeTsReferences(doxProject: dox.DoxProject) {
     return [...(doxProject.npmPackages.values() || [])]
         .map(dox.NpmPackage.makeTsReferences)
         .flat()
         .map(registerReference);
-    function registerReference(tsReference) {
+
+    function registerReference(tsReference: dox.TsReference) {
         tsReference.parent.registerTsReference(tsReference);
         return tsReference;
     }
 }
-function discoverFilesAndDeclarations(tsReferences) {
+function discoverFilesAndDeclarations(tsReferences: dox.TsReference[]) {
     tsReferences.forEach((tsReference) => {
         tsReference.discoverFiles();
         tsReference.discoverDeclarations();
     });
 }
-function buildRelationShips(tsReferences) {
+function buildRelationShips(tsReferences: dox.TsReference[]) {
     tsReferences.forEach((tsReference) => tsReference.buildRelationships());
 }
-function growDocumentBranches(tsReferences) {
+function growDocumentBranches(tsReferences: dox.TsReference[]) {
     tsReferences.forEach((tsReference) => {
         const fileSources = getSourceFiles(tsReference);
-        const rootDeclarations = dox.TsReference.getDeclarationRoots(fileSources);
+        const rootDeclarations =
+            dox.TsReference.getDeclarationRoots(fileSources);
         const treeBranch = new dox.Branch(tsReference, rootDeclarations);
         tsReference.treeBranches.set(tsReference.name, treeBranch);
     });
-    function getSourceFiles(tsReference) {
+
+    function getSourceFiles(tsReference: dox.TsReference) {
         return [...tsReference.filesMap.values()];
     }
 }
+*/
 //# sourceMappingURL=index.js.map

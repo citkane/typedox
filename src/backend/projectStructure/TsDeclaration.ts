@@ -1,8 +1,30 @@
 import * as dox from '../typedox';
 import * as ts from 'typescript';
-import { Dox } from './Dox';
 
-export class TsDeclaration extends Dox {
+const log = dox.logger;
+
+/**
+ * A container for typescript declarations:
+ *
+ * &emsp;DoxProject\
+ * &emsp;&emsp;|\
+ * &emsp;&emsp;--- NpmPackage[]\
+ * &emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;--- TsReference[]\
+ * &emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;--- TsSourceFile[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;--- **TsDeclaration**[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;--- Branch[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...**TsDeclaration**...
+ *
+ *
+ */
+export class TsDeclaration extends dox.DoxContext {
+	private context: dox.DoxContext;
+
 	name: string;
 	tsKind: ts.SyntaxKind;
 	tsNode: ts.Node;
@@ -14,10 +36,9 @@ export class TsDeclaration extends Dox {
 	aliasName?: string;
 	get: dox.TscWrapper;
 
-	constructor(context: dox.lib.DoxContext, item: ts.Symbol | ts.Node) {
+	constructor(context: dox.DoxContext, item: ts.Symbol | ts.Node) {
 		super(context);
-		this.context = { ...context, tsDeclaration: this };
-		dox.Dox.classString.bind(this);
+		this.context = this.registerTsDeclarationContext(this);
 
 		this.get = this.tsWrap(item);
 		this.name = this.get.name;
@@ -29,16 +50,16 @@ export class TsDeclaration extends Dox {
 		if (!this.get.isExportStarChild && !dox.isSpecifierKind(this.tsKind))
 			return;
 
-		this.debug(this.classIdentifier, this.get.nodeDeclarationText);
+		log.debug(log.identifier(this), this.get.nodeDeclarationText);
 
 		this.parser(this.get.tsNode);
 	}
 	public get parent() {
-		return this.sourceFile!;
+		return this.context.tsSourceFile!;
 	}
 	public get kind() {
 		const { SyntaxKind } = ts;
-		const { DeclarationKind } = dox;
+		const { DeclarationGroup: DeclarationKind } = dox;
 
 		if (this.get.isExportStarChild) return DeclarationKind.ExportStar;
 
@@ -61,9 +82,9 @@ export class TsDeclaration extends Dox {
 				? DeclarationKind.Enum
 				: DeclarationKind.unknown;
 
-		if (kind === dox.DeclarationKind.unknown)
-			this.error(
-				this.classIdentifier,
+		if (kind === dox.DeclarationGroup.unknown)
+			log.error(
+				log.identifier(this),
 				'Did not discover a kind:',
 				SyntaxKind[tsKind],
 				this.get.report,
@@ -80,7 +101,7 @@ export class TsDeclaration extends Dox {
 			? this.parseExportSpecifier()
 			: get.isExportStarChild
 			? this.parseReExporter(get)
-			: TsDeclaration.deepReport.call(
+			: dox.DoxProject.deepReport.call(
 					this,
 					'error',
 					`Did not parse a ${
@@ -105,8 +126,8 @@ export class TsDeclaration extends Dox {
 	private parseExportSpecifier() {
 		const localTarget = this.get.localTargetDeclaration;
 		if (!localTarget)
-			return this.error(
-				this.classIdentifier,
+			return log.error(
+				log.identifier(this),
 				'No local target found:',
 				this.get.report,
 			);

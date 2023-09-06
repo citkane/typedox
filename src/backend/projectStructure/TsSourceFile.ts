@@ -1,8 +1,28 @@
 import * as dox from '../typedox';
 import * as ts from 'typescript';
-import { Dox } from './Dox';
 
-export class TsSourceFile extends Dox {
+const log = dox.logger;
+
+/**
+ * A container for typescript compiler source files:
+ *
+ * &emsp;DoxProject\
+ * &emsp;&emsp;|\
+ * &emsp;&emsp;--- NpmPackage[]\
+ * &emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;--- TsReference[]\
+ * &emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;--- **TsSourceFile**[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;--- TsDeclaration[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;--- Branch[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
+ */
+export class TsSourceFile extends dox.DoxContext {
+	private context: dox.DoxContext;
+
 	public childFiles: string[];
 	public fileName: string;
 	public fileSymbol: ts.Symbol;
@@ -10,10 +30,9 @@ export class TsSourceFile extends Dox {
 	public declarationsMap: dox.declarationMap = new Map();
 	public source: ts.SourceFile;
 
-	constructor(context: dox.lib.DoxContext, source: ts.SourceFile) {
+	constructor(context: dox.DoxContext, source: ts.SourceFile) {
 		super(context);
-		TsSourceFile.classString.bind(this);
-		this.context = { ...this.context, tsSourceFile: this };
+		this.context = this.registerTsSourceFileContext(this);
 
 		this.source = source;
 		this.fileName = source.fileName;
@@ -22,21 +41,21 @@ export class TsSourceFile extends Dox {
 		const fileExports = this.fileSymbol.exports?.values();
 		this.childFiles = this.discoverFiles([...(fileExports || [])]);
 
-		this.debug(this.classIdentifier, this.fileName);
+		log.debug(log.identifier(this), this.fileName);
 	}
 	public get parent() {
-		return this.reference!;
+		return this.context.tsReference!;
 	}
 	private discoverFiles = (fileSymbols: ts.Symbol[]) => {
 		return fileSymbols.map(getFileNames.bind(this)).flat().filter(filter);
 
 		function getFileNames(this: TsSourceFile, symbol: ts.Symbol) {
-			return dox.isStarExport(symbol)
+			return dox.tsc.isStarExport(symbol)
 				? discoverStars.bind(this)(symbol)
 				: this.tsWrap(symbol).targetFileName!;
 		}
 		function discoverStars(this: TsSourceFile, symbol: ts.Symbol) {
-			return dox.parseExportStars
+			return dox.tsc.parseExportStars
 				.call(this, symbol)
 				.map((expression) => this.tsWrap(expression).targetFileName!);
 		}
@@ -48,12 +67,12 @@ export class TsSourceFile extends Dox {
 		this.fileSymbol.exports?.forEach(parseSymbol.bind(this));
 
 		function parseSymbol(this: TsSourceFile, symbol: ts.Symbol) {
-			dox.isStarExport(symbol)
+			dox.tsc.isStarExport(symbol)
 				? discoverStarExports.bind(this)(symbol)
 				: makeDeclaration.call(this, symbol);
 		}
 		function discoverStarExports(this: TsSourceFile, symbol: ts.Symbol) {
-			dox.parseExportStars
+			dox.tsc.parseExportStars
 				.call(this, symbol)
 				.forEach(makeDeclaration.bind(this));
 		}
@@ -67,7 +86,7 @@ export class TsSourceFile extends Dox {
 	};
 	public buildRelationships = () => {
 		this.declarationsMap.forEach(
-			(declaration) => new dox.lib.Relation(this.context, declaration),
+			(declaration) => new dox.Relation(this.context, declaration),
 		);
 	};
 }

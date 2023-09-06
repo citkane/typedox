@@ -6,37 +6,37 @@
 import * as dox from '../typedox';
 import * as ts from 'typescript';
 import * as path from 'path';
-import * as fs from 'fs-extra';
-import { Logger } from '../lib/Logger';
+import * as fs from 'fs';
+import { tscParsedConfig } from '../typedox';
 
-export class PackageConfig extends Logger {
+const log = dox.logger;
+
+export class PackageConfig {
 	public npmPackageName: string;
 	public npmPackageVersion: string;
 	public npmPackageRootDir: string;
 
-	public tsReferenceConfigs: Map<string, ts.ParsedCommandLine> = new Map();
-	public tsPrograms: Map<string, ts.Program> = new Map();
+	public tscConfigs: Map<string, tscParsedConfig> = new Map();
+	public tscPrograms: Map<string, ts.Program> = new Map();
 
 	constructor(
-		tsEntryDefs: dox.tsEntryDef[],
 		npmProjectName: string,
 		npmProjectVersion: string,
 		npmProjectRootDir: string,
-		optionOverrides: Partial<ts.ParsedCommandLine> = {},
+		tsEntryDefs: tscParsedConfig[],
+		//optionOverrides: Partial<ts.ParsedCommandLine> = {},
 	) {
-		super();
-		PackageConfig.classString.bind(this);
-
 		this.npmPackageName = npmProjectName;
 		this.npmPackageVersion = npmProjectVersion;
 		this.npmPackageRootDir = npmProjectRootDir;
-		tsEntryDefs.forEach((entryDef) =>
-			this.parseTsEntryDef(entryDef, optionOverrides),
+		tsEntryDefs.forEach(
+			(entryDef) => {},
+			//this.parseTsEntryDef(entryDef, optionOverrides),
 		);
 	}
-
+	/*
 	private parseTsEntryDef = (
-		entryDef: dox.tsEntryDef,
+		entryDef: dox.tscRawConfig,
 		optionOverrides: Partial<ts.ParsedCommandLine>,
 	) => {
 		const fileName = typeof entryDef === 'string' ? entryDef : entryDef[1];
@@ -52,7 +52,7 @@ export class PackageConfig extends Logger {
 				? PackageConfig.getReferenceName(basePath, config)
 				: entryDef[0];
 
-		this.tsReferenceConfigs.set(referenceName, config);
+		this.tscReferenceConfigs.set(referenceName, config);
 	};
 	public static findTsEntryDefs() {
 		return dox.tsEntryRefsStub;
@@ -69,8 +69,8 @@ export class PackageConfig extends Logger {
 		optionOverrides: Partial<ts.ParsedCommandLine>,
 	) {
 		if (!fs.existsSync(filePath))
-			PackageConfig.throwError(
-				PackageConfig.classString(),
+			log.throwError(
+				log.identifier(this),
 				'Entry file not found:',
 				filePath,
 			);
@@ -93,4 +93,5 @@ export class PackageConfig extends Logger {
 		});
 		return parsedOptions;
 	}
+	*/
 }

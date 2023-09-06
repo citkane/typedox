@@ -25,32 +25,41 @@ var __importStar = (this && this.__importStar) || function (mod) {
 var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TscWrapper = exports.config = exports.lib = exports.DeclarationKind = exports.tsEntryRefsStub = exports.npmPackagesStub = exports.doxOptionsStub = exports.npmPackageStub = void 0;
+exports.npmPackagesStub = exports.npmPackageStub = exports.tsc = exports.config = exports.serialise = exports.TscWrapper = exports.DoxContext = exports.DoxProject = exports.DeclarationGroup = exports.logger = void 0;
 const path = __importStar(require("path"));
+const Logger_1 = require("./logger/Logger");
+exports.logger = new Logger_1.Logger();
+/**
+ * An enumerator for dox groups used to categorise `tsDeclarations`.
+ */
+var DeclarationGroup;
+(function (DeclarationGroup) {
+    DeclarationGroup[DeclarationGroup["unknown"] = 0] = "unknown";
+    DeclarationGroup[DeclarationGroup["ExportStar"] = 1] = "ExportStar";
+    DeclarationGroup[DeclarationGroup["Module"] = 2] = "Module";
+    DeclarationGroup[DeclarationGroup["Variable"] = 3] = "Variable";
+    DeclarationGroup[DeclarationGroup["Function"] = 4] = "Function";
+    DeclarationGroup[DeclarationGroup["Class"] = 5] = "Class";
+    DeclarationGroup[DeclarationGroup["Enum"] = 6] = "Enum";
+})(DeclarationGroup || (exports.DeclarationGroup = DeclarationGroup = {}));
+var DoxProject_1 = require("./projectStructure/DoxProject");
+Object.defineProperty(exports, "DoxProject", { enumerable: true, get: function () { return DoxProject_1.DoxProject; } });
+var DoxContext_1 = require("./projectStructure/DoxContext");
+Object.defineProperty(exports, "DoxContext", { enumerable: true, get: function () { return __importDefault(DoxContext_1).default; } });
+var TsWrapper_1 = require("./tscApiWrapper/TsWrapper");
+Object.defineProperty(exports, "TscWrapper", { enumerable: true, get: function () { return TsWrapper_1.TscWrapper; } });
+__exportStar(require("./projectStructure/_namespace"), exports);
+exports.serialise = __importStar(require("./serialiser/_namespace"));
+exports.config = __importStar(require("./config/_namespace"));
+exports.tsc = __importStar(require("./tscApiWrapper/_namespace"));
 exports.npmPackageStub = {
     name: 'typedox',
     version: 'v0.0.0',
     packageRootDir: path.join(__dirname, '../../'),
 };
-exports.doxOptionsStub = { tsOverrides: { options: { types: [] } } };
 exports.npmPackagesStub = [exports.npmPackageStub];
-exports.tsEntryRefsStub = [
-    'test/scenarios/testNamespaces/tsconfig.json',
-];
-var DeclarationKind;
-(function (DeclarationKind) {
-    DeclarationKind[DeclarationKind["unknown"] = 0] = "unknown";
-    DeclarationKind[DeclarationKind["ExportStar"] = 1] = "ExportStar";
-    DeclarationKind[DeclarationKind["Module"] = 2] = "Module";
-    DeclarationKind[DeclarationKind["Variable"] = 3] = "Variable";
-    DeclarationKind[DeclarationKind["Function"] = 4] = "Function";
-    DeclarationKind[DeclarationKind["Class"] = 5] = "Class";
-    DeclarationKind[DeclarationKind["Enum"] = 6] = "Enum";
-})(DeclarationKind || (exports.DeclarationKind = DeclarationKind = {}));
-exports.lib = __importStar(require("./lib/_namespace"));
-exports.config = __importStar(require("./config/_namespace"));
-var TsWrapper_1 = require("./tscApi/TsWrapper");
-Object.defineProperty(exports, "TscWrapper", { enumerable: true, get: function () { return TsWrapper_1.TscWrapper; } });
-__exportStar(require("./projectStructure/_namespace"), exports);
 //# sourceMappingURL=typedox.js.map

@@ -1,8 +1,28 @@
 import * as dox from '../typedox';
 import * as ts from 'typescript';
-const { Logger } = dox.lib;
 
-export class NpmPackage extends Logger {
+const log = dox.logger;
+
+/**
+ * A container for all npm `package` declarations. Can be one, or many in a monorepo:
+ *
+ * &emsp;DoxProject\
+ * &emsp;&emsp;|\
+ * &emsp;&emsp;--- **NpmPackage**[]\
+ * &emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;--- TsReference[]\
+ * &emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;--- TsSourceFile[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;--- TsDeclaration[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;--- Branch[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
+ *
+ *
+ */
+export class NpmPackage {
 	parent: dox.DoxProject;
 	tsReferences: Map<string, dox.TsReference> = new Map();
 	packageConfig: dox.config.PackageConfig;
@@ -14,39 +34,37 @@ export class NpmPackage extends Logger {
 		projectConfig: dox.config.PackageConfig,
 		parent: dox.DoxProject,
 	) {
-		super();
 		this.parent = parent;
 		this.packageConfig = projectConfig;
-		NpmPackage.classString.bind(this);
 
 		const {
 			npmPackageName: projectName,
 			npmPackageVersion: projectVersion,
-			tsPrograms: programs,
+			tscPrograms: programs,
 		} = projectConfig;
 		this.version = projectVersion;
 		this.name = projectName;
 	}
 	public get toObject() {
-		return dox.lib.serialiseNpmPackage(this);
+		return dox.serialise.serialiseNpmPackage(this);
 	}
 	public registerTsReference(tsReference: dox.TsReference) {
 		this.tsReferences.set(tsReference.name, tsReference);
 	}
 	public static makeTsReferences(npmPackage: NpmPackage) {
 		const { packageConfig } = npmPackage;
-		return [...npmPackage.packageConfig.tsPrograms].map((args) =>
-			NpmPackage.makeTsReference(...args, npmPackage),
+		return [...npmPackage.packageConfig.tscPrograms].map((programs) =>
+			NpmPackage.makeTsReference(...programs, npmPackage),
 		);
 	}
 	public static makeTsReference(
 		name: string,
-		program: ts.Program,
+		tsProgram: ts.Program,
 		npmPackage: NpmPackage,
 	) {
 		const { packageConfig } = npmPackage;
-		const config = packageConfig.tsReferenceConfigs.get(name)!;
-		const context = new dox.lib.DoxContext(program, config, npmPackage);
-		return new dox.TsReference(npmPackage, context, name);
+		const tsConfig = packageConfig.tscConfigs.get(name)!;
+		const context = new dox.DoxContext({ tsProgram, tsConfig, npmPackage });
+		return new dox.TsReference(context, name);
 	}
 }

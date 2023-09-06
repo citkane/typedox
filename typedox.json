@@ -1,0 +1,8 @@
+{
+	"projectRootDir": "",
+	"doxOut": "",
+	"typeDependencies": [],
+	"logLevel": "",
+	"tsConfigs": ["test/scenarios/namespaces", "tsconfig.json"],
+	"npmFileConvention": ""
+}

@@ -1,8 +1,27 @@
 import * as dox from '../typedox';
 
-const { Logger } = dox.lib;
+const log = dox.logger;
 
-export class Branch extends Logger {
+/**
+ * The highest level container of the project structure, after which the tree is recursive:
+ *
+ * &emsp;DoxProject\
+ * &emsp;&emsp;|\
+ * &emsp;&emsp;--- NpmPackage[]\
+ * &emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;--- TsReference[]\
+ * &emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;--- TsSourceFile[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;--- TsDeclaration[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;--- **Branch**[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
+ *
+ *
+ */
+export class Branch {
 	parent: dox.TsReference | dox.Branch;
 	_declarationBundle: Map<string, dox.TsDeclaration> = new Map();
 	_exportStarBundle: Map<string, dox.TsDeclaration> = new Map();
@@ -15,7 +34,6 @@ export class Branch extends Logger {
 		parent: dox.TsReference | dox.Branch,
 		declarations: dox.TsDeclaration[],
 	) {
-		super();
 		this.parent = parent;
 		declarations.forEach(this.bundleDeclaration);
 		this.reExports.forEach(this.mergeReExportIntoDeclarations);
@@ -30,7 +48,7 @@ export class Branch extends Logger {
 
 	private bundleDeclaration = (declaration: dox.TsDeclaration) => {
 		const { kind, name } = declaration;
-		const { DeclarationKind } = dox;
+		const { DeclarationGroup: DeclarationKind } = dox;
 		kind === DeclarationKind.ExportStar
 			? this.bundleExportStar(declaration)
 			: this._declarationBundle.set(declaration.name, declaration);
@@ -43,7 +61,7 @@ export class Branch extends Logger {
 	};
 	private registerDeclaration = (declaration: dox.TsDeclaration) => {
 		const { kind, name } = declaration;
-		const { DeclarationKind } = dox;
+		const { DeclarationGroup: DeclarationKind } = dox;
 
 		kind === DeclarationKind.Module
 			? this.registerNameSpace(declaration)
@@ -55,8 +73,8 @@ export class Branch extends Logger {
 			? this.variables.set(name, declaration)
 			: kind === DeclarationKind.Enum
 			? this.enums.set(name, declaration)
-			: this.error(
-					this.classIdentifier,
+			: log.error(
+					log.identifier(this),
 					'Did not find a kind for a declaration: ',
 					`${DeclarationKind[kind]}\n`,
 					declaration.get.report,
