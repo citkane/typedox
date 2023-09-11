@@ -3,6 +3,6 @@
 	"doxOut": "",
 	"typeDependencies": [],
 	"logLevel": "",
-	"tsConfigs": ["test/scenarios/namespaces", "tsconfig.json"],
+	"tsConfigs": [],
 	"npmFileConvention": ""
 }

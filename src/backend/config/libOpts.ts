@@ -1,87 +1,35 @@
 import * as ts from 'typescript';
-import * as args from './libArgs';
-import * as api from './projectConfigApi';
 import { logger as log, config } from '../typedox';
 
-export type coreOpts = doxOptions<api.confApi>;
-export type doxOptions<Args extends args.doxArgsType> = {
-	[K in keyof Args]: Args[K]['defaultValue'];
-};
+type Args = config.appConfApi;
 
-export function getOptionsFromDefaultArgs<Args extends args.doxArgsType>(
-	doxArgs: args.doxArgs<Args>,
-) {
-	const argTuples = Object.entries(doxArgs).map((tuple) => [
-		tuple[0],
-		tuple[1].defaultValue,
-	]);
-	const optionObject = Object.fromEntries(argTuples);
-
-	return optionObject as doxOptions<Args>;
-}
-
-export function getDoxClOptions<Args extends args.doxArgsType>(
-	doxArgs: args.doxArgs<Args>,
-	doxClArgs: string[],
-	doxOptions: doxOptions<Args>,
-) {
-	type thisArgs = args.doxArgs<Args>;
-	type argKey = keyof thisArgs;
-	type clArgKey = `--${string}`;
-
-	const clKeys = args.convertArgObjectToCommandLineKeys<Args>(doxArgs);
-
-	let clKey: clArgKey;
-	doxClArgs.forEach((clArg, index) => {
-		clKey = clKeys.includes(clArg) ? (clArg as clArgKey) : clKey;
-
-		const doxArg = args.unHyphenateArg(clKey) as argKey;
-		const set = doxArgs[doxArg].set;
-		const defaultValue = doxArgs[doxArg].defaultValue;
-		const valueIsDoxKey = clKeys.includes(clArg);
-		const parent = doxClArgs[index + 1];
-		const isOrphan = !parent || parent.startsWith(args.argHyphen);
-
-		valueIsDoxKey && isOrphan ? adoptOrphan() : set(doxOptions, clArg);
-
-		function adoptOrphan() {
-			typeof defaultValue === 'boolean'
-				? set(doxOptions, true)
-				: (doxOptions[doxArg] = defaultValue);
-		}
-	});
-
-	return doxOptions;
-}
-
-export function getDoxOptions(coreArgs: api.confApi) {
+export function getDoxOptions(coreArgs: config.appConfApi) {
 	/**
 	 * @todo
 	 * inject modules here
 	 */
-	type Args = api.confApi;
+
 	const doxArgs = coreArgs;
 	/** */
 
-	const defaultOptions = getOptionsFromDefaultArgs<Args>(doxArgs);
-	let { fileOptions, optionsFile } = config.getDoxConfigFromFile(coreArgs);
-	fileOptions = config.auditConfigFileOptions(
-		fileOptions,
-		optionsFile,
-		coreArgs,
-	);
+	const defaultOptions = getDefaultDoxOptions<Args>(doxArgs);
+	let { fileArgs } = config.readDoxConfigFromFile(coreArgs);
+
 	const clOptions = config.getDoxConfigFromCommandLine<Args>(doxArgs);
 
-	return {
+	const options = {
 		...defaultOptions,
-		...fileOptions,
+		...fileArgs,
 		...clOptions,
-	} as doxOptions<Args>;
+	} as config.doxGenericOptions<Args>;
+
+	validateDoxOptions(coreArgs, options);
+
+	return options;
 }
 
-export function getTscClOptions(doxOptions: doxOptions<api.confApi>) {
-	const tscOptions = ts.parseCommandLine(args.getTscClArgs());
-	tscOptions.options.types = doxOptions.typeDependencies;
+export function getTscParsedCommandline() {
+	const tscOptions = ts.parseCommandLine(config.getTscClArgs());
 	tscOptions.errors.forEach((error) => {
 		log.warn(
 			log.identifier(__filename),
@@ -90,4 +38,40 @@ export function getTscClOptions(doxOptions: doxOptions<api.confApi>) {
 		);
 	});
 	return tscOptions;
+}
+
+function getDefaultDoxOptions<Args extends config.doxArgs>(
+	doxArgs: config.doxGenericArgs<Args>,
+) {
+	const argTuples = Object.entries(doxArgs).map((tuple) => {
+		const [key, item] = tuple;
+		return [key, item.defaultValue];
+	});
+	const optionObject = Object.fromEntries(argTuples);
+
+	return optionObject as config.doxGenericOptions<Args>;
+}
+function validateDoxOptions(
+	coreArgs: config.appConfApi,
+	options: config.doxGenericOptions<Args>,
+) {
+	Object.keys(coreArgs).forEach((key) => {
+		const coreArg = coreArgs[key];
+		const optionValue = options[key];
+		const notFound = !optionValue;
+		const validated = coreArg.validate(optionValue);
+
+		if (coreArg.required && (notFound || validated === undefined))
+			log.throwError(
+				log.identifier(__filename),
+				'A required option was not found:',
+				key,
+			);
+		if (!validated)
+			log.throwError(
+				log.identifier(__filename),
+				'An invalid option was found:',
+				key,
+			);
+	});
 }

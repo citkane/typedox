@@ -1,147 +1,61 @@
-import { ProjectConfig } from './config/ProjectConfig';
-import { logger as log, config } from './typedox';
+import {
+	logger as log,
+	config,
+	TsReference,
+	DoxProject,
+	NpmPackage,
+	Branch,
+} from './typedox';
 
-import * as ts from 'typescript';
+log.isClRequestForHelp() || main();
 
-main(log.isRequestForHelp());
-function main(helpRequest: boolean) {
-	if (helpRequest) return log.logApplicationHelp();
+function main() {
+	const doxProject = makeDoxProject();
+	const npmPackages = getNpmPackages(doxProject);
+	const tsReferences = getTsReferences(npmPackages);
 
-	const projectConfig = configureProject();
-	const packageConfigs = configurePackages(projectConfig);
+	discoverFilesAndDeclarations(tsReferences);
+	buildRelationShips(tsReferences);
+	growDocumentBranches(tsReferences);
+
+	//log.info(JSON.stringify(doxProject.toObject, null, 2));
 }
 
-/*
-const doxProject = bootStrapEnv(doxOptions);
-
-const tsReferences = makeTsReferences(doxProject);
-
-discoverFilesAndDeclarations(tsReferences);
-buildRelationShips(tsReferences);
-growDocumentBranches(tsReferences);
-*/
-//projectLogger.info(JSON.stringify(doxProject.toObject, null, 4));
-
-function configureProject() {
-	const projectOptions = config.getDoxOptions(config.confApi);
-	const tscCommandlineOptions = config.getTscClOptions(projectOptions);
-	const projectConfig = new ProjectConfig(
-		projectOptions,
-		tscCommandlineOptions,
-	);
-
-	config.auditOptions.call(projectConfig);
-	log.setLogLevel(projectConfig.logLevel);
-
-	return projectConfig;
-}
-function configurePackages(projectConfig: ProjectConfig) {
-	const {
-		initTsconfigPathToConfig,
-		discoverTscRawConfigs,
-		discoverNpmPackages,
-		registerNpmPackageDefs,
-	} = config;
-	const { tsConfigs } = projectConfig;
-	const filenamesToConfigs = initTsconfigPathToConfig.bind(projectConfig);
-	const discoverConfigs = discoverTscRawConfigs.bind(projectConfig);
-	const discoverPackages = discoverNpmPackages.bind(projectConfig);
-	const registerPackages = registerNpmPackageDefs.bind(projectConfig);
-
-	const initialTscConfigs = tsConfigs.map(filenamesToConfigs);
-	const tscConfigs = discoverConfigs(initialTscConfigs);
-	const npmPackageDefs = discoverPackages(tscConfigs);
-	const doxPackageConfigs = registerPackages(npmPackageDefs);
-
-	log.inspect(doxPackageConfigs);
-}
-/*
-function bootStrapEnv(projectConfig: dox.config.ProjectConfig) {
-	const doxProject = new dox.DoxProject(projectConfig);
-
-	getNpmPackages()
-		.map(makeProjectConfig)
-		.map(registerTscProgramsToConfig)
-		.map(diagnoseTsPrograms)
-		.map(doxProject.makeNpmPackage)
-		.forEach(doxProject.registerNpmPackage);
+function makeDoxProject() {
+	const projectOptions = config.getDoxOptions(config.appConfApi);
+	const doxProject = new DoxProject(projectOptions);
+	log.setLogLevel(doxProject.logLevel);
 
 	return doxProject;
-
-	function getNpmPackages() {
-		return dox.npmPackagesStub;
-	}
-	function makeProjectConfig(npmPackageDef: dox.npmPackageDef) {
-		const { name, version, packageRootDir } = npmPackageDef;
-		const tsEntryRefs = dox.config.PackageConfig.findTsEntryDefs();
-		const config = new dox.config.PackageConfig(
-			tsEntryRefs,
-			name,
-			version,
-			packageRootDir,
-			options,
-		);
-		return config;
-	}
-	function registerTscProgramsToConfig(
-		packageConfig: dox.config.PackageConfig,
-	) {
-		packageConfig.tscReferenceConfigs.forEach((tscConfig, name) => {
-			const tscProgram = ts.createProgram(
-				tscConfig.fileNames,
-				tscConfig.options,
-			);
-			packageConfig.tscPrograms.set(name, tscProgram);
-		});
-		return packageConfig;
-	}
-	function diagnoseTsPrograms(packageConfig: dox.config.PackageConfig) {
-		packageConfig.tscPrograms.forEach((tscProgram) => {
-			const diagnostics = ts.getPreEmitDiagnostics(tscProgram);
-			if (diagnostics.length) {
-				diagnostics.forEach((diagnosis) => {
-					log.warn(['index'], diagnosis.messageText);
-					if (diagnosis.relatedInformation)
-						log.debug(diagnosis.relatedInformation);
-				});
-				log.throwError(['index'], 'TSC diagnostics failed.');
-			}
-		});
-		return packageConfig;
-	}
+}
+function getNpmPackages(doxProject: DoxProject) {
+	return doxProject.npmPackages;
 }
 
-function makeTsReferences(doxProject: dox.DoxProject) {
-	return [...(doxProject.npmPackages.values() || [])]
-		.map(dox.NpmPackage.makeTsReferences)
-		.flat()
-		.map(registerReference);
-
-	function registerReference(tsReference: dox.TsReference) {
-		tsReference.parent.registerTsReference(tsReference);
-		return tsReference;
-	}
+function getTsReferences(npmPackages: NpmPackage[]) {
+	return npmPackages.map((npmPackage) => npmPackage.tsReferences).flat();
 }
-function discoverFilesAndDeclarations(tsReferences: dox.TsReference[]) {
+
+function discoverFilesAndDeclarations(tsReferences: TsReference[]) {
 	tsReferences.forEach((tsReference) => {
 		tsReference.discoverFiles();
 		tsReference.discoverDeclarations();
 	});
 }
-function buildRelationShips(tsReferences: dox.TsReference[]) {
+
+function buildRelationShips(tsReferences: TsReference[]) {
 	tsReferences.forEach((tsReference) => tsReference.buildRelationships());
 }
-function growDocumentBranches(tsReferences: dox.TsReference[]) {
+
+function growDocumentBranches(tsReferences: TsReference[]) {
 	tsReferences.forEach((tsReference) => {
 		const fileSources = getSourceFiles(tsReference);
-		const rootDeclarations =
-			dox.TsReference.getDeclarationRoots(fileSources);
-		const treeBranch = new dox.Branch(tsReference, rootDeclarations);
+		const rootDeclarations = TsReference.getDeclarationRoots(fileSources);
+		const treeBranch = new Branch(tsReference, rootDeclarations);
 		tsReference.treeBranches.set(tsReference.name, treeBranch);
 	});
 
-	function getSourceFiles(tsReference: dox.TsReference) {
+	function getSourceFiles(tsReference: TsReference) {
 		return [...tsReference.filesMap.values()];
 	}
 }
-*/

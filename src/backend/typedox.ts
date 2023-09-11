@@ -1,6 +1,10 @@
 import * as path from 'path';
 import * as ts from 'typescript';
-import { TsSourceFile, TsDeclaration } from './projectStructure/_namespace';
+import {
+	TsSourceFile,
+	TsDeclaration,
+	TsReference,
+} from './projectStructure/_namespace';
 import { Logger } from './logger/Logger';
 
 export const logger = new Logger();
@@ -20,8 +24,8 @@ export enum DeclarationGroup {
 export type tsConfigFile = string;
 export type referenceName = string;
 
+export { DoxConfig } from './config/_namespace';
 export { DoxProject } from './projectStructure/DoxProject';
-export { default as DoxContext } from './projectStructure/DoxContext';
 export { TscWrapper } from './tscApiWrapper/TsWrapper';
 export * from './projectStructure/_namespace';
 export * as serialise from './serialiser/_namespace';
@@ -43,33 +47,29 @@ export type logableObjects = TsDeclaration;
 
 export type whatIsIt = Exclude<ts.Node | ts.Symbol | ts.Type, ts.SourceFile>;
 
-export const npmPackageStub = {
-	name: 'typedox',
-	version: 'v0.0.0',
-	packageRootDir: path.join(__dirname, '../../'),
-};
-
-export type npmPackageMap = Record<string, npmPackageInfo>;
-export interface npmPackageInfo {
-	name: string;
-	version: string;
-	packageRootDir: string;
-	tscRawConfigs: tscRawConfig[];
+export interface rawDox {
+	fileName: string;
+	init: boolean;
+	rootDir: string;
 }
-export const npmPackagesStub = [npmPackageStub];
-export type npmPackageDefs = typeof npmPackagesStub;
-export type npmPackageDef = npmPackageDefs[0];
-
-export type tscRawConfig = {
-	filepathAbs: string;
+export interface tscRawConfig {
+	dox: rawDox;
 	config: {
 		extends?: string;
 		references?: ts.ProjectReference[];
-		compilerOptions: ts.CompilerOptions;
+		compilerOptions?: ts.CompilerOptions;
+		exclude: string[];
+		include: string[];
 	};
 	error?: ts.Diagnostic;
-};
-export interface tscParsedConfig extends ts.ParsedCommandLine {
-	rootDir: string;
-	rootName: string;
+}
+
+export type namedDef<def> = [string | undefined, def];
+export type namedRegistry<reg> = Record<string, reg>;
+
+export type npmPackageDefinition = [program: ts.Program, rootDir: string][];
+export type npmPackageDefinitions = namedRegistry<npmPackageDefinition>;
+
+export namespace foo {
+	const bar = 'foo';
 }

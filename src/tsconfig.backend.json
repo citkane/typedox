@@ -1,8 +1,11 @@
 {
 	"extends": "@typedox/tsconfig/nodeNext.json",
-	"include": ["./backend"],
+
+	"include": ["./backend", "./foo"],
+	
 	"compilerOptions": {
-		"outDir": "../dist/backend",
-		"target":"es6"
+		"outDir": "../dist",
+		"target":"es6",
+		"composite": true
 	}
 }

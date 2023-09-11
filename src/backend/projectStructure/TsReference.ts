@@ -1,7 +1,14 @@
-import * as dox from '../typedox';
+import {
+	Branch,
+	DoxConfig,
+	DoxProject,
+	NpmPackage,
+	TsSourceFile,
+	fileMap,
+	logger as log,
+	rawDox,
+} from '../typedox';
 import * as ts from 'typescript';
-
-const log = dox.logger;
 
 /**
  * A container for a typescript compiler reference. This could be the only one in a npm package, or one of many if
@@ -22,27 +29,40 @@ const log = dox.logger;
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
  *
  */
-export class TsReference extends dox.DoxContext {
-	private context: dox.DoxContext;
-	name: string;
-	filesMap: dox.fileMap = new Map();
-	treeBranches: Map<string, dox.Branch> = new Map();
-	entryFileList: string[];
+export class TsReference extends DoxConfig {
+	public name: string;
+	public parent: NpmPackage;
+	public filesMap = new Map<string, TsSourceFile>();
+	public treeBranches: Map<string, Branch> = new Map();
+	public entryFileList: string[];
+	private program: ts.Program;
 
-	constructor(context: dox.DoxContext, name: string) {
-		super(context);
-		this.context = this.registerTsReferenceContext(this);
+	constructor(
+		parent: NpmPackage,
+		name: string,
+		program: ts.Program,
+		files: string[],
+	) {
+		super(parent.projectOptions, program.getTypeChecker());
 
 		this.name = name;
-		this.entryFileList = context.tsConfig.fileNames;
+		this.parent = parent;
+		this.entryFileList = files;
+		this.program = program;
+		/*
+		files.forEach((fileName) => {
+			const checker = program.getTypeChecker();
+			const foo = program.getSourceFile(fileName)!;
+			this.filesMap.set(fileName, new TsSourceFile(this, foo, checker));
+		});
+*/
+		//this.entryFileList = context.tsConfig.fileNames;
 	}
-	public get parent() {
-		return this.context.npmPackage;
-	}
+	/*
 	public get toObject() {
 		return dox.serialise.serialiseTsReference(this);
 	}
-
+*/
 	public discoverDeclarations = () =>
 		this.filesMap.forEach((file) => file.discoverDeclarations());
 
@@ -51,10 +71,9 @@ export class TsReference extends dox.DoxContext {
 
 	public discoverFiles = this.discoverFilesRecursively;
 	private discoverFilesRecursively(fileList = this.entryFileList) {
-		const { tsProgram: program } = this.context;
 		fileList.forEach((fileName) => {
 			if (this.filesMap.has(fileName)) return;
-			const fileSource = program.getSourceFile(fileName);
+			const fileSource = this.program.getSourceFile(fileName);
 
 			if (!fileSource)
 				return log.error(
@@ -63,22 +82,23 @@ export class TsReference extends dox.DoxContext {
 					fileName,
 				);
 
-			const doxSourceFile = new dox.TsSourceFile(
-				this.context,
+			const doxSourceFile = new TsSourceFile(
+				this,
 				fileSource,
+				this.checker!,
 			);
 			this.filesMap.set(fileName, doxSourceFile);
 
 			this.discoverFilesRecursively(doxSourceFile.childFiles);
 		});
 	}
-	public static getDeclarationRoots = (sourceFiles: dox.TsSourceFile[]) => {
+	public static getDeclarationRoots = (sourceFiles: TsSourceFile[]) => {
 		return this.getAllDeclarations(sourceFiles).filter(
 			(declaration) => !declaration.parents.length,
 		);
 	};
 
-	private static getAllDeclarations = (sourceFiles: dox.TsSourceFile[]) => {
+	private static getAllDeclarations = (sourceFiles: TsSourceFile[]) => {
 		return sourceFiles
 			.map((fileSource) => [...fileSource.declarationsMap.values()])
 			.flat();

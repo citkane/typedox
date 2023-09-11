@@ -1,7 +1,13 @@
-import * as dox from '../typedox';
+import { DoxConfig } from '../config/DoxConfig';
+import {
+	DeclarationGroup,
+	DoxProject,
+	TsSourceFile,
+	TscWrapper,
+	declarationMap,
+	logger as log,
+} from '../typedox';
 import * as ts from 'typescript';
-
-const log = dox.logger;
 
 /**
  * A container for typescript declarations:
@@ -22,9 +28,8 @@ const log = dox.logger;
  *
  *
  */
-export class TsDeclaration extends dox.DoxContext {
-	private context: dox.DoxContext;
-
+export class TsDeclaration extends DoxConfig {
+	parent: TsSourceFile;
 	name: string;
 	tsKind: ts.SyntaxKind;
 	tsNode: ts.Node;
@@ -32,13 +37,17 @@ export class TsDeclaration extends dox.DoxContext {
 	tsType: ts.Type;
 	nameSpace?: string;
 	parents: TsDeclaration[] = [];
-	children: dox.declarationMap = new Map();
+	children: declarationMap = new Map();
 	aliasName?: string;
-	get: dox.TscWrapper;
+	get: TscWrapper;
 
-	constructor(context: dox.DoxContext, item: ts.Symbol | ts.Node) {
-		super(context);
-		this.context = this.registerTsDeclarationContext(this);
+	constructor(
+		parent: TsSourceFile,
+		item: ts.Symbol | ts.Node,
+		checker: ts.TypeChecker,
+	) {
+		super(parent.projectOptions, checker);
+		this.parent = parent;
 
 		this.get = this.tsWrap(item);
 		this.name = this.get.name;
@@ -47,21 +56,17 @@ export class TsDeclaration extends dox.DoxContext {
 		this.tsSymbol = this.get.tsSymbol;
 		this.tsType = this.get.tsType;
 
-		if (!this.get.isExportStarChild && !dox.isSpecifierKind(this.tsKind))
+		if (!this.get.isExportStarChild && !this.isSpecifierKind(this.tsKind))
 			return;
 
 		log.debug(log.identifier(this), this.get.nodeDeclarationText);
 
 		this.parser(this.get.tsNode);
 	}
-	public get parent() {
-		return this.context.tsSourceFile!;
-	}
 	public get kind() {
 		const { SyntaxKind } = ts;
-		const { DeclarationGroup: DeclarationKind } = dox;
 
-		if (this.get.isExportStarChild) return DeclarationKind.ExportStar;
+		if (this.get.isExportStarChild) return DeclarationGroup.ExportStar;
 
 		const tsKind = TsDeclaration.resolveTsKind(this);
 
@@ -71,18 +76,18 @@ export class TsDeclaration extends dox.DoxContext {
 
 		const kind =
 			tsKind === SyntaxKind.VariableDeclaration
-				? DeclarationKind.Variable
+				? DeclarationGroup.Variable
 				: isModule
-				? DeclarationKind.Module
+				? DeclarationGroup.Module
 				: tsKind === SyntaxKind.ClassDeclaration
-				? DeclarationKind.Class
+				? DeclarationGroup.Class
 				: tsKind === SyntaxKind.FunctionDeclaration
-				? DeclarationKind.Function
+				? DeclarationGroup.Function
 				: tsKind === SyntaxKind.EnumDeclaration
-				? DeclarationKind.Enum
-				: DeclarationKind.unknown;
+				? DeclarationGroup.Enum
+				: DeclarationGroup.unknown;
 
-		if (kind === dox.DeclarationGroup.unknown)
+		if (kind === DeclarationGroup.unknown)
 			log.error(
 				log.identifier(this),
 				'Did not discover a kind:',
@@ -93,6 +98,11 @@ export class TsDeclaration extends dox.DoxContext {
 	}
 
 	private parser(node: ts.Node, get = this.get, isLocalTarget = false) {
+		if (!this.isSpecifierKind(node.kind)) return;
+
+		const reportType = isLocalTarget ? 'localTargetNode' : 'node';
+		const reportMessage = `Did not parse a ${reportType}`;
+
 		ts.isModuleDeclaration(node)
 			? this.parseModuleDeclaration(node)
 			: ts.isNamespaceExport(node)
@@ -101,17 +111,16 @@ export class TsDeclaration extends dox.DoxContext {
 			? this.parseExportSpecifier()
 			: get.isExportStarChild
 			? this.parseReExporter(get)
-			: dox.DoxProject.deepReport.call(
+			: DoxProject.deepReport.call(
 					this,
+					__filename,
 					'error',
-					`Did not parse a ${
-						isLocalTarget ? 'localTargetNode' : 'node'
-					}`,
+					reportMessage,
 					get,
 					isLocalTarget,
 			  );
 	}
-	private parseReExporter(get: dox.TscWrapper) {
+	private parseReExporter(get: TscWrapper) {
 		//this.info(get.tsSymbol.exports);
 	}
 	private parseModuleDeclaration(module: ts.ModuleDeclaration) {
@@ -134,7 +143,7 @@ export class TsDeclaration extends dox.DoxContext {
 		const get = this.tsWrap(localTarget);
 		this.parser(get.tsNode, get, true);
 	}
-	private static resolveTsKind(declaration: dox.TsDeclaration) {
+	private static resolveTsKind(declaration: TsDeclaration) {
 		let tsKind = declaration.tsKind;
 		let { get } = declaration;
 

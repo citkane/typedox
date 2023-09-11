@@ -1,260 +1,182 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import * as ts from 'typescript';
-import * as args from './libArgs';
-import * as opts from './libOpts';
-import * as api from './projectConfigApi';
-import { logger as log, config, tscRawConfig } from '../typedox';
 
-/** get a handle for future jsconfig fun */
-export const tsFileSpecifier = 'tsconfig';
+import { logger as log, config, DoxConfig } from '../typedox';
 
-export function fileExists(filepath: string) {
-	if (!fs.existsSync(filepath)) {
-		log.error(log.identifier(__filename), 'File not found:', filepath);
-		return false;
-	}
-	return true;
-}
-export function jsonFileToObject(absFilepath: string) {
-	if (!fileExists(absFilepath)) return;
-
-	const sourceFile = ts.readJsonConfigFile(absFilepath, ts.sys.readFile);
-	const object = ts.convertToObject(sourceFile, []);
-
-	return object;
-
-	/*
-	const source = ts.sys.readFile(absFilepath);
-	log.info(source);
-	let text = ts.transpile(source!, {
-		resolveJsonModule: true,
-		removeComments: true,
-	});
-	log.info(text);
-	text = text
-		.replace(/}\n(\s)*([",\[,{]])/g, '},$2')
-		.replace(/;(\s)*}[\n,$]/g, '}')
-		.replace(/([",\[,{]);\n/g, '$1:')
-		.replace(/,\n(\s)*}}(\s)*$/g, '}}');
-
-	log.info(text);
-	return JSON.parse(text);
-	*/
-
-	return {};
-}
-
-export function getDoxOut(this: config.ProjectConfig) {
-	const doxout = this.projectConfig.doxOut;
-	return path.isAbsolute(doxout)
-		? doxout
-		: path.join(this.projectRootDir, doxout);
-}
-
-let _getTsConfigsCache: string[];
-export function getTsConfigFilePaths(this: config.ProjectConfig) {
-	if (_getTsConfigsCache) return _getTsConfigsCache;
-	const { projectConfig } = this;
-	const { tsConfigs } = projectConfig;
-
-	const configs: string[] = [];
-	this.clProject
-		? configs.push(ensureAbsPath(this.projectRootDir, this.clProject))
-		: this.entryConfig
-		? configs.push(ensureAbsPath(this.projectRootDir, this.entryConfig))
-		: tsConfigs.length
-		? tsConfigs
-				.map((file) => ensureAbsPath(this.projectRootDir, file))
-				.forEach((file) => configs.push(file))
-		: [];
-
-	_getTsConfigsCache = configs;
-	return configs;
-}
-export function ensureAbsPath(rootDir: string, location: string) {
-	const isAbsolute = path.isAbsolute(location);
-	if (!isAbsolute) location = path.join(rootDir, location);
-	const isFile = location.endsWith('.json');
-	if (!isFile) location = path.join(location, `${tsFileSpecifier}.json`);
-
-	return location;
-}
-
-export function initTsconfigPathToConfig(
-	this: config.ProjectConfig,
-	relPath: string,
+export function getDoxConfigFromCommandLine<Args extends config.doxArgs>(
+	doxArgs: config.doxGenericArgs<Args>,
 ) {
-	const clConfig = this.tscCommandlineConfig;
-	const isInit = this.clProject || this.entryConfig;
-	const rawConfig = pathToRawTsConfig.call(this, relPath);
-	isInit &&
-		(rawConfig.config.compilerOptions = {
-			...rawConfig.config.compilerOptions,
-			...clConfig.options,
-		});
-
-	return rawConfig;
-}
-
-export function pathToRawTsConfig(
-	this: config.ProjectConfig,
-	filepath: string,
-) {
-	filepath = ensureAbsPath(this.projectRootDir, filepath);
-	jsonFileToObject(filepath);
-	const rawConfig = ts.readConfigFile(
-		filepath,
-		ts.sys.readFile,
-	) as tscRawConfig;
-	rawConfig.config.compilerOptions.types = this.dependTypes;
-	rawConfig.filepathAbs = filepath;
-
-	return rawConfig;
-}
-
-export function discoverTscRawConfigs(
-	this: config.ProjectConfig,
-	newConfigs: tscRawConfig[],
-	accumulator: tscRawConfig[] = [],
-): tscRawConfig[] {
-	return newConfigs
-		.reduce(discover.bind(this), accumulator)
-		.reduce(deDupe, [] as tscRawConfig[]);
-
-	function discover(
-		this: config.ProjectConfig,
-		accumulator: tscRawConfig[],
-		currentConfig: tscRawConfig,
-	) {
-		accumulator.push(currentConfig);
-		const newReferences = currentConfig.config.references?.map(
-			(reference) => pathToRawTsConfig.call(this, reference.path),
-		);
-		newReferences &&
-			discoverTscRawConfigs.call(this, newReferences, accumulator);
-
-		return accumulator;
-	}
-	function deDupe(accumulator: tscRawConfig[], currentConfig: tscRawConfig) {
-		!accumulator.find(
-			(config) => config.filepathAbs === currentConfig.filepathAbs,
-		) && accumulator.push(currentConfig);
-
-		return accumulator;
-	}
-}
-
-export function getDoxConfigFromCommandLine<Args extends args.doxArgsType>(
-	doxArgs: args.doxArgs<Args>,
-) {
-	const doxClArgs = args.getDoxClArgs<Args>(doxArgs);
-	const doxConfig = opts.getDoxClOptions<Args>(
+	const doxClArgs = config.getDoxClArgs<Args>(doxArgs);
+	const doxConfig = getDoxClOptions<Args>(
 		doxArgs,
 		doxClArgs,
-		{} as opts.doxOptions<Args>,
+		{} as config.doxGenericOptions<Args>,
 	);
 	return doxConfig;
 }
 
-export function getDoxConfigFromFile(coreArgs: api.confApi) {
-	const optionsFile = args.getDoxConfigFilepathFromClArgs(coreArgs);
-	let fileOptions = {} as opts.doxOptions<api.confApi>;
+export function readDoxConfigFromFile(coreArgs: config.appConfApi) {
+	type doxOptions = config.doxGenericOptions<config.appConfApi>;
+	const optionsFile =
+		config.getDoxConfigFilepathFromClArgs(coreArgs) ||
+		coreArgs.typedox.defaultValue;
 
-	if (!fileExists(optionsFile)) return { fileOptions, optionsFile };
+	const validOptions = Object.keys(coreArgs);
+	const fileArgs: doxOptions = fs.existsSync(optionsFile)
+		? DoxConfig.jsonFileToObject(optionsFile)
+		: {};
 
-	fileOptions = jsonFileToObject(optionsFile) as opts.doxOptions<api.confApi>;
+	Object.keys(fileArgs).forEach((key) => {
+		const coreArg = coreArgs[key];
+		const fileArg = fileArgs[key];
+		const validKeyError = !validOptions.includes(key);
+		const isRequiredError = coreArg.required && !fileArg;
+		if (!coreArg.required && fileArg === '') return delete fileArgs[key];
+		if (validKeyError || isRequiredError) {
+			warnAboutInvalidOption(key, coreArgs, optionsFile, validKeyError);
+			delete fileArgs[key];
+		}
+	});
 
-	return { fileOptions, optionsFile };
+	return { fileArgs, optionsFile };
 }
 
-export function auditConfigFileOptions(
-	fileOptions: opts.doxOptions<api.confApi>,
-	optionsFile: string,
-	coreArgs: api.confApi,
-) {
-	Object.keys(fileOptions).forEach(parseKey);
-	return fileOptions;
-
-	function parseKey(key: string) {
-		const doesNotExist = !(key in coreArgs);
-		if (doesNotExist)
+export const configValidators = {
+	projectRootDir: (value: any) =>
+		validator(value, function (value: any) {
+			return !!value && typeof value === 'string';
+		}),
+	doxOut: (value: any) =>
+		validator(value, function (value: any) {
+			return !!value && typeof value === 'string';
+		}),
+	typeDependencies: (value: any) =>
+		validator(value, function (value: any) {
 			return (
-				warning(key, coreArgs, optionsFile) && delete fileOptions[key]
+				Array.isArray(value) &&
+				!value.find((value) => typeof value !== 'string')
 			);
+		}),
+	logLevel: (value: any) =>
+		validator(value, function (value: any) {
+			return log.logLevelKeyStrings.includes(value);
+		}),
+	tsConfigs: (value: any) =>
+		validator(value, (value: any) => {
+			return !Array.isArray(value)
+				? false
+				: !value.find((innerValue) => {
+						return checkInnerTsconfigValue(innerValue);
+				  });
+		}),
+	npmFileConvention: (value: any) =>
+		validator(
+			value,
+			(value: any) =>
+				typeof value === 'string' && value.split('.').length > 1,
+		),
+	typedox: (value: any) =>
+		validator(
+			value,
+			(value) => typeof value === 'string' && value.split('.').length > 1,
+		),
+};
 
-		const value = fileOptions[key];
-		const defaultValue = coreArgs[key].defaultValue;
-		const valueGiven = typeof defaultValue === 'boolean' || value;
-		const correctValueType =
-			areBothArrays(defaultValue, value) ||
-			typeof defaultValue === typeof value;
+export const configSetters = {
+	projectRootDir: function (doxOptions: config.coreOpts, value: string) {
+		doxOptions.projectRootDir = value;
+	},
+	doxOut: function (doxOptions: config.coreOpts, value: string) {
+		doxOptions.doxOut = value;
+	},
+	typeDependencies: function (
+		doxOptions: config.coreOpts,
+		value: string,
+	): void {
+		!doxOptions.typeDependencies &&
+			(doxOptions.typeDependencies =
+				config.appConfApi.typeDependencies.defaultValue);
 
-		!valueGiven && delete fileOptions[key];
-		!correctValueType &&
-			warning(key, coreArgs, optionsFile, true) &&
-			delete fileOptions[key];
-	}
+		!doxOptions.typeDependencies.includes(value) &&
+			doxOptions.typeDependencies.push(value);
+	},
+	logLevel: function (doxOptions: config.coreOpts, value: string) {
+		doxOptions.logLevel = value as keyof typeof log.logLevels;
+	},
+	tsConfigs: function (doxOptions: config.coreOpts, value: string) {
+		!doxOptions.tsConfigs &&
+			(doxOptions.tsConfigs = config.appConfApi.tsConfigs.defaultValue);
+
+		!doxOptions.tsConfigs.includes(value) &&
+			doxOptions.tsConfigs.push(value);
+	},
+	npmFileConvention: function (doxOptions: config.coreOpts, value: string) {
+		doxOptions.npmFileConvention = value;
+	},
+	typedox: function (doxOptions: config.coreOpts, value: string) {
+		doxOptions.typedox = value;
+	},
+};
+
+function validator(value: any, callback: (value: any) => boolean) {
+	if (!value) return undefined;
+	return callback(value);
+}
+function checkInnerTsconfigValue(innerValue: any) {
+	return typeof innerValue === 'string'
+		? false
+		: Array.isArray(innerValue)
+		? !innerValue.find((innerString) => typeof innerString !== 'string')
+		: true;
 }
 
-function areBothArrays(defaultValue: object, value: object) {
-	return Array.isArray(defaultValue) && Array.isArray(value);
-}
-function warning(
+function warnAboutInvalidOption(
 	key: string,
-	coreArgs: api.confApi,
+	coreArgs: config.appConfApi,
 	optionsFile: string,
 	isType: boolean = false,
 ) {
 	log.warn(
 		log.identifier(__filename),
 		`Invalid option ${isType ? 'type ' : ''}found in ${optionsFile}:`,
-		key,
+		`"${key}".`,
+		'The value was replaced with the default value.',
 	);
-	log.log('Allowed Options:', Object.keys(coreArgs));
+	isType && log.log('Allowed Options:', Object.keys(coreArgs));
 	return true;
 }
 
-/*
-function getClProject(this: config.ProjectConfig, clProject: string) {
-	clProject = ensureAbsPath(this.projectRootDir, clProject)!;
-	const config = {
-		...readTsConfigFromFile(clProject),
-		...this.tscCommandlineConfig,
-	};
-
-	const doxSpecifiesTsConfig = !!this.projectConfig.tsConfigs.length;
-	doxSpecifiesTsConfig && adviseUserOfOverride(this.projectConfig, clProject);
-
-	return config;
-}
-
-
-function adviseUserOfOverride(
-	projectConfig: config.ProjectConfig['projectConfig'],
-	clProject: string,
+function getDoxClOptions<Args extends config.doxArgs>(
+	doxArgs: config.doxGenericArgs<Args>,
+	doxClArgs: string[],
+	doxOptions: config.doxGenericOptions<Args>,
 ) {
-	log.info(
-		log.identifier(config.ProjectConfig),
-		'Tsc command line project overrode dox options:',
-		{
-			tsc: clProject,
-			dox: projectConfig.tsConfigs,
-		},
-	);
+	type thisArgs = config.doxGenericArgs<Args>;
+	type argKey = keyof thisArgs;
+	type clArgKey = `--${string}`;
+
+	const clKeys = config.convertArgObjectToCommandLineKeys<Args>(doxArgs);
+
+	let clKey: clArgKey;
+	doxClArgs.forEach((clArg, index) => {
+		clKey = clKeys.includes(clArg) ? (clArg as clArgKey) : clKey;
+
+		const doxArg = config.unHyphenateArg(clKey) as argKey;
+		const set = doxArgs[doxArg].set;
+		const defaultValue = doxArgs[doxArg].defaultValue;
+		const valueIsDoxKey = clKeys.includes(clArg);
+		const parent = doxClArgs[index + 1];
+		const isOrphan = !parent || parent.startsWith(config.argHyphen);
+
+		valueIsDoxKey && isOrphan
+			? adoptOrphan()
+			: !valueIsDoxKey && set(doxOptions, clArg);
+
+		function adoptOrphan() {
+			typeof defaultValue === 'boolean'
+				? set(doxOptions, true)
+				: (doxOptions[doxArg] = defaultValue);
+		}
+	});
+
+	return doxOptions;
 }
-function toDirName(this: config.ProjectConfig, tsconfig: string) {
-	return path.dirname(tsconfig);
-}
-function findParentPackage(
-	this: config.ProjectConfig,
-	dir: string,
-): string | undefined {
-	const npmPackage = path.join(dir, this.npmFileConvention);
-	return fs.existsSync(npmPackage)
-		? npmPackage
-		: dir === this.projectRootDir
-		? undefined
-		: findParentPackage.call(this, path.join(dir, '../'));
-}
-*/

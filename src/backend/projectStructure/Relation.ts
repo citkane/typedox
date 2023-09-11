@@ -1,26 +1,38 @@
 import * as ts from 'typescript';
-import * as dox from '../typedox';
+import {
+	DoxProject,
+	TsDeclaration,
+	TsSourceFile,
+	TscWrapper,
+	fileMap,
+	logger as log,
+	tsc,
+} from '../typedox';
+import { DoxConfig } from '../config/DoxConfig';
 
-const log = dox.logger;
 /**
  * Builds a many to many mapping of all discovered `ts.Declarations`
  *
- * The mapping is applied into {@link dox.kinds.Declaration}.
+ * The mapping is applied into {@link dox.Declaration}.
  */
-export class Relation extends dox.DoxContext {
-	public get: dox.TscWrapper;
+export class Relation extends DoxConfig {
+	public get: TscWrapper;
 	private name: string;
-	private filesMap: dox.fileMap;
-	private declaration: dox.TsDeclaration;
-	private context: dox.DoxContext;
+	private filesMap: fileMap;
+	private declaration: TsDeclaration;
+	private parent;
 
-	constructor(context: dox.DoxContext, declaration: dox.TsDeclaration) {
-		super(context);
+	constructor(
+		parent: TsSourceFile,
+		declaration: TsDeclaration,
+		checker: ts.TypeChecker,
+	) {
+		super(parent.projectOptions, checker);
+		this.parent = parent;
 		this.declaration = declaration;
 		this.get = declaration.get;
-		this.context = context;
 		this.name = declaration.name;
-		this.filesMap = declaration.parent.parent.filesMap;
+		this.filesMap = declaration.parent.parent.filesMap as any;
 
 		this.mapRelationships(this.get.tsNode);
 
@@ -28,7 +40,8 @@ export class Relation extends dox.DoxContext {
 	}
 	/** A `Map` of the local file's declarations keyed by name */
 	private get localDeclarationMap() {
-		return this.filesMap.get(this.get.fileName)!.declarationsMap;
+		const fileName = this.get.fileName;
+		return this.filesMap.get(fileName)!.declarationsMap;
 	}
 	/** The local declaration in scope */
 	private get localDoxDeclaration() {
@@ -49,10 +62,10 @@ export class Relation extends dox.DoxContext {
 		get = this.get,
 		_isLocalTarget = false,
 	) {
-		if (!dox.isSpecifierKind(node.kind) && !get.isExportStarChild) return;
-		const errorMessage = `Did not parse a ${
+		if (!this.isSpecifierKind(node.kind) && !get.isExportStarChild) return;
+		const errorMessage = `Did not map a ${
 			_isLocalTarget ? 'localTargetNode' : 'node'
-		}`;
+		} relationship`;
 
 		get.isExportStarChild
 			? this.mapExportStarChild(get)
@@ -70,8 +83,9 @@ export class Relation extends dox.DoxContext {
 			? this.mapExportAssignment(node)
 			: ts.isImportSpecifier(node)
 			? this.mapImportSpecifier(node, get)
-			: dox.DoxProject.deepReport.call(
+			: DoxProject.deepReport.call(
 					this,
+					__filename,
 					'error',
 					errorMessage,
 					get,
@@ -80,7 +94,7 @@ export class Relation extends dox.DoxContext {
 	}
 	private mapImportSpecifier(
 		importSpecifier: ts.ImportSpecifier,
-		get: dox.TscWrapper,
+		get: TscWrapper,
 	) {
 		const name = importSpecifier.name.getText();
 		const source = this.localDoxDeclaration;
@@ -90,7 +104,7 @@ export class Relation extends dox.DoxContext {
 		source.children.set(name, target);
 		target.parents.push(source);
 	}
-	private mapExportSpecifier(get: dox.TscWrapper) {
+	private mapExportSpecifier(get: TscWrapper) {
 		if (get.localTargetDeclaration) {
 			const local = get.localTargetDeclaration;
 			const localGet = this.tsWrap(local);
@@ -103,18 +117,18 @@ export class Relation extends dox.DoxContext {
 		);
 	}
 	private registerReExporter(symbol: ts.Symbol) {
-		dox.tsc.parseExportStars.call(this, symbol).forEach((expression) => {
+		tsc.parseExportStars.call(this, symbol).forEach((expression) => {
 			const get = this.tsWrap(expression);
 			this.mapExportStarChild(get);
 		});
 	}
-	private mapExportStarChild(get: dox.TscWrapper) {
+	private mapExportStarChild(get: TscWrapper) {
 		const targetSource = this.filesMap.get(get.targetFileName!)!;
 		const targetSymbols = targetSource.fileSymbol.exports;
 		const source = this.localDoxDeclaration;
 
 		targetSymbols?.forEach((symbol) => {
-			if (dox.tsc.isStarExport(symbol)) {
+			if (tsc.isStarExport(symbol)) {
 				return this.registerReExporter(symbol);
 			}
 
@@ -131,13 +145,17 @@ export class Relation extends dox.DoxContext {
 		const source = this.localDoxDeclaration;
 
 		moduleSymbol.exports?.forEach((symbol) => {
-			const target = new dox.TsDeclaration(this.context, symbol);
+			const target = new TsDeclaration(
+				this.parent,
+				symbol,
+				this.checker!,
+			);
 
 			target.parents.push(source);
 			source.children.set(target.name, target);
 		});
 	}
-	private mapNameSpaceExport(get: dox.TscWrapper) {
+	private mapNameSpaceExport(get: TscWrapper) {
 		const remoteFile = this.filesMap.get(get.targetFileName!)!;
 		const source = this.localDoxDeclaration;
 
@@ -155,17 +173,17 @@ export class Relation extends dox.DoxContext {
 		}
 
 		function exportStars(this: Relation, symbol: ts.Symbol) {
-			return dox.tsc.isStarExport(symbol)
-				? dox.tsc.parseExportStars
+			return tsc.isStarExport(symbol)
+				? tsc.parseExportStars
 						.call(this, symbol)
 						.map((expression) => this.tsWrap(expression).tsSymbol)
 				: symbol;
 		}
 	}
-	private mapNameSpaceImport = (get: dox.TscWrapper) => {
+	private mapNameSpaceImport = (get: TscWrapper) => {
 		this.mapNameSpaceExport(get);
 	};
-	private mapImportClause(get: dox.TscWrapper) {
+	private mapImportClause(get: TscWrapper) {
 		const remoteFile = this.filesMap.get(get.targetFileName!)!;
 		const source = this.localDoxDeclaration;
 		const target = remoteFile.declarationsMap.get(this.name)!;

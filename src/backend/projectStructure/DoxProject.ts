@@ -1,5 +1,17 @@
-import * as dox from '../typedox';
-const log = dox.logger;
+import * as ts from 'typescript';
+import * as path from 'path';
+import * as fs from 'fs';
+import {
+	logger as log,
+	config,
+	NpmPackage,
+	TsDeclaration,
+	Relation,
+	TscWrapper,
+	namedRegistry,
+	npmPackageDefinitions,
+	DoxConfig,
+} from '../typedox';
 
 /**
  * A container for the whole project structure
@@ -18,31 +30,78 @@ const log = dox.logger;
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
  */
-export class DoxProject {
-	public npmPackages: Map<string, dox.NpmPackage> = new Map();
-	public projectConfig: dox.config.ProjectConfig;
+export class DoxProject extends DoxConfig {
+	public npmPackages: NpmPackage[];
 
-	constructor(projectConfig: dox.config.ProjectConfig) {
-		this.projectConfig = projectConfig;
+	private npmPackageDefinitions: npmPackageDefinitions;
+	private programs: ts.Program[];
+
+	constructor(projectOptions: config.doxGenericOptions<config.appConfApi>) {
+		super(projectOptions);
+
+		this.programs = this._programs(this.tscParsedConfigs);
+		this.npmPackageDefinitions = this._npmPackageDefinitions(this.programs);
+		this.npmPackages = this._nmpPackages(this.npmPackageDefinitions);
 	}
-	public get toObject() {
-		return dox.serialise.serialiseProject(this);
+	public get serialProject() {
+		return {};
+		//return serialise.serialiseProject(this);
 	}
-	public registerNpmPackage = (npmPackage: dox.NpmPackage) => {
-		this.npmPackages.set(npmPackage.name, npmPackage);
+
+	private _nmpPackages = (npmPackageDefinitions: npmPackageDefinitions) => {
+		const definitions = npmPackageDefinitions;
+		const configFiles = Object.keys(definitions);
+		const npmPackages = configFiles.map(
+			(filePath) => new NpmPackage(this, filePath, definitions[filePath]),
+		);
+
+		return npmPackages;
 	};
-	public makeNpmPackage = (packageConfig: dox.config.PackageConfig) => {
-		return new dox.NpmPackage(packageConfig, this);
+	private _npmPackageDefinitions = (programs: ts.Program[]) => {
+		const npmPackageDefinitions = programs.reduce(
+			(accumulator, program) => {
+				const rootDirs = getProgramRoots(program.getRootFileNames());
+				rootDirs.forEach(
+					parseProgramRootDir.bind(this, accumulator, program),
+				);
+				return accumulator;
+			},
+			{} as npmPackageDefinitions,
+		);
+
+		return npmPackageDefinitions;
+	};
+	private _programs = (tscParsedConfigs: ts.ParsedCommandLine[]) => {
+		const programs = tscParsedConfigs.reduce(
+			(accumulator, parsedConfig) => {
+				if (!configHasOutDir(parsedConfig)) return accumulator;
+
+				const program = ts.createProgram(
+					parsedConfig.fileNames,
+					parsedConfig.options,
+				);
+				const { configFilePath } = parsedConfig.options;
+
+				runDiagnostics(program, configFilePath?.toLocaleString());
+				accumulator.push(program);
+
+				return accumulator;
+			},
+			[] as ts.Program[],
+		);
+
+		return programs;
 	};
 
 	public static deepReport(
-		this: dox.TsDeclaration | dox.Relation,
+		this: TsDeclaration | Relation,
+		location: string,
 		logLevel: keyof typeof log.logLevels,
 		message: string,
-		get: dox.TscWrapper,
+		get: TscWrapper,
 		isLocalTarget: boolean,
 	) {
-		log[logLevel](log.identifier(this), message, {
+		log[logLevel](log.identifier(location), message, {
 			filename: this.get.fileName,
 			sourceReport: this.get.report,
 			sourceDeclaration: this.get.nodeDeclarationText,
@@ -52,4 +111,68 @@ export class DoxProject {
 				: undefined,
 		});
 	}
+}
+function parseProgramRootDir(
+	this: DoxProject,
+	accumulator: npmPackageDefinitions,
+	program: ts.Program,
+	rootDir: string,
+) {
+	const npmPackage = findNpmPackage(
+		this.projectRootDir,
+		rootDir,
+		this.npmFileConvention,
+	);
+	if (!npmPackage) {
+		log.error(
+			log.identifier(__filename),
+			`No npm "${this.npmFileConvention}" found for a compiler root directory:`,
+			rootDir,
+		);
+		return accumulator;
+	}
+	(accumulator[npmPackage] ??= []).push([program, rootDir]);
+}
+function configHasOutDir(parsedConfig: ts.ParsedCommandLine) {
+	const { configFilePath, outDir } = parsedConfig.options;
+	if (!outDir) {
+		log.info(
+			log.identifier(__filename),
+			configFilePath?.toLocaleString() || 'An unknown configuration',
+			"has no out directory, so it's file list is being ignored.",
+		);
+	}
+	return !!outDir;
+}
+function getProgramRoots(fileNames: readonly string[]) {
+	return fileNames
+		.map((file) => path.dirname(file))
+		.map((dir, i, array) => array.find((d) => dir.startsWith(d))!)
+		.filter((dir, i, array) => array.indexOf(dir) === i);
+}
+function runDiagnostics(program: ts.Program, fileName: string | undefined) {
+	const diagnostics = program.getGlobalDiagnostics();
+
+	diagnostics.forEach((diagnostic) => log.warn(diagnostic.messageText));
+	if (diagnostics.length)
+		log.throwError(
+			log.identifier(__filename),
+			'Error in ts.Program:',
+			fileName || 'unknown file',
+		);
+}
+function findNpmPackage(
+	projectRootDir: string,
+	absDir: string,
+	npmFileConvention: string,
+): string | undefined {
+	const npmFilePath = path.join(absDir, npmFileConvention);
+	const parentDir = path.join(absDir, '../');
+	const atFsRoot = parentDir === absDir;
+	const atProjectRoot = absDir === projectRootDir;
+	return fs.existsSync(npmFilePath)
+		? npmFilePath
+		: atFsRoot || atProjectRoot
+		? undefined
+		: findNpmPackage(projectRootDir, parentDir, npmFileConvention);
 }

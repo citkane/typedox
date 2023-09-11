@@ -32,7 +32,6 @@ export class Logger extends Console {
 		super.warn(utils.colourise('FgYellow', '[warning]'), ...args);
 
 	public error = (...args: any) =>
-		this.shouldLog(utils.logLevels.error) &&
 		super.error(utils.colourise('FgRed', '[error]'), ...args);
 
 	public throwError = (...args: any) => {
@@ -48,7 +47,7 @@ export class Logger extends Console {
 	public initLowerCamel = utils.initLowerCamel;
 
 	public logApplicationHelp = utils.logApplicationHelp;
-	public isRequestForHelp = utils.isRequestForHelp;
+	public isClRequestForHelp = utils.isRequestForHelp;
 
 	private shouldLog = (level: utils.logLevels) => level >= this.logLevel;
 }

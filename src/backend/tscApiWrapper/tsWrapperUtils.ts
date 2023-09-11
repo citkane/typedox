@@ -50,7 +50,7 @@ export function getLocalTargetDeclaration(
 
 	if (declarations && declarations.length > 1)
 		log.throwError(
-			log.identifier(this),
+			log.identifier(__filename),
 			'Expected only one declaration in a local target symbol',
 		);
 	return !!declarations ? declarations[0] : undefined;
@@ -60,9 +60,11 @@ export function getTsNodeFromSymbol(this: Object, symbol: ts.Symbol) {
 	const declarations = symbol.getDeclarations();
 	return declarations && declarations.length === 1
 		? (declarations[0] as ts.Node)
+		: !!symbol.valueDeclaration
+		? symbol.valueDeclaration
 		: log.throwError(
-				log.identifier(this),
-				'Unexpected error while getting a ts.Node form a ts.Symbol',
+				log.identifier(__filename),
+				'Unexpected error while getting a ts.Node from a ts.Symbol',
 		  );
 }
 
@@ -71,7 +73,7 @@ export function getTsSymbolFromType(this: Object, type: ts.Type) {
 	return symbol
 		? symbol
 		: log.throwError(
-				log.identifier(this),
+				log.identifier(__filename),
 				'Unexpected error while getting a ts.Symbol from a ts.Type',
 		  );
 }

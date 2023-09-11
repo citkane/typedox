@@ -1,26 +1,10 @@
 import * as path from 'path';
-import * as opts from './libOpts';
-import * as api from './projectConfigApi';
 import { logger as log, config } from '../typedox';
 
-export type doxArgsType = Record<string, doxArg<any, any, any>>;
-export type doxArgs<argsInterface extends doxArgsType> = {
-	[K in keyof argsInterface]: doxArg<any, any, argsInterface>;
-};
-export interface doxArg<
-	defaultValue,
-	value,
-	argsInterface extends doxArgsType,
-> {
-	description: string;
-	defaultValue: defaultValue;
-	set: (doxOptions: opts.doxOptions<argsInterface>, value: value) => void;
-}
-
-export const argHyphen = '--';
-
 let _splitArgs: { doxClArgs: string[]; tscClArgs: string[] };
-export function getDoxClArgs<Args extends doxArgsType>(doxArgs: doxArgs<Args>) {
+export function getDoxClArgs<Args extends config.doxArgs>(
+	doxArgs: config.doxGenericArgs<Args>,
+) {
 	return _extrudeDoxClArgValues(doxArgs).doxClArgs;
 }
 export function getTscClArgs() {
@@ -31,39 +15,7 @@ export function getTscClArgs() {
 		);
 	return _splitArgs.tscClArgs;
 }
-function _extrudeDoxClArgValues<Args extends doxArgsType>(
-	doxArgs: doxArgs<Args>,
-) {
-	if (_splitArgs) return _splitArgs;
-	const doxClArgs: string[] = [];
-	const doxClKeys = convertArgObjectToCommandLineKeys<Args>(doxArgs);
-	let isDox = false;
-
-	const tscClArgs = process.argv.filter((arg) => {
-		isDox = doxClKeys.includes(arg)
-			? true
-			: arg.startsWith('-')
-			? false
-			: isDox;
-
-		isDox && doxClArgs.push(arg);
-		return !isDox;
-	});
-	_splitArgs = { doxClArgs, tscClArgs };
-	return _splitArgs;
-}
-
-export const convertArgObjectToCommandLineKeys = <
-	argsInterface extends doxArgsType,
->(
-	rawArgDefs: doxArgs<argsInterface>,
-) => Object.keys(rawArgDefs).map((projectArg) => hyphenateArg(projectArg));
-
-export const hyphenateArg = (arg: string) => `${argHyphen}${arg}`;
-export const unHyphenateArg = (arg: `${typeof argHyphen}${string}`) =>
-	arg.replace(argHyphen, '');
-
-export function getDoxConfigFilepathFromClArgs(coreArgs: api.confApi) {
+export function getDoxConfigFilepathFromClArgs(coreArgs: config.appConfApi) {
 	let typedox = '';
 	let rootDir = '';
 	process.argv.forEach((value, index) => {
@@ -96,4 +48,37 @@ export function getDoxConfigFilepathFromClArgs(coreArgs: api.confApi) {
 	return path.isAbsolute(typedox)
 		? typedox
 		: path.join(coreArgs.projectRootDir.defaultValue, typedox);
+}
+
+export const convertArgObjectToCommandLineKeys = <
+	argsInterface extends config.doxArgs,
+>(
+	rawArgDefs: config.doxGenericArgs<argsInterface>,
+) => Object.keys(rawArgDefs).map((projectArg) => hyphenateArg(projectArg));
+
+export const argHyphen = '--';
+export const hyphenateArg = (arg: string) => `${argHyphen}${arg}`;
+export const unHyphenateArg = (arg: `${typeof argHyphen}${string}`) =>
+	arg.replace(argHyphen, '');
+
+function _extrudeDoxClArgValues<Args extends config.doxArgs>(
+	doxArgs: config.doxGenericArgs<Args>,
+) {
+	if (_splitArgs) return _splitArgs;
+	const doxClArgs: string[] = [];
+	const doxClKeys = convertArgObjectToCommandLineKeys<Args>(doxArgs);
+	let isDox = false;
+
+	const tscClArgs = process.argv.filter((arg) => {
+		isDox = doxClKeys.includes(arg)
+			? true
+			: arg.startsWith('-')
+			? false
+			: isDox;
+
+		isDox && doxClArgs.push(arg);
+		return !isDox;
+	});
+	_splitArgs = { doxClArgs, tscClArgs };
+	return _splitArgs;
 }

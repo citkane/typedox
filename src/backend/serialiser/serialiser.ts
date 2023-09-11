@@ -1,5 +1,5 @@
 import * as dox from '../typedox';
-
+/*
 export function serialiseProject(root: dox.DoxProject) {
 	const packages = mapToObject<npmPackage>(
 		root.npmPackages,
@@ -95,3 +95,4 @@ type classes = typeof classesGroup;
 type variables = typeof variablesGroup;
 type functions = typeof functionsGroup;
 type enums = typeof enumsGroup;
+*/

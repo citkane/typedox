@@ -46,8 +46,8 @@ const c = {
 };
 
 export function logApplicationHelp() {
-	Object.keys(config.confApi).map((key) => {
-		const helpItem = config.confApi[key];
+	Object.keys(config.appConfApi).map((key) => {
+		const helpItem = config.appConfApi[key];
 
 		log.group(config.argHyphen + log.colourise('Underscore', key));
 		log.log(helpItem.description);
@@ -75,23 +75,60 @@ export const logLevelKeyStrings = Object.keys(logLevels).filter(
 	(v) => !Number(v) && v !== '0',
 );
 
-export function inspect(object: object, shrinkObject?: boolean) {
-	object = shrinkObject ? shrink(object) : object;
-	log.log('[inspect]', util.inspect(object, false, null, true));
+export function inspect(
+	object: any,
+	ignoreKeysOrShrink?: string[] | boolean,
+): void;
+export function inspect(
+	object: any,
+	ignoreKeysOrShrink?: boolean | string[],
+	ignoreKeys?: string[],
+) {
+	if (typeof object !== 'object') return log.log(...getArgs(object));
+
+	ignoreKeys = !!ignoreKeys
+		? ignoreKeys
+		: Array.isArray(ignoreKeysOrShrink)
+		? ignoreKeysOrShrink
+		: undefined;
+	const hide =
+		typeof ignoreKeysOrShrink === 'boolean' ? ignoreKeysOrShrink : false;
+
+	if (hide || ignoreKeys) object = shrink(object, hide, ignoreKeys);
+
+	log.log(...getArgs(object));
+
+	function getArgs(obj = object) {
+		return ['[inspect]', util.inspect(obj, false, null, true)];
+	}
 }
 
-function shrink(item: any): any {
+function shrink(item: any, hide = false, unwantedKeys: string[] = []): any {
 	const isArray = Array.isArray(item);
 	const isObject = typeof item == 'object';
 	if (!isArray && !isObject) return item;
 	const objectCopy = isArray
 		? [...item]
-				.filter((i) => !!i)
-				.map((i) => (typeof i === 'object' ? shrink(i) : i))
+				.filter(
+					(value) =>
+						(!!value || !hide) && !unwantedKeys.includes(value),
+				)
+				.map((value) =>
+					typeof value === 'object'
+						? (unwantedKeys.includes(value) && '[hidden]') ||
+						  shrink(value, hide, unwantedKeys)
+						: value,
+				)
 		: (Object.entries({ ...item }).reduce(
 				(accumulator, tuple) => {
-					if (typeof tuple[1] === 'boolean' || !!tuple[1])
-						accumulator[tuple[0]] = shrink(tuple[1]);
+					const [key, value] = tuple;
+					const hasValue = typeof value === 'boolean' || !!value;
+					if (hide && !hasValue) return accumulator;
+					if (hide && unwantedKeys.includes(key)) return accumulator;
+					accumulator[key] = unwantedKeys.includes(key)
+						? '[hidden]'
+						: shrink(value, hide, unwantedKeys);
+
 					return accumulator;
 				},
 				{} as Record<string, any>,

@@ -5,10 +5,10 @@
 	"main": "./dist/index.js",
 	"scripts": {
 		"build:watch": "npx tsc -b -w",
-		"backend": "node -r source-map-support/register ./dist/backend/index.js --typeDependencies foo bar",
+		"backend": "node -r source-map-support/register ./dist/backend/index.js",
 		"help": "node dist/backend/index.js --help",
-		"typedoc": "npx typedoc --tsconfig test/scenarios/testNamespaces/tsconfig.json test/scenarios/testNamespaces/index.ts",
-		"scenario:namespace:recursion": "node -r source-map-support/register ./dist/backend/index.js --packages test/scenarios/namespaces"
+		"typedoc": "npx typedoc --tsconfig tsconfig.json src/backend/typedox.ts",
+		"scenario:namespace:recursion": "node -r source-map-support/register ./dist/backend/index.js --tsConfigs test/scenarios/namespaces"
 	},
 	"repository": {
 		"type": "git",
