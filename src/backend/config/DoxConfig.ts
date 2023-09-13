@@ -7,131 +7,190 @@ import {
 	tscRawConfig,
 	config,
 	TscWrapper,
-	whatIsIt,
+	tsItem,
+	serialise,
+	DoxProject,
+	NpmPackage,
+	TsReference,
+	tsc,
+	projectOptions,
 } from '../typedox';
+import { appConfApi } from './doxConfigApi';
 
 /** get a handle for future jsconfig etc fun */
 export const tsFileSpecifier = 'tsconfig';
+
 let _tscCommandlineConfig: ts.ParsedCommandLine;
 let _clProject: string[] | undefined;
 let _customProject: string[] | undefined;
 let _entryProject: string[];
 let _tscRawConfigs: tscRawConfig[];
 let _tscParsedConfigs: ts.ParsedCommandLine[];
+let _projectOptions: projectOptions;
 
 export class DoxConfig {
-	public projectOptions: config.doxGenericOptions<config.appConfApi>;
-	public tscParsedConfigs: ts.ParsedCommandLine[];
+	public checker?: ts.TypeChecker;
 
-	protected checker?: ts.TypeChecker;
-
-	private clProject: string[] | undefined;
-	private customProject: string[] | undefined;
-	private entryProject: string[];
-	private tscRawConfigs: tscRawConfig[];
-	private _tscCommandlineConfig: ts.ParsedCommandLine;
-
+	constructor(checker?: ts.TypeChecker);
+	constructor(projectOptions: projectOptions, checker?: ts.TypeChecker);
 	constructor(
-		projectOptions: config.doxGenericOptions<config.appConfApi>,
-		checker?: ts.TypeChecker,
+		projectOrChecker?: projectOptions | ts.TypeChecker,
+		optionalChecker?: ts.TypeChecker,
 	) {
+		const [projectOptions, checker] = resolveConstructorOverload(
+			projectOrChecker,
+			optionalChecker,
+		);
 		this.checker = checker;
 
-		this.projectOptions = projectOptions;
-		this._tscCommandlineConfig = _tscCommandlineConfig ??=
+		_projectOptions ??= projectOptions! as projectOptions;
+		_tscCommandlineConfig = _tscCommandlineConfig ??=
 			config.getTscParsedCommandline();
 
-		this.clProject = _clProject ??= this._clProject;
-		this.customProject = _customProject ??= this._customProject;
-		this.entryProject = _entryProject ??= this._entryProject;
-		this.tscRawConfigs = _tscRawConfigs ??= this._tscRawConfigs;
-		this.tscParsedConfigs = _tscParsedConfigs ??= this._tscParsedConfigs;
+		_clProject ??= this._clProject();
+		_customProject ??= this._customProject();
+		_entryProject ??= this._entryProject();
+		_tscRawConfigs ??= this._tscRawConfigs();
+		_tscParsedConfigs ??= this._tscParsedConfigs();
+
+		if (!_projectOptions)
+			log.throwError(
+				log.identifier(__filename),
+				'must be initiated with project options.',
+			);
 	}
 
-	public get projectRootDir() {
-		return path.resolve(this.projectOptions.projectRootDir!);
+	public get options() {
+		return {
+			projectRootDir: this.projectRootDir,
+			doxout: this.doxOut,
+			dependTypes: this.dependTypes,
+			logLevel: this.logLevel,
+			npmFileConvention: this.npmFileConvention,
+			tsConfigs: this.tsConfigs,
+		};
 	}
-	public get doxOut() {
+
+	public get toObject() {
+		const constructor = this.constructor.name;
+		const self = this as unknown;
+		return constructor === 'DoxProject'
+			? serialise.serialiseProject(self as DoxProject)
+			: constructor === 'NpmPackage'
+			? serialise.serialiseNpmPackage(self as NpmPackage)
+			: constructor === 'TsReference'
+			? serialise.serialiseTsReference(self as TsReference)
+			: log.error(
+					log.identifier(__filename),
+					'Call made to unknown serialiser:',
+					constructor,
+			  );
+	}
+
+	protected get tscParsedConfigs() {
+		return _tscParsedConfigs;
+	}
+
+	private get projectRootDir() {
+		return path.resolve(_projectOptions.projectRootDir!);
+	}
+	private get doxOut() {
 		return DoxConfig.ensureAbsPath(
 			this.projectRootDir,
-			this.projectOptions.doxOut!,
+			_projectOptions.doxOut!,
 		);
 	}
-	public get dependTypes() {
-		return this.projectOptions.typeDependencies!;
+	private get dependTypes() {
+		return _projectOptions.typeDependencies || [];
 	}
-	public get logLevel() {
-		return log.logLevels[this.projectOptions.logLevel!];
+	private get logLevel() {
+		return log.logLevels[_projectOptions.logLevel!];
 	}
-	public get npmFileConvention() {
-		return this.projectOptions.npmFileConvention!;
+	private get npmFileConvention() {
+		return _projectOptions.npmFileConvention!;
+	}
+	private get tsConfigs() {
+		return _clProject
+			? _clProject
+			: _customProject?.length
+			? _customProject
+			: _entryProject;
 	}
 
-	protected tsWrap = (item: whatIsIt): TscWrapper => {
-		if (!this.checker)
-			log.throwError(
-				log.identifier(this),
-				'Typechecker has not been registered yet',
-			);
-		return new TscWrapper(this.checker!, item);
+	public isSpecifierKind = (kind: ts.SyntaxKind) => {
+		const {
+			NamespaceExport,
+			NamespaceImport,
+			ModuleDeclaration,
+			ExportDeclaration,
+			ExportSpecifier,
+			ExportAssignment,
+			ImportClause,
+			ImportSpecifier,
+		} = ts.SyntaxKind;
+		const specifiers = [
+			NamespaceExport,
+			NamespaceImport,
+			ModuleDeclaration,
+			ExportDeclaration,
+			ExportSpecifier,
+			ExportAssignment,
+			ImportClause,
+			ImportSpecifier,
+		];
+
+		return specifiers.includes(kind);
 	};
-	private get tsConfigs() {
-		return this.clProject
-			? this.clProject
-			: this.customProject?.length
-			? this.customProject
-			: this.entryProject;
-	}
+
+	protected tsWrap = (item: tsItem): TscWrapper => {
+		!this.checker && notices.tsWrap.throw(log.stackTracer);
+		return tsc.wrap(this.checker!, item);
+	};
+
 	private get tscCommandLineOptions() {
 		const clOptions = {
-			...this._tscCommandlineConfig.options,
+			..._tscCommandlineConfig.options,
 		} as ts.CompilerOptions;
 		clOptions.types = this.dependTypes;
 		return clOptions;
 	}
-	private get _clProject() {
+	private _clProject = () => {
 		let project = this.tscCommandLineOptions.project;
 		const def = project
 			? [DoxConfig.ensureAbsPath(this.projectRootDir, project)]
 			: undefined;
 
 		return def;
-	}
-	private get _customProject() {
-		return this.projectOptions.tsConfigs?.map((fileName) =>
+	};
+	private _customProject = () => {
+		return _projectOptions.tsConfigs?.map((fileName) =>
 			DoxConfig.ensureAbsPath(this.projectRootDir, fileName),
 		);
-	}
-	private get _entryProject() {
+	};
+	private _entryProject = () => {
 		return [ts.findConfigFile(this.projectRootDir, ts.sys.fileExists)!];
-	}
-	private get _tscRawConfigs(): tscRawConfig[] {
-		const isRootInit = !!this.entryProject || !!this.clProject;
+	};
+	private _tscRawConfigs = (): tscRawConfig[] => {
+		const isRootInit = !!_entryProject || !!_clProject;
 		const rawConfigs = findAllRawConfigs(
 			this.tsConfigs,
 			DoxConfig.ensureAbsPath.bind(null, this.projectRootDir),
 			isRootInit,
 		);
 		return rawConfigs;
-	}
-	private get _tscParsedConfigs() {
-		const isRootLevel = this.entryProject || this.clProject;
+	};
+	private _tscParsedConfigs = () => {
+		const isRootLevel = _entryProject || _clProject;
 		const existingOptions = isRootLevel ? this.tscCommandLineOptions : {};
 
 		const parsedConfigs = makeParsedConfigs(
-			this.tscRawConfigs,
+			_tscRawConfigs,
 			this.dependTypes,
 			existingOptions,
 		);
-		/*
-		const npmPackageConfigRegister = makeNpmPackageConfigRegister(
-			parsedConfigRegister,
-			this.projectRootDir,
-			this.npmFileConvention,
-		);
-		*/
+
 		return parsedConfigs;
-	}
+	};
 
 	public static jsonFileToObject(absFilepath: string) {
 		DoxConfig.ensureFileExists(absFilepath);
@@ -157,30 +216,26 @@ export class DoxConfig {
 		if (path.isAbsolute(location)) return location;
 		return path.join(rootDir, location);
 	}
+}
+function resolveConstructorOverload(
+	optionsOrChecker: any,
+	checker: any,
+): [projectOptions | undefined, ts.TypeChecker | undefined] {
+	if (!optionsOrChecker && !checker) return [undefined, undefined];
+	if (optionsOrChecker && checker)
+		return [optionsOrChecker as projectOptions, checker as ts.TypeChecker];
 
-	public isSpecifierKind = (kind: ts.SyntaxKind) => {
-		const {
-			NamespaceExport,
-			NamespaceImport,
-			ModuleDeclaration,
-			ExportDeclaration,
-			ExportSpecifier,
-			ExportAssignment,
-			ImportClause,
-			ImportSpecifier,
-		} = ts.SyntaxKind;
-		const specifiers = [
-			NamespaceExport,
-			NamespaceImport,
-			ModuleDeclaration,
-			ExportDeclaration,
-			ExportSpecifier,
-			ExportAssignment,
-			ImportClause,
-			ImportSpecifier,
-		];
-		return specifiers.includes(kind);
-	};
+	const isOptions = isEqual(optionsOrChecker, config.appConfApi);
+	return isOptions
+		? [optionsOrChecker as projectOptions, undefined]
+		: [undefined, optionsOrChecker as ts.TypeChecker];
+
+	function isEqual(value: any, value2: any) {
+		const keys = Object.keys(value);
+		const keys2 = Object.keys(value2);
+
+		return keys.every((key) => keys2.includes(key));
+	}
 }
 function makeParsedConfig(
 	dependTypes: string[],
@@ -279,3 +334,15 @@ function makeRawTscConfigFromFile(fileName: string, init: boolean) {
 		return ts.readConfigFile(configPath, ts.sys.readFile) as tscRawConfig;
 	}
 }
+
+const notices = {
+	tsWrap: {
+		throw: function (trace: string) {
+			log.throwError(
+				log.identifier(__filename),
+				'Typechecker has not been registered yet',
+				trace,
+			);
+		},
+	},
+};

@@ -1,13 +1,11 @@
 import * as ts from 'typescript';
-import * as dox from '../typedox';
-
-const log = dox.logger;
+import { Relation, TsSourceFile, TscWrapper, logger as log } from '../typedox';
 
 export type symbolFlagString = keyof typeof ts.SymbolFlags;
 export type typeFlagString = keyof typeof ts.SymbolFlags;
 export type nodeKindString = keyof typeof ts.SyntaxKind;
-export type tscWrapperReport = Partial<Record<keyof dox.TscWrapper, any>>;
-export const reportKeys: (keyof dox.TscWrapper)[] = [
+export type tscWrapperReport = Partial<Record<keyof TscWrapper, any>>;
+export const reportKeys: (keyof TscWrapper)[] = [
 	'fileName',
 	'targetFileName',
 	'nodeText',
@@ -23,10 +21,7 @@ export const reportKeys: (keyof dox.TscWrapper)[] = [
 	'hasDeclarations',
 	'hasValueDeclaration',
 ];
-export function parseReportKey(
-	this: dox.TscWrapper,
-	key: keyof dox.TscWrapper,
-) {
+export function parseReportKey(this: TscWrapper, key: keyof TscWrapper) {
 	let value = this[key];
 
 	key === 'moduleSpecifier' &&
@@ -40,14 +35,13 @@ export function parseReportKey(
 }
 
 export function getLocalTargetDeclaration(
-	this: Object,
-	declaration: ts.ExportSpecifier | ts.Identifier,
+	this: TscWrapper,
+	declaration: ts.Identifier | ts.ExportSpecifier,
 	checker: ts.TypeChecker,
 ) {
 	const declarations = checker
 		.getExportSpecifierLocalTargetSymbol(declaration)
 		?.getDeclarations();
-
 	if (declarations && declarations.length > 1)
 		log.throwError(
 			log.identifier(__filename),
@@ -56,7 +50,7 @@ export function getLocalTargetDeclaration(
 	return !!declarations ? declarations[0] : undefined;
 }
 
-export function getTsNodeFromSymbol(this: Object, symbol: ts.Symbol) {
+export function getTsNodeFromSymbol(this: TscWrapper, symbol: ts.Symbol) {
 	const declarations = symbol.getDeclarations();
 	return declarations && declarations.length === 1
 		? (declarations[0] as ts.Node)
@@ -68,7 +62,7 @@ export function getTsNodeFromSymbol(this: Object, symbol: ts.Symbol) {
 		  );
 }
 
-export function getTsSymbolFromType(this: Object, type: ts.Type) {
+export function getTsSymbolFromType(this: TscWrapper, type: ts.Type) {
 	const symbol = type.getSymbol();
 	return symbol
 		? symbol
@@ -79,7 +73,7 @@ export function getTsSymbolFromType(this: Object, type: ts.Type) {
 }
 
 export function getTsSymbolFromNode(
-	this: object,
+	this: TscWrapper,
 	node: ts.Node,
 	checker: ts.TypeChecker,
 	fromName = false,
@@ -113,7 +107,10 @@ export function isStarExport(symbol: ts.Symbol) {
 	return symbol.flags === ts.SymbolFlags.ExportStar;
 }
 
-export function parseExportStars(this: Object, symbol: ts.Symbol) {
+export function parseExportStars(
+	this: TsSourceFile | Relation,
+	symbol: ts.Symbol,
+) {
 	return symbol
 		.declarations!.map((declaration) => {
 			return ts.isExportDeclaration(declaration)
@@ -132,8 +129,13 @@ export function parseExportStars(this: Object, symbol: ts.Symbol) {
 	}
 }
 
-export function getModuleSpecifier(node: ts.Node): ts.Expression | undefined {
+export function getModuleSpecifier(
+	node: ts.Node,
+	//seen = new Map<object, true>(),
+): ts.Expression | undefined {
+	//if (seen.has(node)) return undefined;
+	//seen.set(node, true);
 	if ('moduleSpecifier' in node) return node.moduleSpecifier as ts.Expression;
-	if (!!node.parent) return getModuleSpecifier(node.parent);
+	if (!!node.parent) return getModuleSpecifier(node.parent); //,seen);
 	return undefined;
 }

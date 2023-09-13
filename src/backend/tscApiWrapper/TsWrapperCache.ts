@@ -1,89 +1,146 @@
 import * as ts from 'typescript';
-import * as dox from '../typedox';
-import { TscWrapper } from './TsWrapper';
+import { TscWrapper, logger as log, tsItem, tsc } from '../typedox';
 
-type cacheKeys = keyof typeof cacheCallbacks;
+export class TsWrapperCache {
+	private _cache = {} as cache;
+	protected checker: ts.TypeChecker;
 
-export default class TsWrapperCache {
-	private wrapper: TscWrapper;
-	private checker: ts.TypeChecker;
-	private _cache = new Map<cacheKeys, any>();
-
-	constructor(wrapper: TscWrapper, checker: ts.TypeChecker) {
-		this.wrapper = wrapper;
+	constructor(checker: ts.TypeChecker) {
 		this.checker = checker;
 	}
 
-	public cacheGet = <T>(key: cacheKeys) => this.cacheSet<T>(key);
-	public cacheSet = <T>(key: cacheKeys, knownValue?: T) => {
-		if (this._cache.has(key)) return this._cache.get(key) as T;
+	protected cacheSet = (
+		key: keyof cache,
+		value: ts.Node | ts.Symbol | ts.Type,
+	) => {
+		this._cache[key] === undefined
+			? (this._cache[key] = value as any)
+			: notices.cacheSet.call(this, key);
+	};
 
-		const value: T = knownValue
-			? knownValue
-			: (cacheCallbacks[key].bind(this.wrapper)(this.checker) as T);
-
-		this._cache.set(key, value);
-
-		return value;
+	protected cacheGetter = (wrapper: TscWrapper, key: keyof cache) => {
+		return (this._cache[key] ??= cacheCallbacks[key].bind({
+			wrapper,
+			checker: this.checker,
+		})() as any);
 	};
 }
 
+export type cache = {
+	[K in keyof typeof cacheCallbacks]: ReturnType<(typeof cacheCallbacks)[K]>;
+};
+const wrappers = new Map<ts.Node | ts.Symbol | ts.Type, TscWrapper>();
+type wrapper = { wrapper: TscWrapper; checker: ts.TypeChecker };
 const cacheCallbacks = {
-	tsNode: function (this: TscWrapper) {
-		return dox.tsc.getTsNodeFromSymbol.call(this, this.tsSymbol);
-	},
-	tsSymbol: function (this: TscWrapper, checker: ts.TypeChecker) {
-		return this.isType
-			? dox.tsc.getTsSymbolFromType.call(this, this.tsType)
-			: this.isNode
-			? dox.tsc.getTsSymbolFromNode.call(this, this.tsNode, checker)
-			: (null as unknown as ts.Symbol);
-	},
-	tsType: function (this: TscWrapper, checker: ts.TypeChecker) {
-		return checker.getTypeOfSymbol(this.tsSymbol);
-	},
-	alias: function (this: TscWrapper) {
-		return ts.isImportOrExportSpecifier(this.tsNode)
-			? this.tsNode.propertyName?.getText()
-			: undefined;
-	},
-	moduleSpecifier: function (this: TscWrapper) {
-		return dox.tsc.getModuleSpecifier(this.tsNode);
-	},
-	targetFileName: function (this: TscWrapper, checker: ts.TypeChecker) {
-		const target = this.localTargetDeclaration;
-		const get = target ? new TscWrapper(checker, target) : this;
+	tsNode: function (this: wrapper): ts.Node {
+		const { wrapper } = this;
+		const node = tsc.getTsNodeFromSymbol.call(wrapper, wrapper.tsSymbol);
+		wrappers.set(node, wrapper);
 
-		return get.moduleSpecifier
-			? checker
-					.getSymbolAtLocation(get.moduleSpecifier)
-					?.valueDeclaration?.getSourceFile().fileName
+		return node;
+	},
+	tsSymbol: function (this: wrapper): ts.Symbol {
+		const { wrapper, checker } = this;
+		const symbol = wrapper.isType
+			? tsc.getTsSymbolFromType.call(wrapper, wrapper.tsType)
+			: wrapper.isNode
+			? tsc.getTsSymbolFromNode.call(wrapper, wrapper.tsNode, checker)
+			: notices.cacheCallbacks.tsSymbol.throw();
+		wrappers.set(symbol, wrapper);
+
+		return symbol;
+	},
+	tsType: function (this: wrapper): ts.Type {
+		const { wrapper, checker } = this;
+		const type = checker.getTypeOfSymbol(wrapper.tsSymbol);
+		wrappers.set(type, wrapper);
+
+		return type;
+	},
+	alias: function (this: wrapper) {
+		const { wrapper } = this;
+		return ts.isImportOrExportSpecifier(wrapper.tsNode)
+			? wrapper.tsNode.propertyName?.getText()
 			: undefined;
 	},
-	fileName: function (this: TscWrapper) {
-		return this.tsNode.getSourceFile().fileName;
+	moduleSpecifier: function (this: wrapper) {
+		const { wrapper } = this;
+		return tsc.getModuleSpecifier(wrapper.tsNode);
 	},
-	localTargetDeclaration: function (
-		this: TscWrapper,
-		checker: ts.TypeChecker,
-	) {
-		if (!(this.isExportSpecifier || this.isIdentifier)) return undefined;
-		return dox.tsc.getLocalTargetDeclaration.call(
-			this,
-			this.tsNode as ts.Identifier | ts.ExportSpecifier,
+	targetFileName: function (this: wrapper) {
+		const { wrapper, checker } = this;
+		const target = wrapper.localTargetDeclaration;
+		const get = target ? wrap(checker, target) : wrapper;
+
+		if (!get.moduleSpecifier) return undefined;
+		return checker
+			.getSymbolAtLocation(get.moduleSpecifier)
+			?.valueDeclaration?.getSourceFile().fileName;
+	},
+	fileName: function (this: wrapper) {
+		const { wrapper } = this;
+		return wrapper.tsNode.getSourceFile().fileName as string;
+	},
+	localTargetDeclaration: function (this: wrapper) {
+		const { wrapper, checker } = this;
+		if (!wrapper.isIdentifier && !wrapper.isExportSpecifier)
+			return undefined;
+		return tsc.getLocalTargetDeclaration.call(
+			wrapper,
+			wrapper.tsNode as ts.Identifier | ts.ExportSpecifier,
 			checker,
 		);
 	},
-	callSignatures: function (this: TscWrapper) {
-		return this.tsType.getCallSignatures();
-	},
-	nodeDeclarationText: function (this: TscWrapper) {
-		const text = isRoot(this.tsNode).getText();
-		return text;
+	callSignatures: function (this: wrapper) {
+		const { wrapper } = this;
 
-		function isRoot(node: ts.Node) {
+		return wrapper.tsType.getCallSignatures();
+	},
+	nodeDeclarationText: function (this: wrapper) {
+		const { wrapper, checker } = this;
+
+		return rootNode(wrapper.tsNode).getText();
+
+		function rootNode(node: ts.Node) {
 			if (ts.isSourceFile(node.parent)) return node;
-			return isRoot(node.parent);
+			return rootNode(node.parent);
 		}
+	},
+	aliasedSymbol: function (this: wrapper) {
+		const { wrapper, checker } = this;
+
+		return checker.getAliasedSymbol(wrapper.tsSymbol);
+	},
+	immediateAliasedSymbol: function (this: wrapper) {
+		const { wrapper, checker } = this;
+
+		return checker.getImmediateAliasedSymbol(wrapper.tsSymbol);
+	},
+};
+
+export function wrap(checker: ts.TypeChecker, item: tsItem): TscWrapper {
+	const wrapped = wrappers.get(item) || new TscWrapper(checker, item);
+	!wrappers.has(item) && wrappers.set(item, wrapped);
+
+	return wrapped;
+}
+
+const notices = {
+	cacheSet: function (this: TsWrapperCache, key: string) {
+		log.error(
+			log.identifier(this),
+			'Tried to set existing cache key:',
+			key,
+		);
+	},
+	cacheCallbacks: {
+		tsSymbol: {
+			throw: function () {
+				return log.throwError(
+					log.identifier(__filename),
+					'Could not find ts.Symbol',
+				);
+			},
+		},
 	},
 };

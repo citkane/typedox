@@ -1,27 +1,26 @@
-import * as dox from '../typedox';
 import * as ts from 'typescript';
-import TsWrapperCache from './TsWrapperCache';
-
-const log = dox.logger;
+import { TsWrapperCache } from './TsWrapperCache';
+import { logger as log, tsc } from '../typedox';
 
 /**
  * Provides a convenience dox API wrapper around the typescript compiler API.
  */
-export class TscWrapper {
+export class TscWrapper extends TsWrapperCache {
 	private objectClass: string;
-	private cacheGet: TsWrapperCache['cacheGet'];
 
 	constructor(
 		checker: ts.TypeChecker,
 		tsItem: ts.Node | ts.Symbol | ts.Type,
 	) {
+		super(checker);
 		this.objectClass = tsItem.constructor.name;
-		const { cacheGet, cacheSet } = new TsWrapperCache(this, checker);
-		this.cacheGet = cacheGet;
 
-		this.isNode && cacheSet<ts.Node>('tsNode', tsItem as ts.Node);
-		this.isSymbol && cacheSet<ts.Symbol>('tsSymbol', tsItem as ts.Symbol);
-		this.isType && cacheSet<ts.Type>('tsType', tsItem as ts.Type);
+		this.isNode && this.cacheSet('tsNode', tsItem as ts.Node);
+		this.isSymbol && this.cacheSet('tsSymbol', tsItem as ts.Symbol);
+		this.isType && this.cacheSet('tsType', tsItem as ts.Type);
+	}
+	public get cacheGet() {
+		return this.cacheGetter.bind(null, this);
 	}
 	public get isNode() {
 		return this.objectClass === 'NodeObject';
@@ -32,22 +31,22 @@ export class TscWrapper {
 	public get isType() {
 		return this.objectClass === 'TypeObject';
 	}
-	public get tsNode() {
-		return this.cacheGet<ts.Node>('tsNode');
+	public get tsNode(): tsc.cache['tsNode'] {
+		return this.cacheGet('tsNode');
 	}
-	public get tsSymbol() {
-		return this.cacheGet<ts.Symbol>('tsSymbol');
+	public get tsSymbol(): tsc.cache['tsSymbol'] {
+		return this.cacheGet('tsSymbol') as tsc.cache['tsSymbol'];
 	}
-	public get tsType() {
-		return this.cacheGet<ts.Type>('tsType');
+	public get tsType(): tsc.cache['tsType'] {
+		return this.cacheGet('tsType');
 	}
 	/** The name of the `ts.Symbol` in scope */
 	public get name() {
 		return this.tsSymbol.name;
 	}
 	/** The name alias, if any, of a `ts.Node` */
-	public get alias() {
-		return <string | undefined>this.cacheGet('alias');
+	public get alias(): tsc.cache['alias'] {
+		return this.cacheGet('alias');
 	}
 
 	public get kind() {
@@ -67,33 +66,35 @@ export class TscWrapper {
 		return this.tsSymbol.flags;
 	}
 	public get symbolFlagString() {
-		return ts.SymbolFlags[this.symbolFlag] as dox.tsc.symbolFlagString;
+		return ts.SymbolFlags[this.symbolFlag] as tsc.symbolFlagString;
 	}
 	public get typeFlag() {
 		return this.tsType.getFlags();
 	}
 	public get typeFlagString() {
-		return ts.TypeFlags[this.typeFlag] as dox.tsc.typeFlagString;
+		return ts.TypeFlags[this.typeFlag] as tsc.typeFlagString;
 	}
-	public get moduleSpecifier() {
-		return <ts.Expression | undefined>this.cacheGet('moduleSpecifier');
+	public get moduleSpecifier(): tsc.cache['moduleSpecifier'] {
+		return this.cacheGet('moduleSpecifier');
 	}
-	public get targetFileName() {
-		return <string | undefined>this.cacheGet('targetFileName');
+	public get targetFileName(): tsc.cache['targetFileName'] {
+		return this.cacheGet('targetFileName');
 	}
-
 	/** The file path of the declaration in scope */
-	public get fileName() {
-		return <string>this.cacheGet('fileName');
+	public get fileName(): tsc.cache['fileName'] {
+		return this.cacheGet('fileName');
 	}
-	public get localTargetDeclaration() {
-		return <ts.Declaration | undefined>(
-			this.cacheGet('localTargetDeclaration')
-		);
+	public get localTargetDeclaration(): tsc.cache['localTargetDeclaration'] {
+		return this.cacheGet('localTargetDeclaration');
 	}
-
-	public get callSignatures() {
-		return <ts.Signature[]>this.cacheGet('callSignatures');
+	public get aliasedSymbol(): tsc.cache['aliasedSymbol'] {
+		return this.cacheGet('aliasedSymbol');
+	}
+	public get immediatelyAliasedSymbol(): tsc.cache['immediateAliasedSymbol'] {
+		return this.cacheGet('immediateAliasedSymbol');
+	}
+	public get callSignatures(): tsc.cache['callSignatures'] {
+		return this.cacheGet('callSignatures');
 	}
 	public get hasDeclarations() {
 		const { declarations } = this.tsSymbol;
@@ -102,7 +103,7 @@ export class TscWrapper {
 	public get hasValueDeclaration() {
 		const { valueDeclaration } = this.tsSymbol;
 		return valueDeclaration
-			? (ts.SyntaxKind[valueDeclaration.kind] as dox.tsc.nodeKindString)
+			? (ts.SyntaxKind[valueDeclaration.kind] as tsc.nodeKindString)
 			: false;
 	}
 
@@ -111,8 +112,8 @@ export class TscWrapper {
 		return this.tsNode.getText();
 	}
 	/** The full string representation of a declaration ancestor where it is a direct child of the sourceFile. */
-	public get nodeDeclarationText() {
-		return <string>this.cacheGet('nodeDeclarationText');
+	public get nodeDeclarationText(): tsc.cache['nodeDeclarationText'] {
+		return this.cacheGet('nodeDeclarationText');
 	}
 
 	public get isExportStarChild() {
@@ -132,13 +133,15 @@ export class TscWrapper {
 
 	/** A pre-formatted simple report on the scope. */
 	public get report() {
-		const report: dox.tsc.tscWrapperReport = {};
+		const report: tsc.tscWrapperReport = {};
 
-		dox.tsc.reportKeys.forEach((key) => {
-			const value = dox.tsc.parseReportKey.call(this, key);
+		tsc.reportKeys.forEach((key) => {
+			const value = tsc.parseReportKey.call(this, key);
 			value !== undefined && (report[key] = value);
 		});
 
 		return report;
 	}
 }
+
+const notices = {};

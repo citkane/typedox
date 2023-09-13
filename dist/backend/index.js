@@ -1,20 +1,24 @@
+#!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const typedox_1 = require("./typedox");
-typedox_1.logger.isClRequestForHelp() || main();
-function main() {
-    const doxProject = makeDoxProject();
+main();
+function main(customOptions) {
+    if (typedox_1.logger.isClRequestForHelp())
+        return;
+    const doxProject = makeDoxProject(customOptions);
     const npmPackages = getNpmPackages(doxProject);
     const tsReferences = getTsReferences(npmPackages);
     discoverFilesAndDeclarations(tsReferences);
     buildRelationShips(tsReferences);
     growDocumentBranches(tsReferences);
-    //log.info(JSON.stringify(doxProject.toObject, null, 2));
+    //log.inspect(doxProject.toObject);
 }
-function makeDoxProject() {
-    const projectOptions = typedox_1.config.getDoxOptions(typedox_1.config.appConfApi);
+exports.default = main;
+function makeDoxProject(customOptions) {
+    const projectOptions = typedox_1.config.getDoxOptions(customOptions);
     const doxProject = new typedox_1.DoxProject(projectOptions);
-    typedox_1.logger.setLogLevel(doxProject.logLevel);
+    typedox_1.logger.setLogLevel(doxProject.options.logLevel);
     return doxProject;
 }
 function getNpmPackages(doxProject) {

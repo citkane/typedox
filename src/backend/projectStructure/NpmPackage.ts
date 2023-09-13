@@ -1,4 +1,3 @@
-import * as ts from 'typescript';
 import * as path from 'path';
 import {
 	logger as log,
@@ -40,7 +39,7 @@ export class NpmPackage extends DoxConfig {
 		npmFilePath: string,
 		programs: npmPackageDefinition,
 	) {
-		super(parent.projectOptions);
+		super();
 		const packageConfig = DoxConfig.jsonFileToObject(npmFilePath);
 		const { name, version } = packageConfig;
 

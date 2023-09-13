@@ -1,20 +1,27 @@
-import * as dox from '../typedox';
-/*
-export function serialiseProject(root: dox.DoxProject) {
-	const packages = mapToObject<npmPackage>(
-		root.npmPackages,
-		serialiseNpmPackage,
-	);
+import {
+	Branch,
+	DoxProject,
+	NpmPackage,
+	TsDeclaration,
+	TsReference,
+	logger as log,
+} from '../typedox';
+
+export function serialiseProject(project: DoxProject) {
+	const packageMap = new Map<string, NpmPackage>();
+	project.npmPackages.forEach((pack) => packageMap.set(pack.name, pack));
+	const packages = mapToObject<npmPackage>(packageMap, serialiseNpmPackage);
 
 	return {
 		packages,
 	};
 }
-
-export function serialiseNpmPackage(npmPackage: dox.NpmPackage) {
+export function serialiseNpmPackage(npmPackage: NpmPackage) {
 	const { version, name, tsReferences } = npmPackage;
+	const referenceMap = new Map<string, TsReference>();
+	tsReferences.forEach((ref) => referenceMap.set(ref.name, ref));
 	const references = mapToObject<tsReference>(
-		tsReferences,
+		referenceMap,
 		serialiseTsReference,
 	);
 
@@ -25,17 +32,25 @@ export function serialiseNpmPackage(npmPackage: dox.NpmPackage) {
 	};
 }
 
-export function serialiseTsReference(reference: dox.TsReference) {
+export function serialiseTsReference(reference: TsReference) {
 	const branches = mapToObject<branch>(reference.treeBranches, branch);
 	const branchName = reference.name;
 
 	return { ...branches[branchName] };
 }
 
-function branch(treeBranch: dox.Branch) {
-	const { nameSpaces, functions, variables, classes, enums } = treeBranch;
+function branch(treeBranch: Branch) {
+	const {
+		nameSpaces,
+		functions,
+		variables,
+		classes,
+		enums,
+		default: def,
+	} = treeBranch;
 
 	return {
+		default: def?.name,
 		namespaces: mapToObject<nameSpaces>(nameSpaces, nameSpacesGroup),
 		classes: mapToObject<classes>(classes, classesGroup),
 		functions: mapToObject<functions>(functions, functionsGroup),
@@ -44,7 +59,7 @@ function branch(treeBranch: dox.Branch) {
 	};
 }
 
-function nameSpacesGroup(nameSpace: dox.Branch) {
+function nameSpacesGroup(nameSpace: Branch) {
 	return { ...branch(nameSpace) };
 }
 
@@ -80,10 +95,10 @@ function mapToObject<T extends targetFunction>(
 }
 
 type sourceMapTypes =
-	| Map<string, dox.NpmPackage>
-	| Map<string, dox.TsReference>
-	| Map<string, dox.Branch>
-	| Map<string, dox.TsDeclaration>;
+	| Map<string, NpmPackage>
+	| Map<string, TsReference>
+	| Map<string, Branch>
+	| Map<string, TsDeclaration>;
 
 type targetFunctionTypes = npmPackage | tsReference | branch;
 type targetFunction = (...args: any) => any;
@@ -95,4 +110,3 @@ type classes = typeof classesGroup;
 type variables = typeof variablesGroup;
 type functions = typeof functionsGroup;
 type enums = typeof enumsGroup;
-*/

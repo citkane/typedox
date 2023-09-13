@@ -1,6 +1,6 @@
 import * as path from 'path';
 import util from 'util';
-import { logger as log, config } from '../typedox';
+import { config, logger as log } from '../typedox';
 
 export enum logLevels {
 	debug = 0,
@@ -58,14 +58,23 @@ export function logApplicationHelp() {
 	return true;
 }
 
-export function identifier(subject: any) {
-	return typeof subject === 'string'
-		? `[${path.basename(subject).split('.')[0]}]`
-		: subject.name
-		? `[${subject.name}]`
-		: subject.constructor && subject.constructor.name
-		? `[${initLowerCamel(subject.constructor.name)}]`
-		: null;
+export function identifier(subject: string | object) {
+	const value =
+		typeof subject === 'string'
+			? `${path.basename(subject).split('.')[0]}`
+			: subject.constructor && subject.constructor.name
+			? `${initLowerCamel(subject.constructor.name)}`
+			: getName(subject);
+
+	return `[${value}]`;
+
+	function getName(subject: any) {
+		try {
+			return subject.name;
+		} catch (error) {
+			return 'unknown';
+		}
+	}
 }
 
 export const isRequestForHelp = () =>
@@ -75,25 +84,25 @@ export const logLevelKeyStrings = Object.keys(logLevels).filter(
 	(v) => !Number(v) && v !== '0',
 );
 
+export function toLine(string: string) {
+	return string.replace(/\s+/g, ' ');
+}
+
+export function inspect(object: any, ignoreKeys?: string[]): void;
+export function inspect(object: any, shrink?: boolean): void;
 export function inspect(
 	object: any,
-	ignoreKeysOrShrink?: string[] | boolean,
+	shrink?: boolean,
+	ignoreKeys?: string[],
 ): void;
 export function inspect(
 	object: any,
-	ignoreKeysOrShrink?: boolean | string[],
-	ignoreKeys?: string[],
+	ignoreOrShrink?: boolean | string[],
+	ignore?: string[],
 ) {
 	if (typeof object !== 'object') return log.log(...getArgs(object));
 
-	ignoreKeys = !!ignoreKeys
-		? ignoreKeys
-		: Array.isArray(ignoreKeysOrShrink)
-		? ignoreKeysOrShrink
-		: undefined;
-	const hide =
-		typeof ignoreKeysOrShrink === 'boolean' ? ignoreKeysOrShrink : false;
-
+	const [hide, ignoreKeys] = resolveOverload(ignoreOrShrink, ignore);
 	if (hide || ignoreKeys) object = shrink(object, hide, ignoreKeys);
 
 	log.log(...getArgs(object));
@@ -101,12 +110,28 @@ export function inspect(
 	function getArgs(obj = object) {
 		return ['[inspect]', util.inspect(obj, false, null, true)];
 	}
+	function resolveOverload(
+		ignoreOrShrink: boolean | string[] | undefined,
+		ignore: string[] | undefined,
+	): [boolean | undefined, string[] | undefined] {
+		return typeof ignoreOrShrink === 'boolean'
+			? [ignoreOrShrink as boolean, ignore]
+			: !!ignoreOrShrink
+			? [undefined, ignoreOrShrink as string[]]
+			: [undefined, undefined];
+	}
 }
 
-function shrink(item: any, hide = false, unwantedKeys: string[] = []): any {
+function shrink(
+	item: any,
+	hide = false,
+	unwantedKeys: string[] = [],
+	seen: Map<object, true> = new Map(),
+): any {
 	const isArray = Array.isArray(item);
 	const isObject = typeof item == 'object';
 	if (!isArray && !isObject) return item;
+
 	const objectCopy = isArray
 		? [...item]
 				.filter(
@@ -115,19 +140,31 @@ function shrink(item: any, hide = false, unwantedKeys: string[] = []): any {
 				)
 				.map((value) =>
 					typeof value === 'object'
-						? (unwantedKeys.includes(value) && '[hidden]') ||
-						  shrink(value, hide, unwantedKeys)
+						? (unwantedKeys.includes(value) && `[hidden]`) ||
+						  shrink(value, hide, unwantedKeys, seen)
 						: value,
 				)
 		: (Object.entries({ ...item }).reduce(
 				(accumulator, tuple) => {
 					const [key, value] = tuple;
 					const hasValue = typeof value === 'boolean' || !!value;
-					if (hide && !hasValue) return accumulator;
-					if (hide && unwantedKeys.includes(key)) return accumulator;
+					if (
+						(hide && !hasValue) ||
+						(hide && unwantedKeys.includes(key)) ||
+						seen.has(value as object)
+					) {
+						return accumulator;
+					}
+					seen.set(value as object, true);
+
+					const len = Array.isArray(value)
+						? `(${value.length}): Array`
+						: typeof value === 'object' &&
+						  `(${Object.keys(value as object).length}): Object`;
+
 					accumulator[key] = unwantedKeys.includes(key)
-						? '[hidden]'
-						: shrink(value, hide, unwantedKeys);
+						? `[hidden ${len || typeof value}]`
+						: shrink(value, hide, unwantedKeys, seen);
 
 					return accumulator;
 				},

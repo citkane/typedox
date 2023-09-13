@@ -1,16 +1,20 @@
+#!/usr/bin/env node
+
 import {
-	logger as log,
 	config,
 	TsReference,
 	DoxProject,
 	NpmPackage,
 	Branch,
+	logger as log,
+	projectOptions,
 } from './typedox';
 
-log.isClRequestForHelp() || main();
+main();
+export default function main(customOptions?: projectOptions) {
+	if (log.isClRequestForHelp()) return;
 
-function main() {
-	const doxProject = makeDoxProject();
+	const doxProject = makeDoxProject(customOptions);
 	const npmPackages = getNpmPackages(doxProject);
 	const tsReferences = getTsReferences(npmPackages);
 
@@ -18,13 +22,13 @@ function main() {
 	buildRelationShips(tsReferences);
 	growDocumentBranches(tsReferences);
 
-	//log.info(JSON.stringify(doxProject.toObject, null, 2));
+	//log.inspect(doxProject.toObject);
 }
 
-function makeDoxProject() {
-	const projectOptions = config.getDoxOptions(config.appConfApi);
+function makeDoxProject(customOptions?: projectOptions) {
+	const projectOptions = config.getDoxOptions(customOptions);
 	const doxProject = new DoxProject(projectOptions);
-	log.setLogLevel(doxProject.logLevel);
+	log.setLogLevel(doxProject.options.logLevel);
 
 	return doxProject;
 }

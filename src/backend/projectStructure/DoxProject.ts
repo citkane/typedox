@@ -8,7 +8,6 @@ import {
 	TsDeclaration,
 	Relation,
 	TscWrapper,
-	namedRegistry,
 	npmPackageDefinitions,
 	DoxConfig,
 } from '../typedox';
@@ -42,10 +41,6 @@ export class DoxProject extends DoxConfig {
 		this.programs = this._programs(this.tscParsedConfigs);
 		this.npmPackageDefinitions = this._npmPackageDefinitions(this.programs);
 		this.npmPackages = this._nmpPackages(this.npmPackageDefinitions);
-	}
-	public get serialProject() {
-		return {};
-		//return serialise.serialiseProject(this);
 	}
 
 	private _nmpPackages = (npmPackageDefinitions: npmPackageDefinitions) => {
@@ -119,14 +114,14 @@ function parseProgramRootDir(
 	rootDir: string,
 ) {
 	const npmPackage = findNpmPackage(
-		this.projectRootDir,
+		this.options.projectRootDir,
 		rootDir,
-		this.npmFileConvention,
+		this.options.npmFileConvention,
 	);
 	if (!npmPackage) {
 		log.error(
 			log.identifier(__filename),
-			`No npm "${this.npmFileConvention}" found for a compiler root directory:`,
+			`No npm "${this.options.npmFileConvention}" found for a compiler root directory:`,
 			rootDir,
 		);
 		return accumulator;

@@ -7,6 +7,7 @@
 		//{ "path": "./src/tsconfig.frontend.json" },
 		//{ "path": "./src/tsconfig.types.json" }
 	],
-	"include":["src"],
-	"exclude": ["src/**"]
+	"include":["package.json"],
+	//"exclude": ["src/**"],
+	"compilerOptions": {"outDir": "dist", "resolveJsonModule": true, "allowJs": true}
 }

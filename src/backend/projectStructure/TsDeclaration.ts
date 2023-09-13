@@ -1,13 +1,13 @@
-import { DoxConfig } from '../config/DoxConfig';
+import * as ts from 'typescript';
 import {
 	DeclarationGroup,
+	DoxConfig,
 	DoxProject,
 	TsSourceFile,
 	TscWrapper,
 	declarationMap,
 	logger as log,
 } from '../typedox';
-import * as ts from 'typescript';
 
 /**
  * A container for typescript declarations:
@@ -41,15 +41,12 @@ export class TsDeclaration extends DoxConfig {
 	aliasName?: string;
 	get: TscWrapper;
 
-	constructor(
-		parent: TsSourceFile,
-		item: ts.Symbol | ts.Node,
-		checker: ts.TypeChecker,
-	) {
-		super(parent.projectOptions, checker);
+	constructor(parent: TsSourceFile, item: ts.Symbol | ts.Node) {
+		super(parent.checker);
 		this.parent = parent;
 
 		this.get = this.tsWrap(item);
+
 		this.name = this.get.name;
 		this.tsKind = this.get.kind;
 		this.tsNode = this.get.tsNode;
@@ -58,8 +55,6 @@ export class TsDeclaration extends DoxConfig {
 
 		if (!this.get.isExportStarChild && !this.isSpecifierKind(this.tsKind))
 			return;
-
-		log.debug(log.identifier(this), this.get.nodeDeclarationText);
 
 		this.parser(this.get.tsNode);
 	}
@@ -72,36 +67,37 @@ export class TsDeclaration extends DoxConfig {
 
 		const isModule =
 			tsKind === SyntaxKind.ModuleDeclaration ||
-			tsKind === SyntaxKind.NamespaceExport;
+			tsKind === SyntaxKind.NamespaceExport ||
+			tsKind === SyntaxKind.NamespaceImport;
+		const isType =
+			tsKind === SyntaxKind.TypeAliasDeclaration ||
+			tsKind === SyntaxKind.InterfaceDeclaration;
 
-		const kind =
-			tsKind === SyntaxKind.VariableDeclaration
-				? DeclarationGroup.Variable
-				: isModule
-				? DeclarationGroup.Module
-				: tsKind === SyntaxKind.ClassDeclaration
-				? DeclarationGroup.Class
-				: tsKind === SyntaxKind.FunctionDeclaration
-				? DeclarationGroup.Function
-				: tsKind === SyntaxKind.EnumDeclaration
-				? DeclarationGroup.Enum
-				: DeclarationGroup.unknown;
+		const kind = isModule
+			? DeclarationGroup.Module
+			: isType
+			? DeclarationGroup.Type
+			: tsKind === SyntaxKind.ImportSpecifier
+			? DeclarationGroup.ReExporter
+			: tsKind === SyntaxKind.VariableDeclaration
+			? DeclarationGroup.Variable
+			: tsKind === SyntaxKind.ClassDeclaration
+			? DeclarationGroup.Class
+			: tsKind === SyntaxKind.FunctionDeclaration
+			? DeclarationGroup.Function
+			: tsKind === SyntaxKind.EnumDeclaration
+			? DeclarationGroup.Enum
+			: tsKind === SyntaxKind.ExportAssignment
+			? DeclarationGroup.Default
+			: DeclarationGroup.unknown;
 
-		if (kind === DeclarationGroup.unknown)
-			log.error(
-				log.identifier(this),
-				'Did not discover a kind:',
-				SyntaxKind[tsKind],
-				this.get.report,
-			);
+		kind === DeclarationGroup.unknown && notices.kind(tsKind, this.get);
+
 		return kind;
 	}
 
-	private parser(node: ts.Node, get = this.get, isLocalTarget = false) {
+	private parser(node: ts.Node, get = this.get, isTarget = false) {
 		if (!this.isSpecifierKind(node.kind)) return;
-
-		const reportType = isLocalTarget ? 'localTargetNode' : 'node';
-		const reportMessage = `Did not parse a ${reportType}`;
 
 		ts.isModuleDeclaration(node)
 			? this.parseModuleDeclaration(node)
@@ -109,31 +105,53 @@ export class TsDeclaration extends DoxConfig {
 			? this.parseNamespaceExport()
 			: ts.isExportSpecifier(node)
 			? this.parseExportSpecifier()
+			: ts.isImportSpecifier(node)
+			? this.parseImportSpecifier()
 			: get.isExportStarChild
 			? this.parseReExporter(get)
-			: DoxProject.deepReport.call(
-					this,
-					__filename,
-					'error',
-					reportMessage,
-					get,
-					isLocalTarget,
-			  );
+			: ts.isExportAssignment(node)
+			? this.parseExportAssignment(get)
+			: ts.isNamespaceImport(node)
+			? this.parseNamespaceImport(get)
+			: notices.parser.deepreport.call(this, isTarget, get);
+	}
+
+	private parseExportAssignment(get: TscWrapper) {
+		notices.parse.debug.call(this, 'parseExportAssignment');
+		//log.inspect(get.tsNode, true, ['parent']);
 	}
 	private parseReExporter(get: TscWrapper) {
+		notices.parse.debug.call(this, 'parseReExporter');
 		//this.info(get.tsSymbol.exports);
 	}
 	private parseModuleDeclaration(module: ts.ModuleDeclaration) {
+		notices.parse.debug.call(this, 'parseModuleDeclaration');
+
 		this.nameSpace = module.name.getText();
 	}
 	private parseNamespaceExport = () => {
+		notices.parse.debug.call(this, 'parseNamespaceExport');
+
 		this.nameSpace = this.name;
 	};
-	private parseNamespaceImport = () => {
+	private parseNamespaceImport = (get: TscWrapper) => {
+		notices.parse.debug.call(this, 'parseNamespaceImport');
+
 		this.nameSpace = this.name;
 	};
+	private parseImportSpecifier() {
+		notices.parse.debug.call(this, 'parseImportSpecifier');
+
+		const target = this.get.immediatelyAliasedSymbol;
+		const get = this.tsWrap(target!);
+
+		//this.parser(get.tsNode, get, true);
+	}
 	private parseExportSpecifier() {
+		notices.parse.debug.call(this, 'parseExportSpecifier');
+
 		const localTarget = this.get.localTargetDeclaration;
+
 		if (!localTarget)
 			return log.error(
 				log.identifier(this),
@@ -143,6 +161,7 @@ export class TsDeclaration extends DoxConfig {
 		const get = this.tsWrap(localTarget);
 		this.parser(get.tsNode, get, true);
 	}
+
 	private static resolveTsKind(declaration: TsDeclaration) {
 		let tsKind = declaration.tsKind;
 		let { get } = declaration;
@@ -150,6 +169,11 @@ export class TsDeclaration extends DoxConfig {
 		if (get.localTargetDeclaration) {
 			get = declaration.tsWrap(get.localTargetDeclaration);
 			tsKind = get.tsNode.kind;
+		}
+		if (ts.isImportSpecifier(get.tsNode)) {
+		}
+		if (ts.isExportSpecifier(get.tsNode)) {
+			log.info('---------------------------------------------');
 		}
 		if (
 			tsKind === ts.SyntaxKind.VariableDeclaration &&
@@ -161,3 +185,42 @@ export class TsDeclaration extends DoxConfig {
 		return tsKind;
 	}
 }
+
+const notices = {
+	kind: function (tsKind: ts.SyntaxKind, get: TscWrapper) {
+		log.error(
+			log.identifier(__filename),
+			'Did not discover a kind:',
+			ts.SyntaxKind[tsKind],
+			get.report,
+		);
+	},
+	parser: {
+		deepreport: function (
+			this: TsDeclaration,
+			isLocalTarget: boolean,
+			get: TscWrapper,
+		) {
+			const reportType = isLocalTarget ? 'localTargetNode' : 'node';
+			const reportMessage = `Did not parse a ${reportType}`;
+			DoxProject.deepReport.call(
+				this,
+				__filename,
+				'error',
+				reportMessage,
+				get,
+				isLocalTarget,
+			);
+		},
+	},
+	parse: {
+		debug: function (this: TsDeclaration, fncName: string) {
+			log.debug(
+				log.identifier(this),
+				`[${fncName}]`,
+				`[${log.toLine(this.get.nodeText)}]`,
+				log.toLine(this.get.nodeDeclarationText),
+			);
+		},
+	},
+};

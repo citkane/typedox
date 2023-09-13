@@ -38,15 +38,15 @@ export class TsSourceFile extends DoxConfig {
 	constructor(
 		parent: TsReference,
 		source: ts.SourceFile,
-		checker: ts.TypeChecker,
+		fileSymbol: ts.Symbol,
 	) {
-		super(parent.projectOptions, checker);
+		super(parent.checker);
 		this.parent = parent;
 		this.checker = this.checker!;
 
 		this.source = source;
 		this.fileName = source.fileName;
-		this.fileSymbol = this.checker.getSymbolAtLocation(source)!;
+		this.fileSymbol = fileSymbol;
 		this.fileType = this.checker.getTypeOfSymbol(this.fileSymbol);
 		const fileExports = this.fileSymbol.exports?.values();
 		this.childFiles = this.discoverFiles([...(fileExports || [])]);
@@ -88,13 +88,13 @@ export class TsSourceFile extends DoxConfig {
 			this: TsSourceFile,
 			item: ts.Symbol | ts.Node,
 		) {
-			const declaration = new TsDeclaration(this, item, this.checker!);
+			const declaration = new TsDeclaration(this, item);
 			this.declarationsMap.set(declaration.name, declaration);
 		}
 	};
 	public buildRelationships = () => {
 		this.declarationsMap.forEach(
-			(declaration) => new Relation(this, declaration, this.checker!),
+			(declaration) => new Relation(this, declaration),
 		);
 	};
 }

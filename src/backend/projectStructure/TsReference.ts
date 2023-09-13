@@ -1,14 +1,11 @@
+import * as ts from 'typescript';
 import {
 	Branch,
 	DoxConfig,
-	DoxProject,
 	NpmPackage,
 	TsSourceFile,
-	fileMap,
 	logger as log,
-	rawDox,
 } from '../typedox';
-import * as ts from 'typescript';
 
 /**
  * A container for a typescript compiler reference. This could be the only one in a npm package, or one of many if
@@ -43,7 +40,7 @@ export class TsReference extends DoxConfig {
 		program: ts.Program,
 		files: string[],
 	) {
-		super(parent.projectOptions, program.getTypeChecker());
+		super(program.getTypeChecker());
 
 		this.name = name;
 		this.parent = parent;
@@ -63,8 +60,9 @@ export class TsReference extends DoxConfig {
 		return dox.serialise.serialiseTsReference(this);
 	}
 */
-	public discoverDeclarations = () =>
+	public discoverDeclarations = () => {
 		this.filesMap.forEach((file) => file.discoverDeclarations());
+	};
 
 	public buildRelationships = () =>
 		this.filesMap.forEach((file) => file.buildRelationships());
@@ -77,15 +75,24 @@ export class TsReference extends DoxConfig {
 
 			if (!fileSource)
 				return log.error(
-					log.identifier(this),
+					log.identifier(__filename),
 					'No source file was found:',
+					fileName,
+				);
+
+			const fileSymbol = this.checker?.getSymbolAtLocation(fileSource);
+
+			if (!fileSymbol)
+				return log.info(
+					log.identifier(__filename),
+					'File was not included as part of the documentation set:',
 					fileName,
 				);
 
 			const doxSourceFile = new TsSourceFile(
 				this,
 				fileSource,
-				this.checker!,
+				fileSymbol,
 			);
 			this.filesMap.set(fileName, doxSourceFile);
 

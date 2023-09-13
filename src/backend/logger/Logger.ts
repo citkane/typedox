@@ -39,15 +39,26 @@ export class Logger extends Console {
 		throw new Error();
 	};
 
+	public get stackTracer() {
+		let i = 0;
+		return Error()
+			.stack?.replace('Error', '')
+			.replace(/\n.*\n/g, (match) => {
+				i++;
+				return i === 1 ? '\n' : match;
+			})!;
+	}
+
 	public identifier = utils.identifier;
 	public logLevelKeyStrings = Object.keys(utils.logLevels).filter(
 		(v) => !Number(v) && v !== '0',
 	);
 	public colourise = utils.colourise;
 	public initLowerCamel = utils.initLowerCamel;
+	public toLine = utils.toLine;
 
-	public logApplicationHelp = utils.logApplicationHelp;
-	public isClRequestForHelp = utils.isRequestForHelp;
+	public isClRequestForHelp = () =>
+		utils.isRequestForHelp() ? utils.logApplicationHelp() : false;
 
 	private shouldLog = (level: utils.logLevels) => level >= this.logLevel;
 }

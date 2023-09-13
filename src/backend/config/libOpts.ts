@@ -1,31 +1,29 @@
 import * as ts from 'typescript';
-import { logger as log, config } from '../typedox';
+import { logger as log, config, projectOptions } from '../typedox';
 
 type Args = config.appConfApi;
 
-export function getDoxOptions(coreArgs: config.appConfApi) {
-	/**
-	 * @todo
-	 * inject modules here
-	 */
+export function getDoxOptions(customOptions?: projectOptions) {
+	const doxArgs = config.appConfApi;
+	const options = customOptions || mergeOptions();
 
-	const doxArgs = coreArgs;
-	/** */
-
-	const defaultOptions = getDefaultDoxOptions<Args>(doxArgs);
-	let { fileArgs } = config.readDoxConfigFromFile(coreArgs);
-
-	const clOptions = config.getDoxConfigFromCommandLine<Args>(doxArgs);
-
-	const options = {
-		...defaultOptions,
-		...fileArgs,
-		...clOptions,
-	} as config.doxGenericOptions<Args>;
-
-	validateDoxOptions(coreArgs, options);
-
+	validateDoxOptions(doxArgs, options);
 	return options;
+
+	function mergeOptions() {
+		const defaultOptions = getDefaultDoxOptions<Args>(doxArgs);
+		let { fileArgs } = config.readDoxConfigFromFile(doxArgs);
+
+		const clOptions = config.getDoxConfigFromCommandLine<Args>(doxArgs);
+
+		const options = {
+			...defaultOptions,
+			...fileArgs,
+			...clOptions,
+		} as projectOptions;
+
+		return options;
+	}
 }
 
 export function getTscParsedCommandline() {
@@ -40,8 +38,8 @@ export function getTscParsedCommandline() {
 	return tscOptions;
 }
 
-function getDefaultDoxOptions<Args extends config.doxArgs>(
-	doxArgs: config.doxGenericArgs<Args>,
+export function getDefaultDoxOptions<Args extends config.doxArgs>(
+	doxArgs = config.appConfApi,
 ) {
 	const argTuples = Object.entries(doxArgs).map((tuple) => {
 		const [key, item] = tuple;
