@@ -1,7 +1,7 @@
 node_modules
 /docs
-/dist
 /temp
 /test/**/coverage
 
+dist
 .nyc_output
