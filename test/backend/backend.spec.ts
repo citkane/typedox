@@ -1,14 +1,8 @@
-process.env.NODE_ENV = 'test';
-
-import * as dox from '../../src/backend/typedox';
-import main from '../../src/backend/typedox';
-
-const defaultOptions = dox.config.getDefaultDoxOptions();
-/*
-const customOptions = {
-	...defaultOptions,
-	...{ projectRootDir: __dirname },
-} as dox.projectOptions;
-
-main(customOptions);
-*/
+describe('Configuration and options', function () {
+	describe('Unit tests', function () {
+		require('./unitTests/unit.options.spec');
+	});
+	describe('Functional tests', function () {
+		require('./functionalTests/functional.options.spec');
+	});
+});

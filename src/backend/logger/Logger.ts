@@ -1,7 +1,8 @@
 import * as ts from 'typescript';
 import * as utils from './loggerUtils';
-import { Console } from 'node:console';
+import { Console } from 'console';
 
+export { logLevels } from './loggerUtils';
 export class Logger extends Console {
 	private logLevel: utils.logLevels;
 
@@ -9,7 +10,7 @@ export class Logger extends Console {
 		super(process.stdout, process.stderr, true);
 		this.logLevel = logLevel;
 	}
-	public logLevels = utils.logLevels;
+
 	public setLogLevel = (logLevel: utils.logLevels) => {
 		this.logLevel = logLevel;
 	};
@@ -35,8 +36,9 @@ export class Logger extends Console {
 		super.error(utils.colourise('FgRed', '[error]'), ...args);
 
 	public throwError = (...args: any) => {
-		this.error(...args);
-		throw new Error();
+		throw new Error(
+			[utils.colourise('FgRed', '[error]'), ...args].join(' '),
+		);
 	};
 
 	public get stackTracer() {

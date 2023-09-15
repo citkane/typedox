@@ -1,33 +1,61 @@
 import * as ts from 'typescript';
-import { logger as log, config, projectOptions } from '../typedox';
+import * as fs from 'fs';
+import { logger as log, config, DoxConfig } from '../typedox';
 
-type Args = config.appConfApi;
-
-export function getDoxOptions(customOptions?: projectOptions) {
-	const doxArgs = config.appConfApi;
+export function getDoxOptions(
+	customOptions?: config.doxOptions,
+	doxClArgsAndValues = config.getClArgs().doxClArgs,
+) {
+	const doxArgs = config.doxArgs;
 	const options = customOptions || mergeOptions();
 
-	validateDoxOptions(doxArgs, options);
+	validateDoxOptions(options, doxArgs);
 	return options;
 
 	function mergeOptions() {
-		const defaultOptions = getDefaultDoxOptions<Args>(doxArgs);
-		let { fileArgs } = config.readDoxConfigFromFile(doxArgs);
-
-		const clOptions = config.getDoxConfigFromCommandLine<Args>(doxArgs);
-
+		const defaultOptions = getDefaultDoxOptions(doxArgs);
+		const fileArgs = config.getFileDoxOptions(doxClArgsAndValues, doxArgs);
+		const clOptions = config.parseDoxClArgsToOptions(
+			doxClArgsAndValues,
+			doxArgs,
+		);
 		const options = {
 			...defaultOptions,
 			...fileArgs,
 			...clOptions,
-		} as projectOptions;
+		} as config.doxOptions;
 
 		return options;
 	}
 }
+export function getDefaultDoxOptions(doxArgs = config.doxArgs) {
+	const argTuples = Object.entries(doxArgs).map((tuple) => {
+		const [key, item] = tuple;
+		return [key, config.clone(item.defaultValue)];
+	});
+	const optionObject = Object.fromEntries(argTuples);
 
-export function getTscParsedCommandline() {
-	const tscOptions = ts.parseCommandLine(config.getTscClArgs());
+	return optionObject as config.doxOptions;
+}
+export function getFileDoxOptions(
+	doxClArgsAndValues = config.getClArgs().doxClArgs,
+	doxArgs = config.doxArgs,
+) {
+	const optionsFile = config.getDoxFilepathFromArgs(
+		doxClArgsAndValues,
+		doxArgs,
+	);
+
+	const fileArgs: config.doxOptions = fs.existsSync(optionsFile)
+		? DoxConfig.jsonFileToObject(optionsFile)
+		: {};
+	return fileArgs;
+}
+
+export function getTscParsedCommandline(
+	tscClArgsAndValues = config.getClArgs().tscClArgs,
+) {
+	const tscOptions = ts.parseCommandLine(tscClArgsAndValues);
 	tscOptions.errors.forEach((error) => {
 		log.warn(
 			log.identifier(__filename),
@@ -38,28 +66,17 @@ export function getTscParsedCommandline() {
 	return tscOptions;
 }
 
-export function getDefaultDoxOptions<Args extends config.doxArgs>(
-	doxArgs = config.appConfApi,
+export function validateDoxOptions(
+	options: config.doxOptions,
+	doxArgs = config.doxArgs,
 ) {
-	const argTuples = Object.entries(doxArgs).map((tuple) => {
-		const [key, item] = tuple;
-		return [key, item.defaultValue];
-	});
-	const optionObject = Object.fromEntries(argTuples);
-
-	return optionObject as config.doxGenericOptions<Args>;
-}
-function validateDoxOptions(
-	coreArgs: config.appConfApi,
-	options: config.doxGenericOptions<Args>,
-) {
-	Object.keys(coreArgs).forEach((key) => {
-		const coreArg = coreArgs[key];
+	Object.keys(doxArgs).forEach((k) => {
+		const key = k as keyof config.doxArgs;
+		const coreArg = doxArgs[key];
 		const optionValue = options[key];
-		const notFound = !optionValue;
-		const validated = coreArg.validate(optionValue);
+		const validated = coreArg.validate(optionValue as any);
 
-		if (coreArg.required && (notFound || validated === undefined))
+		if (coreArg.required && optionValue === undefined)
 			log.throwError(
 				log.identifier(__filename),
 				'A required option was not found:',

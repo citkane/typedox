@@ -3,10 +3,10 @@ import util from 'util';
 import { config, logger as log } from '../typedox';
 
 export enum logLevels {
-	debug = 0,
-	info = 1,
-	warn = 2,
-	error = 3,
+	debug,
+	info,
+	warn,
+	error,
 }
 
 export function initLowerCamel(word: string) {
@@ -46,8 +46,9 @@ const c = {
 };
 
 export function logApplicationHelp() {
-	Object.keys(config.appConfApi).map((key) => {
-		const helpItem = config.appConfApi[key];
+	Object.keys(config.doxArgs).map((k) => {
+		const key = k as keyof config.doxArgs;
+		const helpItem = config.doxArgs[key];
 
 		log.group(config.argHyphen + log.colourise('Underscore', key));
 		log.log(helpItem.description);

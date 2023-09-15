@@ -1,85 +1,83 @@
-import { logger as log } from '../typedox';
-import { configSetters, configValidators } from './libConfig';
+import { logger as log, logLevelKeys } from '../typedox';
+import { configurators, deepFreeze } from './libConfig';
 
-export type doxArgs = Record<string, doxConfigArg<any, any, any>>;
-export interface doxConfigArg<
-	defaultValue,
-	value,
-	argsInterface extends doxArgs,
-> {
+type Flatten<T> = T extends any[] ? T[number] : T;
+type RequiredValue<R, V> = R extends true | undefined ? V : V | undefined;
+
+export type doxOptions = {
+	[K in keyof doxArgs]: doxArgs[K]['required'] extends true | undefined
+		? doxArgs[K]['defaultValue']
+		: doxArgs[K]['defaultValue'] | undefined;
+};
+export interface doxArg<defaultValue, required = false> {
 	description: string;
 	defaultValue: defaultValue;
-	required: defaultValue | undefined;
-	set: (doxOptions: doxGenericOptions<argsInterface>, value: value) => void;
-	validate: (value: any) => undefined | boolean;
-}
-export type doxGenericOptions<Args extends doxArgs> = {
-	[K in keyof Args]: Args[K]['defaultValue'] | Args[K]['required'];
-};
-export type doxGenericArgs<argsInterface extends doxArgs> = {
-	[K in keyof argsInterface]: doxConfigArg<any, any, argsInterface>;
-};
-export type coreOpts = doxGenericOptions<appConfApi>;
-
-export interface appConfApi extends doxArgs {
-	projectRootDir: doxConfigArg<string, string, appConfApi>;
-	doxOut: doxConfigArg<string, string, appConfApi>;
-	typeDependencies: doxConfigArg<string[], string, appConfApi>;
-	logLevel: doxConfigArg<keyof typeof log.logLevels, string, appConfApi>;
-	tsConfigs: doxConfigArg<string[], string, appConfApi>;
-	npmFileConvention: doxConfigArg<string, string, appConfApi>;
-	typedox: doxConfigArg<string, string, appConfApi>;
+	required?: required;
+	set: (
+		doxOptions: doxOptions,
+		value: RequiredValue<required, Flatten<defaultValue>>,
+	) => void;
+	validate: (value: RequiredValue<required, defaultValue>) => boolean;
 }
 
-export const appConfApi: appConfApi = {
+export interface doxArgs {
+	projectRootDir: doxArg<string, true>;
+	doxOut: doxArg<string, true>;
+	typeDependencies: doxArg<string[], true>;
+	logLevel: doxArg<logLevelKeys, true>;
+	tsConfigs: doxArg<string[]>;
+	npmFileConvention: doxArg<string, true>;
+	typedox: doxArg<string>;
+}
+
+export const doxArgs: doxArgs = {
 	projectRootDir: {
 		description: 'The absolute path location of the project root',
 		defaultValue: process.cwd(),
-		required: process.cwd(),
-		set: configSetters.projectRootDir,
-		validate: configValidators.projectRootDir,
+		required: true,
+		set: configurators.projectRootDir.set,
+		validate: configurators.projectRootDir.validate,
 	},
 	doxOut: {
 		description: 'The out directory for document build files',
 		defaultValue: 'docs',
-		required: 'docs',
-		set: configSetters.doxOut,
-		validate: configValidators.doxOut,
+		required: true,
+		set: configurators.doxOut.set,
+		validate: configurators.doxOut.validate,
 	},
 	typeDependencies: {
 		description:
 			'The @types dependencies in `node_modules` to be included for documentation, if any.',
 		defaultValue: [] as string[],
-		required: [] as string[],
-		set: configSetters.typeDependencies,
-		validate: configValidators.typeDependencies,
+		required: true,
+		set: configurators.typeDependencies.set,
+		validate: configurators.typeDependencies.validate,
 	},
 	logLevel: {
 		description: `One of [${log.logLevelKeyStrings}]`,
-		defaultValue: 'info',
-		required: 'info',
-		set: configSetters.logLevel,
-		validate: configValidators.logLevel,
+		defaultValue: 'info' as logLevelKeys,
+		required: true,
+		set: configurators.logLevel.set,
+		validate: configurators.logLevel.validate,
 	},
 	tsConfigs: {
 		description: `Specific tsconfig files to used as documentation entry points.`,
-		defaultValue: [],
-		required: undefined,
-		set: configSetters.tsConfigs,
-		validate: configValidators.tsConfigs,
+		defaultValue: [] as string[],
+		set: configurators.tsConfigs.set,
+		validate: configurators.tsConfigs.validate,
 	},
 	npmFileConvention: {
 		description: 'The name convention of the json files used to set up npm',
 		defaultValue: 'package.json',
-		required: 'package.json',
-		set: configSetters.npmFileConvention,
-		validate: configValidators.npmFileConvention,
+		required: true,
+		set: configurators.npmFileConvention.set,
+		validate: configurators.npmFileConvention.validate,
 	},
 	typedox: {
 		description: 'File location of typedox.json config file',
 		defaultValue: 'typedox.json',
-		required: undefined,
-		set: configSetters.typedox,
-		validate: configValidators.typedox,
+		set: configurators.typedox.set,
+		validate: configurators.typedox.validate,
 	},
 };
+deepFreeze(doxArgs);

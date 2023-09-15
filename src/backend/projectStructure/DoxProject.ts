@@ -10,6 +10,7 @@ import {
 	TscWrapper,
 	npmPackageDefinitions,
 	DoxConfig,
+	logLevels,
 } from '../typedox';
 
 /**
@@ -35,7 +36,7 @@ export class DoxProject extends DoxConfig {
 	private npmPackageDefinitions: npmPackageDefinitions;
 	private programs: ts.Program[];
 
-	constructor(projectOptions: config.doxGenericOptions<config.appConfApi>) {
+	constructor(projectOptions: config.doxOptions) {
 		super(projectOptions);
 
 		this.programs = this._programs(this.tscParsedConfigs);
@@ -91,7 +92,7 @@ export class DoxProject extends DoxConfig {
 	public static deepReport(
 		this: TsDeclaration | Relation,
 		location: string,
-		logLevel: keyof typeof log.logLevels,
+		logLevel: keyof typeof logLevels,
 		message: string,
 		get: TscWrapper,
 		isLocalTarget: boolean,

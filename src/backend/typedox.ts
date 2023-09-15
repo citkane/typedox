@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { Logger } from './logger/Logger';
+import { Logger, logLevels } from './logger/Logger';
 export const logger = new Logger();
 
 import { DoxConfig } from './config/_namespace';
@@ -21,6 +21,7 @@ import main from '.';
 
 export default main;
 export {
+	logLevels,
 	serialise,
 	config,
 	tsc,
@@ -50,6 +51,8 @@ export enum DeclarationGroup {
 	Type,
 	Default,
 }
+
+export type logLevelKeys = keyof typeof logLevels;
 export type tsConfigFile = string;
 export type referenceName = string;
 
@@ -92,8 +95,6 @@ export type namedRegistry<reg> = Record<string, reg>;
 
 export type npmPackageDefinition = [program: ts.Program, rootDir: string][];
 export type npmPackageDefinitions = namedRegistry<npmPackageDefinition>;
-
-export type projectOptions = config.doxGenericOptions<config.appConfApi>;
 
 export namespace foo {
 	const bar = 'foo';

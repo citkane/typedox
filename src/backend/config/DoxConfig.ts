@@ -13,61 +13,65 @@ import {
 	NpmPackage,
 	TsReference,
 	tsc,
-	projectOptions,
+	logLevels,
 } from '../typedox';
-import { appConfApi } from './doxConfigApi';
 
 /** get a handle for future jsconfig etc fun */
 export const tsFileSpecifier = 'tsconfig';
 
-let _tscCommandlineConfig: ts.ParsedCommandLine;
-let _clProject: string[] | undefined;
-let _customProject: string[] | undefined;
-let _entryProject: string[];
-let _tscRawConfigs: tscRawConfig[];
-let _tscParsedConfigs: ts.ParsedCommandLine[];
-let _projectOptions: projectOptions;
-
+let _cache: Cache;
 export class DoxConfig {
+	_deleteCache = () => {
+		(_cache as any) = undefined;
+	};
+
 	public checker?: ts.TypeChecker;
 
-	constructor(checker?: ts.TypeChecker);
-	constructor(projectOptions: projectOptions, checker?: ts.TypeChecker);
+	constructor(clOptions?: string[]);
+	constructor(checker?: ts.TypeChecker, clOptions?: string[]);
 	constructor(
-		projectOrChecker?: projectOptions | ts.TypeChecker,
-		optionalChecker?: ts.TypeChecker,
+		projectOptions?: config.doxOptions,
+		checker?: ts.TypeChecker,
+		clOptions?: string[],
+	);
+	constructor(
+		projectOrCheckerOrClArgs?:
+			| config.doxOptions
+			| ts.TypeChecker
+			| string[],
+		checkerOrClArgs?: ts.TypeChecker | string[],
+		argv = process.argv as string[],
 	) {
-		const [projectOptions, checker] = resolveConstructorOverload(
-			projectOrChecker,
-			optionalChecker,
-		);
+		const [projectOptions, checker, clArgs] =
+			config.resolveConstructorOverload(
+				projectOrCheckerOrClArgs,
+				checkerOrClArgs,
+				argv,
+			);
+
 		this.checker = checker;
 
-		_projectOptions ??= projectOptions! as projectOptions;
-		_tscCommandlineConfig = _tscCommandlineConfig ??=
-			config.getTscParsedCommandline();
-
-		_clProject ??= this._clProject();
-		_customProject ??= this._customProject();
-		_entryProject ??= this._entryProject();
-		_tscRawConfigs ??= this._tscRawConfigs();
-		_tscParsedConfigs ??= this._tscParsedConfigs();
-
-		if (!_projectOptions)
+		if (!projectOptions && !_cache)
 			log.throwError(
-				log.identifier(__filename),
-				'must be initiated with project options.',
+				log.identifier(this),
+				'The initial DoxConfig must include projectOptions',
+			);
+
+		!_cache &&
+			this.warmTheCache(
+				projectOptions! as config.doxOptions,
+				config.getTscParsedCommandline(clArgs),
 			);
 	}
 
 	public get options() {
 		return {
 			projectRootDir: this.projectRootDir,
-			doxout: this.doxOut,
-			dependTypes: this.dependTypes,
+			doxOut: this.doxOut,
+			typeDependencies: this.typeDependencies,
 			logLevel: this.logLevel,
-			npmFileConvention: this.npmFileConvention,
 			tsConfigs: this.tsConfigs,
+			npmFileConvention: this.npmFileConvention,
 		};
 	}
 
@@ -88,33 +92,33 @@ export class DoxConfig {
 	}
 
 	protected get tscParsedConfigs() {
-		return _tscParsedConfigs;
+		return _cache.tscParsedConfigs;
 	}
 
+	private get tsConfigs() {
+		return _cache.clProject
+			? _cache.clProject
+			: _cache.customProject?.length
+			? _cache.customProject
+			: _cache.entryProject;
+	}
 	private get projectRootDir() {
-		return path.resolve(_projectOptions.projectRootDir!);
+		return path.resolve(_cache.projectOptions.projectRootDir!);
 	}
 	private get doxOut() {
 		return DoxConfig.ensureAbsPath(
 			this.projectRootDir,
-			_projectOptions.doxOut!,
+			_cache.projectOptions.doxOut!,
 		);
 	}
-	private get dependTypes() {
-		return _projectOptions.typeDependencies || [];
+	private get typeDependencies() {
+		return _cache.projectOptions.typeDependencies;
 	}
 	private get logLevel() {
-		return log.logLevels[_projectOptions.logLevel!];
+		return logLevels[_cache.projectOptions.logLevel];
 	}
 	private get npmFileConvention() {
-		return _projectOptions.npmFileConvention!;
-	}
-	private get tsConfigs() {
-		return _clProject
-			? _clProject
-			: _customProject?.length
-			? _customProject
-			: _entryProject;
+		return _cache.projectOptions.npmFileConvention!;
 	}
 
 	public isSpecifierKind = (kind: ts.SyntaxKind) => {
@@ -146,12 +150,22 @@ export class DoxConfig {
 		!this.checker && notices.tsWrap.throw(log.stackTracer);
 		return tsc.wrap(this.checker!, item);
 	};
-
+	private warmTheCache(
+		projectOptions: config.doxOptions,
+		tscCommandlineConfig: ts.ParsedCommandLine,
+	) {
+		_cache = new Cache(projectOptions, tscCommandlineConfig);
+		_cache.clProject = this._clProject();
+		_cache.entryProject = this._entryProject();
+		_cache.tscRawConfigs = this._tscRawConfigs();
+		_cache.customProject = this._customProject();
+		_cache.tscParsedConfigs = this._tscParsedConfigs();
+	}
 	private get tscCommandLineOptions() {
 		const clOptions = {
-			..._tscCommandlineConfig.options,
+			..._cache.tscCommandlineConfig.options,
 		} as ts.CompilerOptions;
-		clOptions.types = this.dependTypes;
+		clOptions.types = this.typeDependencies;
 		return clOptions;
 	}
 	private _clProject = () => {
@@ -163,7 +177,7 @@ export class DoxConfig {
 		return def;
 	};
 	private _customProject = () => {
-		return _projectOptions.tsConfigs?.map((fileName) =>
+		return _cache.projectOptions.tsConfigs?.map((fileName) =>
 			DoxConfig.ensureAbsPath(this.projectRootDir, fileName),
 		);
 	};
@@ -171,8 +185,8 @@ export class DoxConfig {
 		return [ts.findConfigFile(this.projectRootDir, ts.sys.fileExists)!];
 	};
 	private _tscRawConfigs = (): tscRawConfig[] => {
-		const isRootInit = !!_entryProject || !!_clProject;
-		const rawConfigs = findAllRawConfigs(
+		const isRootInit = !!_cache.entryProject || !!_cache.clProject;
+		const rawConfigs = config.findAllRawConfigs(
 			this.tsConfigs,
 			DoxConfig.ensureAbsPath.bind(null, this.projectRootDir),
 			isRootInit,
@@ -180,12 +194,12 @@ export class DoxConfig {
 		return rawConfigs;
 	};
 	private _tscParsedConfigs = () => {
-		const isRootLevel = _entryProject || _clProject;
+		const isRootLevel = !!_cache.entryProject || !!_cache.clProject;
 		const existingOptions = isRootLevel ? this.tscCommandLineOptions : {};
 
-		const parsedConfigs = makeParsedConfigs(
-			_tscRawConfigs,
-			this.dependTypes,
+		const parsedConfigs = config.makeParsedConfigs(
+			_cache.tscRawConfigs,
+			this.typeDependencies,
 			existingOptions,
 		);
 
@@ -217,121 +231,53 @@ export class DoxConfig {
 		return path.join(rootDir, location);
 	}
 }
-function resolveConstructorOverload(
-	optionsOrChecker: any,
-	checker: any,
-): [projectOptions | undefined, ts.TypeChecker | undefined] {
-	if (!optionsOrChecker && !checker) return [undefined, undefined];
-	if (optionsOrChecker && checker)
-		return [optionsOrChecker as projectOptions, checker as ts.TypeChecker];
 
-	const isOptions = isEqual(optionsOrChecker, config.appConfApi);
-	return isOptions
-		? [optionsOrChecker as projectOptions, undefined]
-		: [undefined, optionsOrChecker as ts.TypeChecker];
+class Cache {
+	_clProject: string[] | undefined;
+	_customProject: string[] | undefined;
+	_entryProject!: string[];
+	projectOptions: config.doxOptions;
+	tscCommandlineConfig: ts.ParsedCommandLine;
+	_tscParsedConfigs!: ts.ParsedCommandLine[];
+	_tscRawConfigs!: tscRawConfig[];
 
-	function isEqual(value: any, value2: any) {
-		const keys = Object.keys(value);
-		const keys2 = Object.keys(value2);
-
-		return keys.every((key) => keys2.includes(key));
-	}
-}
-function makeParsedConfig(
-	dependTypes: string[],
-	existingOptions: ts.CompilerOptions,
-	tscRawConfig: tscRawConfig,
-) {
-	const { rootDir, fileName } = tscRawConfig.dox;
-	const { compilerOptions } = tscRawConfig.config;
-	compilerOptions && (compilerOptions.types = dependTypes);
-
-	const parsedConfig = ts.parseJsonConfigFileContent(
-		tscRawConfig.config,
-		ts.sys,
-		rootDir,
-		existingOptions,
-		fileName,
-	) as ts.ParsedCommandLine;
-
-	return parsedConfig;
-}
-function makeParsedConfigs(
-	tscRawConfigs: tscRawConfig[],
-	dependTypes: string[],
-	existingOptions: ts.CompilerOptions,
-) {
-	const parseConfig = makeParsedConfig.bind(
-		null,
-		dependTypes,
-		existingOptions,
-	);
-	const parsedConfigs = tscRawConfigs.map(parseConfig);
-
-	return parsedConfigs;
-}
-
-function findAllRawConfigs(
-	configFilePaths: string[],
-	ensureAbsPath: (path: string) => string,
-	isRootInit: boolean = false,
-	accumulator: tscRawConfig[] = [],
-): tscRawConfig[] {
-	const tscRawConfigs = configFilePaths.reduce(
-		mergeConfigReferences.bind(isRootInit),
-		accumulator,
-	);
-	return tscRawConfigs;
-
-	function mergeConfigReferences(
-		this: boolean,
-		accumulator: tscRawConfig[],
-		fileName: string,
+	constructor(
+		projectOptions: config.doxOptions,
+		tscCommandlineConfig: ts.ParsedCommandLine,
 	) {
-		const isInit = this;
-		const rawConfig = makeRawTscConfigFromFile(fileName, isInit);
-
-		accumulator.push(rawConfig);
-
-		const references = discoverReferences(rawConfig);
-
-		return references.length
-			? findAllRawConfigs(references, ensureAbsPath, false, accumulator)
-			: accumulator;
+		this.projectOptions = projectOptions;
+		this.tscCommandlineConfig = tscCommandlineConfig;
 	}
 
-	function discoverReferences(rawConfig: tscRawConfig) {
-		const references = (rawConfig.config.references || [])
-			.map(resolveReference)
-			.filter((reference) => !!reference);
-
-		return references as string[];
+	set clProject(value: string[] | undefined) {
+		this._clProject = value;
 	}
-	function resolveReference(reference: ts.ProjectReference) {
-		const referencePath = ts.resolveProjectReferencePath(reference);
-		!referencePath &&
-			log.warn(
-				log.identifier(__filename),
-				'Did not resolve a reference:',
-				reference.path,
-			);
-		return referencePath ? ensureAbsPath(referencePath) : undefined;
+	get clProject() {
+		return this._clProject;
 	}
-}
-function makeRawTscConfigFromFile(fileName: string, init: boolean) {
-	const rootDir = path.dirname(fileName);
-	const rawConfig = readTscConfigFile(fileName) as tscRawConfig;
-
-	rawConfig.dox = {
-		fileName,
-		init,
-		rootDir,
-	};
-
-	return rawConfig;
-
-	function readTscConfigFile(configPath: string) {
-		return ts.readConfigFile(configPath, ts.sys.readFile) as tscRawConfig;
+	set customProject(value: string[] | undefined) {
+		this._customProject = value;
+	}
+	get customProject() {
+		return this._customProject;
+	}
+	set entryProject(value: string[]) {
+		this._entryProject = value;
+	}
+	get entryProject() {
+		return this._entryProject;
+	}
+	set tscParsedConfigs(value: ts.ParsedCommandLine[]) {
+		this._tscParsedConfigs = value;
+	}
+	get tscParsedConfigs() {
+		return this._tscParsedConfigs;
+	}
+	set tscRawConfigs(value: tscRawConfig[]) {
+		this._tscRawConfigs = value;
+	}
+	get tscRawConfigs() {
+		return this._tscRawConfigs;
 	}
 }
 

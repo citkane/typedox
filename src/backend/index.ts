@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import {
 	config,
 	TsReference,
@@ -7,11 +5,9 @@ import {
 	NpmPackage,
 	Branch,
 	logger as log,
-	projectOptions,
 } from './typedox';
 
-main();
-export default function main(customOptions?: projectOptions) {
+export default function main(customOptions?: config.doxOptions) {
 	if (log.isClRequestForHelp()) return;
 
 	const doxProject = makeDoxProject(customOptions);
@@ -25,7 +21,7 @@ export default function main(customOptions?: projectOptions) {
 	//log.inspect(doxProject.toObject);
 }
 
-function makeDoxProject(customOptions?: projectOptions) {
+function makeDoxProject(customOptions?: config.doxOptions) {
 	const projectOptions = config.getDoxOptions(customOptions);
 	const doxProject = new DoxProject(projectOptions);
 	log.setLogLevel(doxProject.options.logLevel);

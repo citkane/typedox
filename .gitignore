@@ -1,7 +1,8 @@
-node_modules
 /docs
 /temp
 /test/**/coverage
 
 dist
+node_modules
 .nyc_output
+tsconfig.tsbuildinfo 

@@ -4,16 +4,16 @@
 	"description": "Document Generator for Typedoc",
 	"main": "backend/index.js",
 	"bin": {
-		"typedox": "backend/index.js"
+		"typedox": "bin/typedox.js"
 	},
 	"scripts": {
-		"build:watch": "npx tsc -b -w",
+		"build:watch": "node .build.js -b -w",
 		"backend": "node -r source-map-support/register dist/backend/index",
 		"help": "node dist/backend/index.js --help",
 		"typedoc": "npx typedoc --tsconfig tsconfig.json src/backend/typedox.ts",
 		"scenario:namespace:recursion": "node -r source-map-support/register ./dist/backend/index.js --tsConfigs test/scenarios/namespaces",
-		"test:backend": "mocha --file test/backend/backend.spec.ts --logLevel warn",
-		"test:backend:coverage": "nyc --include=src/backend/**/*.ts npm run test:backend"
+		"test:backend": "NODE_ENV=test mocha --file test/backend/backend.spec.ts",
+		"test:backend:coverage": "nyc --include=src/backend/**/*.ts --report-dir=test/backend/coverage npm run test:backend"
 	},
 	"repository": {
 		"type": "git",
@@ -37,17 +37,23 @@
 	],
 	"devDependencies": {
 		"@typedox/tsconfig": "*",
-		"@types/node": "^20.5.6",
+		"@types/chai": "^4.3.6",
+		"@types/mocha": "^10.0.1",
+		"@types/node": "^20.6.0",
+		"chai": "^4.3.8",
 		"mocha": "^10.2.0",
 		"nyc": "^15.1.0",
 		"prettier": "^3.0.1",
 		"source-map-support": "^0.5.21",
 		"ts-node": "^10.9.1",
-		"typedoc": "^0.25.1",
 		"typedox": "file:dist"
 	},
 	"dependencies": {
 		"typescript": "^5.2.2"
+	},
+	"engines": {
+		"npm": ">=7.0.2 <=9.8.1",
+		"node": ">=15.0.1 <=20.6.1"
 	},
 	"mocha": {
 		"extension": [
@@ -67,7 +73,6 @@
 			"text",
 			"html"
 		],
-		"report-dir": "test/coverage",
 		"temp-dir": "test/.nyc_output"
 	}
 }
