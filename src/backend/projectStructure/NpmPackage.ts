@@ -6,6 +6,7 @@ import {
 	namedRegistry,
 	npmPackageDefinition,
 	DoxConfig,
+	config,
 } from '../typedox';
 
 /**
@@ -40,7 +41,7 @@ export class NpmPackage extends DoxConfig {
 		programs: npmPackageDefinition,
 	) {
 		super();
-		const packageConfig = DoxConfig.jsonFileToObject(npmFilePath);
+		const packageConfig = config.jsonFileToObject(npmFilePath);
 		const { name, version } = packageConfig;
 
 		this.parent = parent;
@@ -86,16 +87,16 @@ function getNameMap(programs: npmPackageDefinition) {
 	function getNameFromRootDir(
 		rootDirs: string[],
 		rootDir: string,
-		longname: string[],
+		longName: string[],
 	): string[] {
 		const hasParent = rootDirs.find(
 			(dir) => dir !== rootDir && rootDir.startsWith(dir),
 		);
-		hasParent && longname.unshift(path.basename(hasParent));
+		hasParent && longName.unshift(path.basename(hasParent));
 
 		return hasParent
-			? getNameFromRootDir(rootDirs, hasParent, longname)
-			: longname;
+			? getNameFromRootDir(rootDirs, hasParent, longName)
+			: longName;
 	}
 
 	return referenceNameMap;

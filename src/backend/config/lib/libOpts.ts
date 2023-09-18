@@ -1,12 +1,30 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
-import { logger as log, config, DoxConfig } from '../typedox';
+import { logger as log, config, DoxConfig } from '../../typedox';
 
+export function getDoxOptions(doxClArgsAndValues?: string[]): config.doxOptions;
 export function getDoxOptions(
 	customOptions?: config.doxOptions,
+	doxClArgsAndValues?: string[],
+): config.doxOptions;
+export function getDoxOptions(
+	customOrCl?: config.doxOptions | string[],
 	doxClArgsAndValues = config.getClArgs().doxClArgs,
-) {
+): config.doxOptions {
 	const doxArgs = config.doxArgs;
+	const arg0is =
+		customOrCl === undefined
+			? undefined
+			: Array.isArray(customOrCl)
+			? 'cl'
+			: 'custom';
+
+	doxClArgsAndValues =
+		arg0is === 'cl' ? (customOrCl as string[]) : doxClArgsAndValues;
+
+	const customOptions =
+		arg0is === 'custom' ? (customOrCl as config.doxOptions) : undefined;
+
 	const options = customOptions || mergeOptions();
 
 	validateDoxOptions(options, doxArgs);
@@ -47,11 +65,10 @@ export function getFileDoxOptions(
 	);
 
 	const fileArgs: config.doxOptions = fs.existsSync(optionsFile)
-		? DoxConfig.jsonFileToObject(optionsFile)
+		? config.jsonFileToObject(optionsFile)
 		: {};
 	return fileArgs;
 }
-
 export function getTscParsedCommandline(
 	tscClArgsAndValues = config.getClArgs().tscClArgs,
 ) {
@@ -65,7 +82,6 @@ export function getTscParsedCommandline(
 	});
 	return tscOptions;
 }
-
 export function validateDoxOptions(
 	options: config.doxOptions,
 	doxArgs = config.doxArgs,

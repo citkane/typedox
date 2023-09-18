@@ -1,3 +1,3 @@
 export * from './tsWrapperUtils';
-export { wrap, cache, TsWrapperCache } from './TsWrapperCache';
+export { wrap, cache } from './TsWrapperCache';
 export { TscWrapper } from './TsWrapper';

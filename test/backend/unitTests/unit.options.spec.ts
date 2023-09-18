@@ -1,13 +1,24 @@
-import * as path from 'path';
 import * as stubs from '../stubs.spec';
+import * as path from 'path';
+import * as ts from 'typescript';
 import { assert } from 'chai';
-import { logger as log, config, logLevels } from '../../../src/backend/typedox';
+import { stub } from 'sinon';
+import {
+	logger as log,
+	config,
+	logLevels,
+	DoxConfig,
+	tscRawConfig,
+} from '../../../src/backend/typedox';
+
+const { configurators } = DoxConfig;
 
 before(function () {
 	log.setLogLevel(logLevels.error);
 });
+
 describe('Commandline arguments', function () {
-	const doxArgVstub = Object.entries(stubs.configs.defaultConfig).reduce(
+	const doxArgVstub = Object.entries(config.getDefaultDoxOptions()).reduce(
 		(accumulator, tuple) => {
 			const [key, value] = tuple;
 			accumulator.push(`${config.argHyphen}${key}`);
@@ -16,12 +27,12 @@ describe('Commandline arguments', function () {
 		},
 		[] as string[],
 	);
-	const tscargVStub = ['-b', '--noEmit', '--target', '--esnext'];
+	const tscArgVStub = ['-b', '--noEmit', '--target', '--esnext'];
 	const argvStub = [
 		process.argv[0],
 		process.argv[1],
 		...doxArgVstub,
-		...tscargVStub,
+		...tscArgVStub,
 	];
 	const orphanArgs = [
 		'--projectRootDir',
@@ -64,13 +75,13 @@ describe('Commandline arguments', function () {
 
 	it('should get tsc cl arguments', function () {
 		const args = config.getClArgs(argvStub).tscClArgs;
-		assert.deepEqual(args.slice(2), tscargVStub);
+		assert.deepEqual(args.slice(2), tscArgVStub);
 	});
 	it('should try to get tsc parsed options from commandline', function () {
 		assert.doesNotThrow(() => config.getTscParsedCommandline());
 	});
 	it('should get tsc parsed options from commandline', function () {
-		const options = config.getTscParsedCommandline(tscargVStub);
+		const options = config.getTscParsedCommandline(tscArgVStub);
 		assert.deepEqual(options.options, {
 			build: true,
 			noEmit: true,
@@ -114,7 +125,7 @@ describe('Commandline arguments', function () {
 });
 describe('Parsed options', function () {
 	const badConfigStub = function () {
-		let badConfig = config.deepClone(stubs.configs.defaultConfig) as any;
+		let badConfig = config.getDefaultDoxOptions() as any;
 		badConfig.typeDependencies = 123;
 		const badConfigs = { wrong: config.deepClone(badConfig) } as any;
 		delete badConfig.typeDependencies;
@@ -127,11 +138,11 @@ describe('Parsed options', function () {
 	};
 	it('should get the default options', function () {
 		const autoConfig = config.getDefaultDoxOptions();
-		assert.deepEqual(autoConfig, stubs.configs.defaultConfig as any);
+		assert.deepEqual(autoConfig, config.getDefaultDoxOptions() as any);
 	});
 	it('should validate the default options', function () {
 		assert.doesNotThrow(() =>
-			config.validateDoxOptions(stubs.configs.defaultConfig as any),
+			config.validateDoxOptions(config.getDefaultDoxOptions() as any),
 		);
 	});
 	it('should throw if required option is missing', function () {
@@ -147,10 +158,34 @@ describe('Parsed options', function () {
 		);
 	});
 	it('should get and validate custom options', function () {
-		const customOptions = config.getDoxOptions(
-			stubs.configs.defaultConfig as any,
-		);
-		assert.deepEqual(customOptions, stubs.configs.defaultConfig as any);
+		const customOptions = config.getDefaultDoxOptions();
+		customOptions.doxOut = 'foo';
+		customOptions.logLevel = 'error';
+		customOptions.npmFileConvention = 'foo.bar';
+		customOptions.projectRootDir = 'here';
+		customOptions.tsConfigs = ['there'];
+		customOptions.typeDependencies = ['foo', 'bar'];
+		customOptions.typedox = 'foo.bar';
+
+		const validatedOptions = config.getDoxOptions([
+			'--doxOut',
+			'foo',
+			'--logLevel',
+			'error',
+			'--npmFileConvention',
+			'foo.bar',
+			'--projectRootDir',
+			'here',
+			'--tsConfigs',
+			'there',
+			'--typeDependencies',
+			'foo',
+			'bar',
+			'--typedox',
+			'foo.bar',
+		]);
+
+		assert.deepEqual(customOptions, validatedOptions);
 	});
 	it('should try to read the default config file', function () {
 		assert.doesNotThrow(() => config.getFileDoxOptions());
@@ -180,7 +215,7 @@ describe('Parsed options', function () {
 			doxOut: 'testDocs',
 			typeDependencies: ['foo', 'bar'],
 			logLevel: 'info',
-			tsConfigs: [],
+			tsConfigs: undefined,
 			npmFileConvention: 'package.json',
 			typedox: 'typedox.spec.json',
 		};
@@ -214,7 +249,6 @@ describe('config tools', function () {
 	it('should deepfreeze a object', function () {
 		assert.throws(() => (deepRef.deep = 'frozen'));
 	});
-
 	it('should deep clone a frozen object', function () {
 		assert.doesNotThrow(() => {
 			clone[0].ref.deep = 'frozen';
@@ -230,17 +264,17 @@ describe('config tools', function () {
 	});
 	it('should set all options using the configurator', function () {
 		Object.keys(config.doxArgs).forEach((key) => {
-			assert.doesNotThrow(() => config.configurators[key].set({}, 'foo'));
+			assert.doesNotThrow(() => configurators[key].set({}, 'foo'));
 		});
 	});
 	it('should validate all options using the configurator', function () {
 		Object.keys(config.doxArgs).forEach((key) => {
-			assert.isBoolean(config.configurators[key].validate('foo'));
+			assert.isBoolean(configurators[key].validate('foo'));
 		});
 	});
 	it('should validate and set tsConfig arrays', function () {
-		const validate = config.configurators.tsConfigs.validate;
-		const set = config.configurators.tsConfigs.set;
+		const validate = configurators.tsConfigs.validate;
+		const set = configurators.tsConfigs.set;
 
 		assert.isTrue(validate(undefined));
 		assert.isFalse(validate('foo' as any));
@@ -261,9 +295,160 @@ describe('config tools', function () {
 		} as any);
 	});
 	it('should validate a file signature for typedox', function () {
-		const validate = config.configurators.typedox.validate;
+		const validate = configurators.typedox.validate;
 		assert.isTrue(validate(undefined));
 		assert.isTrue(validate('typedox.json'));
 		assert.isFalse(validate('typedoxjson'));
+	});
+	it('throws if file does not exist', function () {
+		assert.throws(() => config.ensureFileExists('foo'));
+	});
+	it('reports on bad json', function () {
+		const warnStub = stub(log, 'warn')
+			.onFirstCall()
+			.callsFake((...args) => {
+				assert.equal(
+					args[1],
+					"Property value can only be string literal, numeric literal, 'true', 'false', 'null', object literal or array literal.",
+				);
+			});
+		config.jsonFileToObject(
+			stubs.configs.ensureAbsPath(
+				'test/backend/unitTests/badJson.spec.json',
+			),
+		);
+		warnStub.restore();
+	});
+	it('ensures an absolute path', function () {
+		const absPath = config.ensureAbsPath('/foo', '/foo/bar');
+		const relPath = config.ensureAbsPath('/foo', 'bar');
+		assert.equal(absPath, relPath);
+	});
+});
+describe('config parsing', function () {
+	let rawConfig;
+	let rawConfigs;
+	const tsconfigRelPath = 'test/backend/tsconfig.spec.json';
+	const tsConfigAbsPath = stubs.configs.ensureAbsPath(tsconfigRelPath);
+	const tsconfigRefRelPath = 'unitTests/tsconfig.spec.json';
+	const tsconfigRefAbsPath = stubs.configs.ensureAbsPath(
+		path.join('test/backend', tsconfigRefRelPath),
+	);
+
+	it('resolves the class constructor overloads', function () {
+		const options = config.getDoxOptions();
+		const clArgs = ['foo'];
+		const checker = {} as ts.TypeChecker;
+
+		assert.deepEqual(config.resolveConstructorOverload(), [
+			undefined,
+			undefined,
+			process.argv,
+		]);
+		assert.deepEqual(config.resolveConstructorOverload(clArgs), [
+			undefined,
+			undefined,
+			clArgs,
+		]);
+		assert.deepEqual(config.resolveConstructorOverload(options), [
+			options,
+			undefined,
+			process.argv,
+		]);
+		assert.deepEqual(config.resolveConstructorOverload(checker), [
+			undefined,
+			checker,
+			process.argv,
+		]);
+
+		assert.deepEqual(config.resolveConstructorOverload(checker, clArgs), [
+			undefined,
+			checker,
+			clArgs,
+		]);
+		assert.deepEqual(config.resolveConstructorOverload(options, clArgs), [
+			options,
+			undefined,
+			clArgs,
+		]);
+		assert.deepEqual(config.resolveConstructorOverload(options, checker), [
+			options,
+			checker,
+			process.argv,
+		]);
+		assert.deepEqual(
+			config.resolveConstructorOverload(options, checker, clArgs),
+			[options, checker, clArgs],
+		);
+		assert.deepEqual(
+			config.resolveConstructorOverload(undefined, checker, clArgs),
+			[undefined, checker, clArgs],
+		);
+		assert.deepEqual(
+			config.resolveConstructorOverload(undefined, undefined, clArgs),
+			[undefined, undefined, clArgs],
+		);
+		assert.deepEqual(
+			config.resolveConstructorOverload(options, undefined, clArgs),
+			[options, undefined, clArgs],
+		);
+	});
+	it('makes a rawTsConfig by reading a tsconfig from file', function () {
+		assert.doesNotThrow(
+			() =>
+				(rawConfig = config.makeRawTscConfigFromFile(
+					tsConfigAbsPath,
+					true,
+				)),
+		);
+
+		assert.deepEqual(rawConfig, {
+			config: {
+				include: ['.'],
+				references: [
+					{ path: tsconfigRefRelPath },
+					{ path: 'doesnotexist.json' },
+				],
+				compilerOptions: { noEmit: true },
+			},
+			error: undefined,
+			dox: {
+				fileName: tsConfigAbsPath,
+				init: true,
+				rootDir: path.dirname(tsConfigAbsPath),
+			},
+		});
+	});
+	it('resolves tsc reference paths from a raw config', function () {
+		assert.deepEqual(
+			[],
+			config.discoverReferences({ config: {} } as tscRawConfig),
+		);
+		const discovered = config.discoverReferences(rawConfig);
+		assert.deepEqual(discovered, [tsconfigRefAbsPath]);
+	});
+	it('finds all raw tscConfigs', function () {
+		rawConfigs = config.findAllRawConfigs(
+			['test/backend/tsconfig.spec.json'],
+			stubs.configs.ensureAbsPath,
+			true,
+		);
+		assert.equal(rawConfigs.length, 2);
+		rawConfigs.forEach((config) => {
+			assert.equal(config.error, undefined);
+		});
+	});
+	it('parses a raw config', function () {
+		const parsedConfig = config.makeParsedConfig([], {}, rawConfig);
+		assert.exists(parsedConfig.options);
+		assert.deepEqual(parsedConfig.options, {
+			noEmit: true,
+			types: [],
+			configFilePath: tsConfigAbsPath,
+		});
+	});
+	it('parses raw configs', function () {
+		const parsedConfigs = config.makeParsedConfigs(rawConfigs, [], {});
+		assert.equal(parsedConfigs.length, 2);
 	});
 });

@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { TsWrapperCache } from './TsWrapperCache';
-import { logger as log, tsc } from '../typedox';
+import { logger as log, tsc, tsItem } from '../typedox';
 
 /**
  * Provides a convenience dox API wrapper around the typescript compiler API.
@@ -8,16 +8,14 @@ import { logger as log, tsc } from '../typedox';
 export class TscWrapper extends TsWrapperCache {
 	private objectClass: string;
 
-	constructor(
-		checker: ts.TypeChecker,
-		tsItem: ts.Node | ts.Symbol | ts.Type,
-	) {
+	constructor(checker: ts.TypeChecker, tsItem: tsItem) {
 		super(checker);
-		this.objectClass = tsItem.constructor.name;
 
+		this.objectClass = tsItem.constructor.name;
 		this.isNode && this.cacheSet('tsNode', tsItem as ts.Node);
 		this.isSymbol && this.cacheSet('tsSymbol', tsItem as ts.Symbol);
-		this.isType && this.cacheSet('tsType', tsItem as ts.Type);
+
+		//this.isType && this.cacheSet('tsType', tsItem as ts.Type);
 	}
 	public get cacheGet() {
 		return this.cacheGetter.bind(null, this);
@@ -28,9 +26,11 @@ export class TscWrapper extends TsWrapperCache {
 	public get isSymbol() {
 		return this.objectClass === 'SymbolObject';
 	}
+	/*
 	public get isType() {
 		return this.objectClass === 'TypeObject';
 	}
+	*/
 	public get tsNode(): tsc.cache['tsNode'] {
 		return this.cacheGet('tsNode');
 	}
@@ -96,10 +96,7 @@ export class TscWrapper extends TsWrapperCache {
 	public get callSignatures(): tsc.cache['callSignatures'] {
 		return this.cacheGet('callSignatures');
 	}
-	public get hasDeclarations() {
-		const { declarations } = this.tsSymbol;
-		return declarations ? declarations.length : false;
-	}
+
 	public get hasValueDeclaration() {
 		const { valueDeclaration } = this.tsSymbol;
 		return valueDeclaration

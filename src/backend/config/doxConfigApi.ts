@@ -1,5 +1,7 @@
 import { logger as log, logLevelKeys } from '../typedox';
-import { configurators, deepFreeze } from './libConfig';
+import { deepFreeze } from './lib/libConfig';
+import { DoxConfig } from './DoxConfig';
+const { configurators } = DoxConfig;
 
 type Flatten<T> = T extends any[] ? T[number] : T;
 type RequiredValue<R, V> = R extends true | undefined ? V : V | undefined;
@@ -25,7 +27,7 @@ export interface doxArgs {
 	doxOut: doxArg<string, true>;
 	typeDependencies: doxArg<string[], true>;
 	logLevel: doxArg<logLevelKeys, true>;
-	tsConfigs: doxArg<string[]>;
+	tsConfigs: doxArg<string[] | undefined>;
 	npmFileConvention: doxArg<string, true>;
 	typedox: doxArg<string>;
 }
@@ -62,7 +64,7 @@ export const doxArgs: doxArgs = {
 	},
 	tsConfigs: {
 		description: `Specific tsconfig files to used as documentation entry points.`,
-		defaultValue: [] as string[],
+		defaultValue: undefined as undefined | string[],
 		set: configurators.tsConfigs.set,
 		validate: configurators.tsConfigs.validate,
 	},

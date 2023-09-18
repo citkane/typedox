@@ -14,21 +14,24 @@ import {
 	TsReference,
 	tsc,
 	logLevels,
+	logLevelKeys,
 } from '../typedox';
+import { ensureFileExists } from './_namespace';
 
 /** get a handle for future jsconfig etc fun */
 export const tsFileSpecifier = 'tsconfig';
 
 let _cache: Cache;
-export class DoxConfig {
-	_deleteCache = () => {
-		(_cache as any) = undefined;
-	};
+export function _deleteCache() {
+	(_cache as any) = undefined;
+}
 
+export class DoxConfig {
 	public checker?: ts.TypeChecker;
 
 	constructor(clOptions?: string[]);
 	constructor(checker?: ts.TypeChecker, clOptions?: string[]);
+	constructor(projectOptions?: config.doxOptions, clOptions?: string[]);
 	constructor(
 		projectOptions?: config.doxOptions,
 		checker?: ts.TypeChecker,
@@ -58,7 +61,7 @@ export class DoxConfig {
 			);
 
 		!_cache &&
-			this.warmTheCache(
+			this._warmTheCache(
 				projectOptions! as config.doxOptions,
 				config.getTscParsedCommandline(clArgs),
 			);
@@ -72,6 +75,7 @@ export class DoxConfig {
 			logLevel: this.logLevel,
 			tsConfigs: this.tsConfigs,
 			npmFileConvention: this.npmFileConvention,
+			typedox: _cache.typedox,
 		};
 	}
 
@@ -84,11 +88,7 @@ export class DoxConfig {
 			? serialise.serialiseNpmPackage(self as NpmPackage)
 			: constructor === 'TsReference'
 			? serialise.serialiseTsReference(self as TsReference)
-			: log.error(
-					log.identifier(__filename),
-					'Call made to unknown serialiser:',
-					constructor,
-			  );
+			: notices.toObject(constructor);
 	}
 
 	protected get tscParsedConfigs() {
@@ -98,7 +98,7 @@ export class DoxConfig {
 	private get tsConfigs() {
 		return _cache.clProject
 			? _cache.clProject
-			: _cache.customProject?.length
+			: _cache.customProject
 			? _cache.customProject
 			: _cache.entryProject;
 	}
@@ -106,7 +106,7 @@ export class DoxConfig {
 		return path.resolve(_cache.projectOptions.projectRootDir!);
 	}
 	private get doxOut() {
-		return DoxConfig.ensureAbsPath(
+		return config.ensureAbsPath(
 			this.projectRootDir,
 			_cache.projectOptions.doxOut!,
 		);
@@ -147,18 +147,21 @@ export class DoxConfig {
 	};
 
 	protected tsWrap = (item: tsItem): TscWrapper => {
-		!this.checker && notices.tsWrap.throw(log.stackTracer);
+		!this.checker && notices.tsWrap.throw(log.stackTracer());
 		return tsc.wrap(this.checker!, item);
 	};
-	private warmTheCache(
+	private _warmTheCache(
 		projectOptions: config.doxOptions,
 		tscCommandlineConfig: ts.ParsedCommandLine,
 	) {
 		_cache = new Cache(projectOptions, tscCommandlineConfig);
 		_cache.clProject = this._clProject();
-		_cache.entryProject = this._entryProject();
-		_cache.tscRawConfigs = this._tscRawConfigs();
 		_cache.customProject = this._customProject();
+		_cache.entryProject = this._entryProject();
+
+		if (!this.tsConfigs) notices._warmTheCache.throwError.call(this);
+
+		_cache.tscRawConfigs = this._tscRawConfigs(this.tsConfigs!);
 		_cache.tscParsedConfigs = this._tscParsedConfigs();
 	}
 	private get tscCommandLineOptions() {
@@ -168,27 +171,41 @@ export class DoxConfig {
 		clOptions.types = this.typeDependencies;
 		return clOptions;
 	}
-	private _clProject = () => {
+	private _clProject = (): string[] | undefined => {
 		let project = this.tscCommandLineOptions.project;
-		const def = project
-			? [DoxConfig.ensureAbsPath(this.projectRootDir, project)]
+		const filePath = project
+			? config.ensureAbsPath(this.projectRootDir, project)
 			: undefined;
 
-		return def;
+		return filePath ? [config.ensureFileExists(filePath)!] : undefined;
 	};
 	private _customProject = () => {
-		return _cache.projectOptions.tsConfigs?.map((fileName) =>
-			DoxConfig.ensureAbsPath(this.projectRootDir, fileName),
-		);
+		if (_cache._clProject) return undefined;
+		const tsConfigs = _cache.projectOptions.tsConfigs;
+
+		const custom = tsConfigs
+			? tsConfigs.map((fileName) =>
+					config.ensureAbsPath(this.projectRootDir, fileName),
+			  )
+			: undefined;
+
+		return custom && custom.length
+			? custom.map((file) => config.ensureFileExists(file)!)
+			: undefined;
 	};
 	private _entryProject = () => {
-		return [ts.findConfigFile(this.projectRootDir, ts.sys.fileExists)!];
+		if (_cache._clProject || _cache.customProject) return undefined;
+		const entryFile = ts.findConfigFile(
+			this.projectRootDir,
+			ts.sys.fileExists,
+		);
+		return entryFile ? [config.ensureFileExists(entryFile)!] : undefined;
 	};
-	private _tscRawConfigs = (): tscRawConfig[] => {
+	private _tscRawConfigs = (tsConfigs: string[]): tscRawConfig[] => {
 		const isRootInit = !!_cache.entryProject || !!_cache.clProject;
 		const rawConfigs = config.findAllRawConfigs(
-			this.tsConfigs,
-			DoxConfig.ensureAbsPath.bind(null, this.projectRootDir),
+			tsConfigs,
+			config.ensureAbsPath.bind(null, this.projectRootDir),
 			isRootInit,
 		);
 		return rawConfigs;
@@ -205,39 +222,95 @@ export class DoxConfig {
 
 		return parsedConfigs;
 	};
+	public static configurators = {
+		projectRootDir: {
+			validate: (value: string) => {
+				return !!value && typeof value === 'string';
+			},
+			set: (doxOptions: config.doxOptions, value: string) => {
+				doxOptions.projectRootDir = value;
+			},
+		},
+		doxOut: {
+			validate: (value: string) => {
+				return !!value && typeof value === 'string';
+			},
+			set: (doxOptions: config.doxOptions, value: string) => {
+				doxOptions.doxOut = value;
+			},
+		},
+		typeDependencies: {
+			validate: (value: string[]) => {
+				return (
+					Array.isArray(value) &&
+					!value.find((value) => typeof value !== 'string')
+				);
+			},
+			set: (doxOptions: config.doxOptions, value: string) => {
+				doxOptions.typeDependencies ??= config.clone(
+					config.doxArgs.typeDependencies.defaultValue,
+				);
+				!doxOptions.typeDependencies.includes(value) &&
+					doxOptions.typeDependencies.push(value);
+			},
+		},
+		logLevel: {
+			validate: (value: logLevelKeys) => {
+				return log.logLevelKeyStrings.includes(value);
+			},
+			set: (doxOptions: config.doxOptions, value: logLevelKeys) => {
+				doxOptions.logLevel = value;
+			},
+		},
+		tsConfigs: {
+			validate: (value: string[] | undefined) => {
+				return value === undefined
+					? true
+					: !Array.isArray(value)
+					? false
+					: !value.find((innerVal) => typeof innerVal !== 'string');
+			},
+			set: (doxOptions: config.doxOptions, value: string | undefined) => {
+				const defaultValue = config.clone(
+					config.doxArgs.tsConfigs.defaultValue || [],
+				) as string[];
 
-	public static jsonFileToObject(absFilepath: string) {
-		DoxConfig.ensureFileExists(absFilepath);
-		const sourceFile = ts.readJsonConfigFile(absFilepath, ts.sys.readFile);
-		const diagnostics: ts.Diagnostic[] = [];
-		const object = ts.convertToObject(sourceFile, diagnostics);
-		diagnostics.forEach((diagnostic) =>
-			log.warn(log.identifier(__filename), diagnostic.messageText),
-		);
-
-		return object;
-	}
-	public static ensureFileExists(filepath: string) {
-		if (!fs.existsSync(filepath)) {
-			log.throwError(
-				log.identifier(__filename),
-				'File not found:',
-				filepath,
-			);
-		}
-	}
-	public static ensureAbsPath(rootDir: string, location: string) {
-		if (path.isAbsolute(location)) return location;
-		return path.join(rootDir, location);
-	}
+				doxOptions.tsConfigs ??= defaultValue;
+				value === undefined
+					? (doxOptions.tsConfigs = value)
+					: !doxOptions.tsConfigs.includes(value)
+					? doxOptions.tsConfigs.push(value)
+					: null;
+			},
+		},
+		npmFileConvention: {
+			validate: (value: string) => {
+				return typeof value === 'string' && value.split('.').length > 1;
+			},
+			set: (doxOptions: config.doxOptions, value: string) => {
+				doxOptions.npmFileConvention = value;
+			},
+		},
+		typedox: {
+			validate: (value: string | undefined) => {
+				return value === undefined
+					? true
+					: typeof value === 'string' && value.split('.').length > 1;
+			},
+			set: (doxOptions: config.doxOptions, value: string | undefined) => {
+				doxOptions.typedox = value;
+			},
+		},
+	};
 }
 
 class Cache {
 	_clProject: string[] | undefined;
 	_customProject: string[] | undefined;
-	_entryProject!: string[];
+	_entryProject: string[] | undefined;
 	projectOptions: config.doxOptions;
 	tscCommandlineConfig: ts.ParsedCommandLine;
+	typedox: string | undefined;
 	_tscParsedConfigs!: ts.ParsedCommandLine[];
 	_tscRawConfigs!: tscRawConfig[];
 
@@ -247,6 +320,7 @@ class Cache {
 	) {
 		this.projectOptions = projectOptions;
 		this.tscCommandlineConfig = tscCommandlineConfig;
+		this.typedox = projectOptions.typedox;
 	}
 
 	set clProject(value: string[] | undefined) {
@@ -261,7 +335,7 @@ class Cache {
 	get customProject() {
 		return this._customProject;
 	}
-	set entryProject(value: string[]) {
+	set entryProject(value: string[] | undefined) {
 		this._entryProject = value;
 	}
 	get entryProject() {
@@ -288,6 +362,21 @@ const notices = {
 				log.identifier(__filename),
 				'Typechecker has not been registered yet',
 				trace,
+			);
+		},
+	},
+	toObject: (constructor: string) =>
+		log.error(
+			log.identifier(__filename),
+			'Call made to unknown serialiser:',
+			constructor,
+		),
+	_warmTheCache: {
+		throwError: function (this: DoxConfig) {
+			log.throwError(
+				log.identifier(this),
+				'Could not locate any tsconfig.json files to start the documentation process:',
+				this.options.projectRootDir,
 			);
 		},
 	},

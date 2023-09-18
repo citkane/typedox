@@ -5,11 +5,10 @@ import {
 	NpmPackage,
 	Branch,
 	logger as log,
+	loggerUtils,
 } from './typedox';
 
 export default function main(customOptions?: config.doxOptions) {
-	if (log.isClRequestForHelp()) return;
-
 	const doxProject = makeDoxProject(customOptions);
 	const npmPackages = getNpmPackages(doxProject);
 	const tsReferences = getTsReferences(npmPackages);

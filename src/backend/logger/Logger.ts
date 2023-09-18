@@ -6,6 +6,7 @@ export { logLevels } from './loggerUtils';
 export class Logger extends Console {
 	private logLevel: utils.logLevels;
 
+	/* istanbul ignore next */
 	constructor(logLevel = utils.logLevels.info) {
 		super(process.stdout, process.stderr, true);
 		this.logLevel = logLevel;
@@ -23,9 +24,12 @@ export class Logger extends Console {
 
 	public info = (...args: any) =>
 		this.shouldLog(utils.logLevels.info) && super.info('[info]', ...args);
+
 	public infoKind = (kind: ts.SyntaxKind) => this.info(ts.SyntaxKind[kind]);
+
 	public infoFlagSymbol = (flag: ts.SymbolFlags) =>
 		this.info(ts.SymbolFlags[flag]);
+
 	public infoFlagType = (flag: ts.TypeFlags) => this.info(ts.TypeFlags[flag]);
 
 	public warn = (...args: any) =>
@@ -41,15 +45,15 @@ export class Logger extends Console {
 		);
 	};
 
-	public get stackTracer() {
+	public stackTracer = () => {
 		let i = 0;
 		return Error()
-			.stack?.replace('Error', '')
+			.stack!.replace('Error', '')
 			.replace(/\n.*\n/g, (match) => {
 				i++;
 				return i === 1 ? '\n' : match;
 			})!;
-	}
+	};
 
 	public identifier = utils.identifier;
 	public logLevelKeyStrings = Object.keys(utils.logLevels).filter(
@@ -58,9 +62,6 @@ export class Logger extends Console {
 	public colourise = utils.colourise;
 	public initLowerCamel = utils.initLowerCamel;
 	public toLine = utils.toLine;
-
-	public isClRequestForHelp = () =>
-		utils.isRequestForHelp() ? utils.logApplicationHelp() : false;
 
 	private shouldLog = (level: utils.logLevels) => level >= this.logLevel;
 }

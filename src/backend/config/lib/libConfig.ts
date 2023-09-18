@@ -1,68 +1,52 @@
 import * as ts from 'typescript';
 import * as path from 'path';
+import * as fs from 'fs';
 
-import { logger as log, config, logLevelKeys, tscRawConfig } from '../typedox';
+import {
+	logger as log,
+	config,
+	logLevelKeys,
+	tscRawConfig,
+	DoxConfig,
+} from '../../typedox';
 
 export function resolveConstructorOverload(
 	projectOrCheckerOrClArgs?: config.doxOptions | ts.TypeChecker | string[],
 	checkerOrClArgs?: ts.TypeChecker | string[],
 	argv = process.argv,
 ): [config.doxOptions | undefined, ts.TypeChecker | undefined, string[]] {
-	if (!projectOrCheckerOrClArgs && !checkerOrClArgs)
-		return [undefined, undefined, argv];
+	const arg0is = whatIs(projectOrCheckerOrClArgs);
+	const arg1is = whatIs(checkerOrClArgs);
 
-	const defaultOpts = config.getDefaultDoxOptions();
-	delete defaultOpts.typedox;
+	return [getIndexValue(0), getIndexValue(1), getIndexValue(2)] as any;
 
-	const arg0is = !projectOrCheckerOrClArgs
-		? undefined
-		: Array.isArray(projectOrCheckerOrClArgs)
-		? 'argv'
-		: isEqual(projectOrCheckerOrClArgs, defaultOpts)
-		? 'project'
-		: 'checker';
+	function getIndexValue(index: 0 | 1 | 2) {
+		const positions = {
+			project: 0,
+			checker: 1,
+			argv: 2,
+		};
+		return arg0is && positions[arg0is] === index
+			? projectOrCheckerOrClArgs
+			: index === 0
+			? undefined
+			: arg1is && positions[arg1is] === index
+			? checkerOrClArgs
+			: index === 1
+			? undefined
+			: argv;
+	}
 
-	const arg1is = !checkerOrClArgs
-		? undefined
-		: Array.isArray(checkerOrClArgs)
-		? 'argv'
-		: 'checker';
-
-	log.debug({
-		projectOrCheckerOrClArgs,
-		checkerOrClArgs,
-		argv,
-		arg0is,
-		arg1is,
-	});
-
-	if (!checkerOrClArgs)
-		return !arg0is
-			? [undefined, undefined, argv]
-			: arg0is === 'argv'
-			? [undefined, undefined, projectOrCheckerOrClArgs as string[]]
-			: arg0is === 'project'
-			? [projectOrCheckerOrClArgs as config.doxOptions, undefined, argv]
-			: [undefined, projectOrCheckerOrClArgs as ts.TypeChecker, argv];
-
-	return arg0is === 'project' && arg1is === 'argv'
-		? [
-				projectOrCheckerOrClArgs as config.doxOptions,
-				undefined,
-				checkerOrClArgs as string[],
-		  ]
-		: arg0is === 'checker' && arg1is === 'argv'
-		? [
-				undefined,
-				projectOrCheckerOrClArgs as ts.TypeChecker,
-				checkerOrClArgs as string[],
-		  ]
-		: [
-				projectOrCheckerOrClArgs as config.doxOptions,
-				checkerOrClArgs as ts.TypeChecker,
-				argv,
-		  ];
-
+	function whatIs(object: any) {
+		const defaultOpts = config.getDefaultDoxOptions();
+		return !object
+			? undefined
+			: Array.isArray(object)
+			? 'argv'
+			: isEqual(object, defaultOpts)
+			? 'project'
+			: 'checker';
+	}
 	function isEqual(value: any, value2: any) {
 		const keys = Object.keys(value);
 		const keys2 = Object.keys(value2);
@@ -114,17 +98,16 @@ export function findAllRawConfigs(
 	accumulator: tscRawConfig[] = [],
 ): tscRawConfig[] {
 	const tscRawConfigs = configFilePaths.reduce(
-		mergeConfigReferences.bind(isRootInit),
+		mergeConfigReferences.bind(null, isRootInit),
 		accumulator,
 	);
 	return tscRawConfigs;
 
 	function mergeConfigReferences(
-		this: boolean,
+		isInit: boolean,
 		accumulator: tscRawConfig[],
 		fileName: string,
 	) {
-		const isInit = this;
 		const rawConfig = makeRawTscConfigFromFile(fileName, isInit);
 
 		accumulator.push(rawConfig);
@@ -135,25 +118,28 @@ export function findAllRawConfigs(
 			? findAllRawConfigs(references, ensureAbsPath, false, accumulator)
 			: accumulator;
 	}
+}
+export function discoverReferences(rawConfig: tscRawConfig) {
+	if (!rawConfig.config.references) return [];
 
-	function discoverReferences(rawConfig: tscRawConfig) {
-		const references = (rawConfig.config.references || [])
-			.map(resolveReference)
-			.filter((reference) => !!reference);
+	const references = rawConfig.config.references
+		.map(resolveReference)
+		.filter((reference) => !!reference);
 
-		return references as string[];
-	}
+	return references as string[];
+
 	function resolveReference(reference: ts.ProjectReference) {
-		const referencePath = ts.resolveProjectReferencePath(reference);
-		!referencePath &&
-			log.warn(
-				log.identifier(__filename),
-				'Did not resolve a reference:',
-				reference.path,
-			);
-		return referencePath ? ensureAbsPath(referencePath) : undefined;
+		const { rootDir } = rawConfig.dox;
+		let referencePath = ts.resolveProjectReferencePath(reference);
+
+		(referencePath as string) = ensureAbsPath(rootDir, referencePath);
+		if (!referencePath || !fs.existsSync(referencePath))
+			return notices.discoverReferences(reference);
+
+		return referencePath;
 	}
 }
+
 export function makeRawTscConfigFromFile(fileName: string, init: boolean) {
 	const rootDir = path.dirname(fileName);
 	const rawConfig = readTscConfigFile(fileName) as tscRawConfig;
@@ -203,8 +189,8 @@ export function parseDoxClArgsToOptions(
 	type hyphenatedArgKey = `--${string}`;
 
 	const hyphenatedKeys = config.getHyphenatedArgKeys(doxArgs);
-
 	let subjectDoxArg: argKey;
+
 	doxClArgsAndValues.forEach((currentArgOrValue, index) => {
 		const isCurrentlyKey = hyphenatedKeys.includes(currentArgOrValue);
 
@@ -293,83 +279,33 @@ export function deepClone(item: any, seen = new Map<object, true>()) {
 	}
 }
 
-export const configurators = {
-	projectRootDir: {
-		validate: (value: string) => {
-			return !!value && typeof value === 'string';
-		},
-		set: (doxOptions: config.doxOptions, value: string) => {
-			doxOptions.projectRootDir = value;
-		},
-	},
-	doxOut: {
-		validate: (value: string) => {
-			return !!value && typeof value === 'string';
-		},
-		set: (doxOptions: config.doxOptions, value: string) => {
-			doxOptions.doxOut = value;
-		},
-	},
-	typeDependencies: {
-		validate: (value: string[]) => {
-			return (
-				Array.isArray(value) &&
-				!value.find((value) => typeof value !== 'string')
-			);
-		},
-		set: (doxOptions: config.doxOptions, value: string) => {
-			doxOptions.typeDependencies ??= config.clone(
-				config.doxArgs.typeDependencies.defaultValue,
-			);
-			!doxOptions.typeDependencies.includes(value) &&
-				doxOptions.typeDependencies.push(value);
-		},
-	},
-	logLevel: {
-		validate: (value: logLevelKeys) => {
-			return log.logLevelKeyStrings.includes(value);
-		},
-		set: (doxOptions: config.doxOptions, value: logLevelKeys) => {
-			doxOptions.logLevel = value;
-		},
-	},
-	tsConfigs: {
-		validate: (value: string[] | undefined) => {
-			return value === undefined
-				? true
-				: !Array.isArray(value)
-				? false
-				: !value.find((innerVal) => typeof innerVal !== 'string');
-		},
-		set: (doxOptions: config.doxOptions, value: string | undefined) => {
-			const defaultValue = config.clone(
-				config.doxArgs.tsConfigs.defaultValue,
-			) as string[];
+export function jsonFileToObject(absFilepath: string) {
+	ensureFileExists(absFilepath);
+	const sourceFile = ts.readJsonConfigFile(absFilepath, ts.sys.readFile);
+	const diagnostics: ts.Diagnostic[] = [];
+	const object = ts.convertToObject(sourceFile, diagnostics);
+	diagnostics.forEach((diagnostic) =>
+		log.warn(log.identifier(__filename), diagnostic.messageText),
+	);
 
-			doxOptions.tsConfigs ??= defaultValue;
-			value === undefined
-				? (doxOptions.tsConfigs = value)
-				: !doxOptions.tsConfigs.includes(value)
-				? doxOptions.tsConfigs.push(value)
-				: null;
-		},
-	},
-	npmFileConvention: {
-		validate: (value: string) => {
-			return typeof value === 'string' && value.split('.').length > 1;
-		},
-		set: (doxOptions: config.doxOptions, value: string) => {
-			doxOptions.npmFileConvention = value;
-		},
-	},
-	typedox: {
-		validate: (value: string | undefined) => {
-			return value === undefined
-				? true
-				: typeof value === 'string' && value.split('.').length > 1;
-		},
-		set: (doxOptions: config.doxOptions, value: string | undefined) => {
-			doxOptions.typedox = value;
-		},
-	},
+	return object;
+}
+export function ensureFileExists(filepath: string) {
+	if (!fs.existsSync(filepath)) {
+		log.throwError(log.identifier(__filename), 'File not found:', filepath);
+	}
+	return filepath;
+}
+export function ensureAbsPath(rootDir: string, location: string) {
+	if (path.isAbsolute(location)) return location;
+	return path.join(rootDir, location);
+}
+
+const notices = {
+	discoverReferences: (reference: ts.ProjectReference) =>
+		log.warn(
+			log.identifier(__filename),
+			'Did not resolve a reference:',
+			reference.path,
+		),
 };

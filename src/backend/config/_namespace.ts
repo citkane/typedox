@@ -1,5 +1,5 @@
-export * from './libArgs';
-export * from './libOpts';
-export * from './libConfig';
+export * from './lib/libArgs';
+export * from './lib/libOpts';
+export * from './lib/libConfig';
 export * from './doxConfigApi';
-export { DoxConfig } from './DoxConfig';
+export { DoxConfig, _deleteCache } from './DoxConfig';

@@ -29,30 +29,33 @@ export class TsWrapperCache {
 export type cache = {
 	[K in keyof typeof cacheCallbacks]: ReturnType<(typeof cacheCallbacks)[K]>;
 };
-const wrappers = new Map<ts.Node | ts.Symbol | ts.Type, TscWrapper>();
 type wrapper = { wrapper: TscWrapper; checker: ts.TypeChecker };
+const wrappers = new Map<ts.Node | ts.Symbol | ts.Type, TscWrapper>();
+
 const cacheCallbacks = {
 	tsNode: function (this: wrapper): ts.Node {
-		const { wrapper } = this;
-		const node = tsc.getTsNodeFromSymbol.call(wrapper, wrapper.tsSymbol);
+		const { wrapper, checker } = this;
+		const node = tsc.getNodeAndTypeFromSymbol(
+			checker,
+			wrapper.tsSymbol,
+		).node;
 		wrappers.set(node, wrapper);
 
 		return node;
 	},
 	tsSymbol: function (this: wrapper): ts.Symbol {
 		const { wrapper, checker } = this;
-		const symbol = wrapper.isType
-			? tsc.getTsSymbolFromType.call(wrapper, wrapper.tsType)
-			: wrapper.isNode
-			? tsc.getTsSymbolFromNode.call(wrapper, wrapper.tsNode, checker)
-			: notices.cacheCallbacks.tsSymbol.throw();
+		const symbol = tsc.getTsSymbolFromNode(checker, wrapper.tsNode);
 		wrappers.set(symbol, wrapper);
 
 		return symbol;
 	},
 	tsType: function (this: wrapper): ts.Type {
 		const { wrapper, checker } = this;
-		const type = checker.getTypeOfSymbol(wrapper.tsSymbol);
+		const type = tsc.getNodeAndTypeFromSymbol(
+			checker,
+			wrapper.tsSymbol,
+		).type;
 		wrappers.set(type, wrapper);
 
 		return type;
@@ -75,7 +78,7 @@ const cacheCallbacks = {
 		if (!get.moduleSpecifier) return undefined;
 		return checker
 			.getSymbolAtLocation(get.moduleSpecifier)
-			?.valueDeclaration?.getSourceFile().fileName;
+			?.valueDeclaration!.getSourceFile().fileName;
 	},
 	fileName: function (this: wrapper) {
 		const { wrapper } = this;
@@ -85,8 +88,7 @@ const cacheCallbacks = {
 		const { wrapper, checker } = this;
 		if (!wrapper.isIdentifier && !wrapper.isExportSpecifier)
 			return undefined;
-		return tsc.getLocalTargetDeclaration.call(
-			wrapper,
+		return tsc.getLocalTargetDeclaration(
 			wrapper.tsNode as ts.Identifier | ts.ExportSpecifier,
 			checker,
 		);
@@ -119,7 +121,9 @@ const cacheCallbacks = {
 };
 
 export function wrap(checker: ts.TypeChecker, item: tsItem): TscWrapper {
-	const wrapped = wrappers.get(item) || new TscWrapper(checker, item);
+	const wrapped = !wrappers.has(item)
+		? new TscWrapper(checker, item)
+		: wrappers.get(item)!;
 	!wrappers.has(item) && wrappers.set(item, wrapped);
 
 	return wrapped;
@@ -132,15 +136,5 @@ const notices = {
 			'Tried to set existing cache key:',
 			key,
 		);
-	},
-	cacheCallbacks: {
-		tsSymbol: {
-			throw: function () {
-				return log.throwError(
-					log.identifier(__filename),
-					'Could not find ts.Symbol',
-				);
-			},
-		},
 	},
 };

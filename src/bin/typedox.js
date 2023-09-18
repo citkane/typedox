@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const main = require('../backend/index.js').default;
+const { loggerUtils } = require('../backend/typedox.js');
 
-console.log(main);
-
-main();
+loggerUtils.isRequestForHelp() ? loggerUtils.logApplicationHelp() : main();

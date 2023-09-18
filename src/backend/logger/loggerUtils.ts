@@ -59,34 +59,45 @@ export function logApplicationHelp() {
 	return true;
 }
 
-export function identifier(subject: string | object) {
+export function identifier(subject: string | object | number) {
 	const value =
 		typeof subject === 'string'
-			? `${path.basename(subject).split('.')[0]}`
-			: subject.constructor && subject.constructor.name
+			? parseFilename(subject)
+			: typeof subject === 'number'
+			? String(subject)
+			: getConstructorName(subject)
 			? `${initLowerCamel(subject.constructor.name)}`
 			: getName(subject);
 
 	return `[${value}]`;
-
+	function parseFilename(subject: string) {
+		return `${path
+			.basename(subject)
+			.split('.')
+			.filter((part) => part !== path.extname(subject).replace('.', ''))
+			.join('.')}`;
+	}
+	function getConstructorName(subject: any) {
+		const sysNames = ['Function', 'Object'];
+		const construct = subject.constructor;
+		return construct && !sysNames.includes(construct.name)
+			? construct.name
+			: undefined;
+	}
 	function getName(subject: any) {
-		try {
-			return subject.name;
-		} catch (error) {
-			return 'unknown';
-		}
+		return 'name' in subject ? subject.name : `${subject}`;
 	}
 }
 
-export const isRequestForHelp = () =>
-	process.argv.includes(`${config.argHyphen}help`);
+export const isRequestForHelp = (argv = process.argv) =>
+	argv.includes(`${config.argHyphen}help`);
 
 export const logLevelKeyStrings = Object.keys(logLevels).filter(
 	(v) => !Number(v) && v !== '0',
 );
 
 export function toLine(string: string) {
-	return string.replace(/\s+/g, ' ');
+	return string.replace(/\s+/g, ' ').trim();
 }
 
 export function inspect(object: any, ignoreKeys?: string[]): void;
@@ -97,19 +108,19 @@ export function inspect(
 	ignoreKeys?: string[],
 ): void;
 export function inspect(
-	object: any,
+	subject: any,
 	ignoreOrShrink?: boolean | string[],
 	ignore?: string[],
 ) {
-	if (typeof object !== 'object') return log.log(...getArgs(object));
+	if (typeof subject !== 'object') return log.log(...getArgs(subject));
 
 	const [hide, ignoreKeys] = resolveOverload(ignoreOrShrink, ignore);
-	if (hide || ignoreKeys) object = shrink(object, hide, ignoreKeys);
+	if (hide || ignoreKeys) subject = shrink(subject, hide, ignoreKeys);
 
-	log.log(...getArgs(object));
+	return log.log(...getArgs(subject));
 
-	function getArgs(obj = object) {
-		return ['[inspect]', util.inspect(obj, false, null, true)];
+	function getArgs(subject: any) {
+		return ['[inspect]', util.inspect(subject, false, null, true)];
 	}
 	function resolveOverload(
 		ignoreOrShrink: boolean | string[] | undefined,
@@ -121,55 +132,64 @@ export function inspect(
 			? [undefined, ignoreOrShrink as string[]]
 			: [undefined, undefined];
 	}
-}
+	function shrink(
+		item: any,
+		hide = false,
+		unwantedKeys: string[] = [],
+		seen: Map<object, true> = new Map(),
+	): any {
+		const isArray = Array.isArray(item);
+		const isObject = typeof item == 'object';
+		if (!isArray && !isObject) return item;
 
-function shrink(
-	item: any,
-	hide = false,
-	unwantedKeys: string[] = [],
-	seen: Map<object, true> = new Map(),
-): any {
-	const isArray = Array.isArray(item);
-	const isObject = typeof item == 'object';
-	if (!isArray && !isObject) return item;
+		const circularString = '[circular]';
 
-	const objectCopy = isArray
-		? [...item]
-				.filter(
-					(value) =>
-						(!!value || !hide) && !unwantedKeys.includes(value),
-				)
-				.map((value) =>
-					typeof value === 'object'
-						? (unwantedKeys.includes(value) && `[hidden]`) ||
-						  shrink(value, hide, unwantedKeys, seen)
-						: value,
-				)
-		: (Object.entries({ ...item }).reduce(
-				(accumulator, tuple) => {
-					const [key, value] = tuple;
-					const hasValue = typeof value === 'boolean' || !!value;
-					if (
-						(hide && !hasValue) ||
-						(hide && unwantedKeys.includes(key)) ||
-						seen.has(value as object)
-					) {
+		const objectCopy = isArray
+			? [...item]
+					.filter(
+						(value) =>
+							(!!value || !hide) && !unwantedKeys.includes(value),
+					)
+					.map((value) => {
+						if (seen.has(value as object)) return circularString;
+						seen.set(value, true);
+
+						return typeof value === 'object'
+							? shrink(value, hide, unwantedKeys, seen)
+							: value;
+					})
+			: (Object.entries({ ...item }).reduce(
+					(accumulator, tuple) => {
+						const [key, value] = tuple;
+						if (seen.has(value as object)) {
+							accumulator[key] = circularString;
+							return accumulator;
+						}
+						seen.set(value as object, true);
+
+						const hasValue = typeof value === 'boolean' || !!value;
+						if (
+							(hide && !hasValue) ||
+							(hide && unwantedKeys.includes(key))
+						) {
+							return accumulator;
+						}
+
+						const len = Array.isArray(value)
+							? `(${value.length}): Array`
+							: typeof value === 'object' &&
+							  `(${
+									Object.keys(value as object).length
+							  }): Object`;
+
+						accumulator[key] = unwantedKeys.includes(key)
+							? `[hidden ${len || typeof value}]`
+							: shrink(value, hide, unwantedKeys, seen);
+
 						return accumulator;
-					}
-					seen.set(value as object, true);
-
-					const len = Array.isArray(value)
-						? `(${value.length}): Array`
-						: typeof value === 'object' &&
-						  `(${Object.keys(value as object).length}): Object`;
-
-					accumulator[key] = unwantedKeys.includes(key)
-						? `[hidden ${len || typeof value}]`
-						: shrink(value, hide, unwantedKeys, seen);
-
-					return accumulator;
-				},
-				{} as Record<string, any>,
-		  ) as object);
-	return objectCopy;
+					},
+					{} as Record<string, any>,
+			  ) as object);
+		return objectCopy;
+	}
 }

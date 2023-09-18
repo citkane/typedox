@@ -1,0 +1,10 @@
+{
+	"include": ["."],
+    "references": [
+        {"path":"unitTests/tsconfig.spec.json"},
+        {"path":"doesnotexist.json"}
+    ],
+    "compilerOptions": {
+        "noEmit": true
+    }
+}

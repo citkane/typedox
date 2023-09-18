@@ -1,0 +1,7 @@
+{
+	"extends": "@typedox/tsconfig/nodeNext.json",
+	"include": ["tsWrapper.ts"],
+	"compilerOptions": {
+		"target": "es6"
+	}
+}

@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import { Relation, TsSourceFile, TscWrapper, logger as log } from '../typedox';
+import { identifier } from '../logger/loggerUtils';
 
 export type symbolFlagString = keyof typeof ts.SymbolFlags;
 export type typeFlagString = keyof typeof ts.SymbolFlags;
@@ -18,7 +19,6 @@ export const reportKeys: (keyof TscWrapper)[] = [
 	'symbolFlagString',
 	'typeFlagString',
 	'moduleSpecifier',
-	'hasDeclarations',
 	'hasValueDeclaration',
 ];
 export function parseReportKey(this: TscWrapper, key: keyof TscWrapper) {
@@ -35,98 +35,91 @@ export function parseReportKey(this: TscWrapper, key: keyof TscWrapper) {
 }
 
 export function getLocalTargetDeclaration(
-	this: TscWrapper,
 	declaration: ts.Identifier | ts.ExportSpecifier,
 	checker: ts.TypeChecker,
 ) {
-	const declarations = checker
+	return checker
 		.getExportSpecifierLocalTargetSymbol(declaration)
-		?.getDeclarations();
-	if (declarations && declarations.length > 1)
-		log.throwError(
-			log.identifier(__filename),
-			'Expected only one declaration in a local target symbol',
-		);
-	return !!declarations ? declarations[0] : undefined;
+		?.getDeclarations()![0];
 }
 
-export function getTsNodeFromSymbol(this: TscWrapper, symbol: ts.Symbol) {
-	const declarations = symbol.getDeclarations();
-	return declarations && declarations.length === 1
-		? (declarations[0] as ts.Node)
-		: !!symbol.valueDeclaration
-		? symbol.valueDeclaration
-		: log.throwError(
-				log.identifier(__filename),
-				'Unexpected error while getting a ts.Node from a ts.Symbol',
-		  );
-}
+export function getNodeAndTypeFromSymbol(
+	checker: ts.TypeChecker,
+	symbol: ts.Symbol,
+) {
+	let type: ts.Type;
+	let node = symbol.declarations?.find(
+		(declaration) => !ts.isTypeAliasDeclaration(declaration),
+	);
+	symbol.declarations?.forEach((declaration) => {
+		if (ts.isTypeAliasDeclaration(declaration)) {
+			type = checker.getTypeAtLocation(declaration);
+			node ??= declaration;
+		}
+	});
+	node ??= symbol.valueDeclaration!;
+	type ??= checker.getTypeOfSymbol(symbol);
 
-export function getTsSymbolFromType(this: TscWrapper, type: ts.Type) {
-	const symbol = type.getSymbol();
-	return symbol
-		? symbol
-		: log.throwError(
-				log.identifier(__filename),
-				'Unexpected error while getting a ts.Symbol from a ts.Type',
-		  );
+	return { node, type };
 }
 
 export function getTsSymbolFromNode(
-	this: TscWrapper,
-	node: ts.Node,
 	checker: ts.TypeChecker,
-	fromName = false,
+	node: ts.Node,
 ): ts.Symbol {
-	if ('symbol' in node && !!node.symbol) return node.symbol as ts.Symbol;
-	let symbol;
-	try {
-		symbol = checker.getSymbolAtLocation(node);
-		if (!symbol)
-			throw new Error(
-				fromName
-					? 'Could not get a ts.Symbol from the ts.Node'
-					: 'Trying to get a ts.Symbol from tsNode.name',
-			);
-	} catch (error) {
-		log.debug(log.identifier(this), (error as Error).message);
-		if (!fromName && 'name' in node)
-			return getTsSymbolFromNode.call(
-				this,
-				(node as any)['name'],
-				checker,
-				true,
-			);
+	const seen = new Map<ts.Node, ts.Symbol>();
+	let symbol = checker.getSymbolAtLocation(node);
+
+	symbol = symbol
+		? symbol
+		: ts.isClassDeclaration(node)
+		? checker.getSymbolAtLocation(node.name!)
+		: 'symbol' in node && !!node.symbol
+		? (node.symbol as ts.Symbol)
+		: notFound(node);
+
+	return symbol ? symbol : notices.getTsSymbolFromNode.throw()!;
+
+	function mapNodes(symbol: ts.Symbol) {
+		symbol.declarations!.forEach((declaration) => {
+			!seen.has(declaration) && seen.set(declaration, symbol);
+		});
 	}
-	return !!symbol
-		? (symbol as ts.Symbol)
-		: log.throwError('Could not create a ts.Symbol from a ts.Node');
+	function notFound(node: ts.Node) {
+		const symbol = checker.getSymbolAtLocation(node.parent);
+		!symbol && notices.getTsSymbolFromNode.throw();
+		const type = checker.getTypeOfSymbol(symbol!);
+
+		symbol?.exports?.forEach((exported) => mapNodes(exported));
+		type.getProperties().forEach((property) => mapNodes(property));
+
+		return ts.isExportDeclaration(node)
+			? parseClause(node.exportClause)
+			: undefined;
+	}
+	function parseClause(clause: ts.NamedExportBindings | undefined) {
+		if (!clause) return undefined;
+		if (seen.has(clause)) return seen.get(clause);
+		const elements = (clause as any).elements as ts.Node[] | undefined;
+
+		const has = elements?.find((element: ts.Node) => seen.has(element));
+
+		return has ? seen.get(has) : undefined;
+	}
 }
 
 export function isStarExport(symbol: ts.Symbol) {
 	return symbol.flags === ts.SymbolFlags.ExportStar;
 }
 
-export function parseExportStars(
-	this: TsSourceFile | Relation,
-	symbol: ts.Symbol,
-) {
+export function parseExportStars(symbol: ts.Symbol) {
 	return symbol
 		.declarations!.map((declaration) => {
 			return ts.isExportDeclaration(declaration)
 				? declaration.moduleSpecifier
-				: logError.call(this, declaration);
+				: undefined;
 		})
 		.filter((symbol) => !!symbol) as ts.Expression[];
-
-	function logError(this: Object, declaration: ts.Declaration) {
-		log.error(
-			log.identifier(this),
-			`Expected a ts.ExportDeclaration but got ts.${
-				ts.SyntaxKind[declaration.kind]
-			}`,
-		);
-	}
 }
 
 export function getModuleSpecifier(
@@ -139,3 +132,15 @@ export function getModuleSpecifier(
 	if (!!node.parent) return getModuleSpecifier(node.parent); //,seen);
 	return undefined;
 }
+
+const notices = {
+	getTsSymbolFromNode: {
+		throw: (): undefined => {
+			log.throwError(
+				log.identifier(__filename),
+				'Invalid node for conversion to symbol',
+				log.stackTracer(),
+			);
+		},
+	},
+};

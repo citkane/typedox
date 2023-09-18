@@ -1,12 +1,17 @@
 {
     "cSpell.words": [
+        "Colour",
         "colourise",
         "Commandline",
         "configurators",
+        "doesnotexist",
         "doxout",
+        "emsp",
         "Filelist",
         "serialise",
         "serialiser",
-        "typedox"
+        "typedox",
+        "typedoxjson",
+        "Vstub"
     ]
 }

@@ -17,11 +17,13 @@ import { TscWrapper } from './tscApiWrapper/_namespace';
 import * as serialise from './serialiser/_namespace';
 import * as config from './config/_namespace';
 import * as tsc from './tscApiWrapper/_namespace';
+import * as loggerUtils from './logger/_namespace';
 import main from '.';
 
 export default main;
 export {
 	logLevels,
+	loggerUtils,
 	serialise,
 	config,
 	tsc,
@@ -71,7 +73,7 @@ export type declaration = referencedExport | localDeclaration;
 
 export type logableObjects = TsDeclaration;
 
-export type tsItem = ts.Node | ts.Symbol | ts.Type;
+export type tsItem = ts.Node | ts.Symbol;
 
 export interface rawDox {
 	fileName: string;
