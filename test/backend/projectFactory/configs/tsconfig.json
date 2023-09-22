@@ -1,0 +1,13 @@
+{
+	"include": ["."],
+    "references": [
+        {"path":"child/tsconfig.json"},
+        {"path":"grandchild/tsconfig.json"},
+        {"path":"greatGrandchild/tsconfig.json"},
+        {"path":"doesnotexist.json"},
+    ],
+    "compilerOptions": {
+        "outDir": "dist",
+        "suppressImplicitAnyIndexErrors": true
+    }
+}

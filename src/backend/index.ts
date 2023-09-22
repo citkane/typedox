@@ -5,7 +5,6 @@ import {
 	NpmPackage,
 	Branch,
 	logger as log,
-	loggerUtils,
 } from './typedox';
 
 export default function main(customOptions?: config.doxOptions) {
@@ -48,13 +47,8 @@ function buildRelationShips(tsReferences: TsReference[]) {
 
 function growDocumentBranches(tsReferences: TsReference[]) {
 	tsReferences.forEach((tsReference) => {
-		const fileSources = getSourceFiles(tsReference);
-		const rootDeclarations = TsReference.getDeclarationRoots(fileSources);
+		const rootDeclarations = tsReference.getRootDeclarations();
 		const treeBranch = new Branch(tsReference, rootDeclarations);
 		tsReference.treeBranches.set(tsReference.name, treeBranch);
 	});
-
-	function getSourceFiles(tsReference: TsReference) {
-		return [...tsReference.filesMap.values()];
-	}
 }

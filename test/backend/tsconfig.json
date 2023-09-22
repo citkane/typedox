@@ -1,0 +1,10 @@
+{
+	"include": ["."],
+	"exclude": ["coverage", "projectFactory", "dist"],
+	"compilerOptions": {
+		"outDir": "../dist",
+		"target": "ES6",
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
+	}
+}

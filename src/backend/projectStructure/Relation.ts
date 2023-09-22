@@ -17,15 +17,15 @@ import {
  */
 export class Relation extends DoxConfig {
 	public get: TscWrapper;
+	private tsSourceFile: TsSourceFile;
 	private name: string;
 	private filesMap: fileMap;
-	private declaration: TsDeclaration;
 	private parent;
 
 	constructor(parent: TsSourceFile, declaration: TsDeclaration) {
 		super(parent.checker);
 		this.parent = parent;
-		this.declaration = declaration;
+		this.tsSourceFile = parent;
 		this.get = declaration.get;
 		this.name = declaration.name;
 		this.filesMap = declaration.parent.parent.filesMap as any;
@@ -56,27 +56,23 @@ export class Relation extends DoxConfig {
 		get = this.get,
 		_isLocalTarget = false,
 	) {
-		if (!this.isSpecifierKind(node.kind) && !get.isExportStarChild) return;
+		if (!this.isSpecifierKind(node.kind) && !get.isReExport) return;
 		const errorMessage = `Did not map a ${
 			_isLocalTarget ? 'localTargetNode' : 'node'
 		} relationship`;
 
-		get.isExportStarChild
-			? this.mapExportStarChild(get)
-			: ts.isNamespaceExport(node)
+		get.isReExport
+			? this.mapReExport(get)
+			: ts.isNamespaceExport(node) || ts.isNamespaceImport(node)
 			? this.mapNameSpaceExport(get)
-			: ts.isNamespaceImport(node)
-			? this.mapNameSpaceImport(get)
 			: ts.isModuleDeclaration(node)
 			? this.mapModuleDeclaration(node)
-			: ts.isExportSpecifier(node)
+			: Relation.isExportSpecifier(node)
 			? this.mapExportSpecifier(get)
-			: ts.isImportClause(node)
-			? this.mapImportClause(get)
-			: ts.isExportAssignment(node)
-			? this.mapExportAssignment(node)
 			: ts.isImportSpecifier(node)
 			? this.mapImportSpecifier(node, get)
+			: ts.isExportAssignment(node)
+			? this.mapExportAssignment(node)
 			: DoxProject.deepReport.call(
 					this,
 					__filename,
@@ -85,54 +81,23 @@ export class Relation extends DoxConfig {
 					get,
 					_isLocalTarget,
 			  );
-	}
-	private mapImportSpecifier(
-		importSpecifier: ts.ImportSpecifier,
-		get: TscWrapper,
-	) {
-		notices.map.debug.call(this, 'mapImportSpecifier');
 
-		const name = importSpecifier.name.getText();
-		const source = this.localDoxDeclaration;
-		const targetSource = this.filesMap.get(get.targetFileName!);
-		const target = targetSource?.declarationsMap.get(name)!;
+		//Not discovered yet??
+		/*
+			: ts.isImportClause(node)
+			? this.mapImportClause(get)
 
-		source.children.set(name, target);
-		target.parents.push(source);
+		*/
 	}
-	private mapExportSpecifier(get: TscWrapper) {
-		notices.map.debug.call(this, 'mapExportSpecifier');
-
-		if (get.localTargetDeclaration) {
-			const local = get.localTargetDeclaration;
-			const localGet = this.tsWrap(local);
-			return this.mapRelationships(local, localGet, true);
-		}
-		log.error(
-			log.identifier(this),
-			'An unknown ts.ExportSpecifier was encountered:',
-			get.report,
-		);
-	}
-	private registerReExporter(symbol: ts.Symbol) {
-		notices.map.debug.call(this, 'registerReExporter');
-
-		tsc.parseExportStars.call(this, symbol).forEach((expression) => {
-			const get = this.tsWrap(expression);
-			this.mapExportStarChild(get);
-		});
-	}
-	private mapExportStarChild(get: TscWrapper) {
-		notices.map.debug.call(this, 'mapExportStarChild');
+	private mapReExport(get: TscWrapper) {
+		notices.map.debug.call(this, 'mapReExport');
 
 		const targetSource = this.filesMap.get(get.targetFileName!)!;
-		const targetSymbols = targetSource.fileSymbol.exports;
+		const targetSymbols = targetSource.fileSymbol.exports!;
 		const source = this.localDoxDeclaration;
 
-		targetSymbols?.forEach((symbol) => {
-			if (tsc.isStarExport(symbol)) {
-				return this.registerReExporter(symbol);
-			}
+		targetSymbols.forEach((symbol) => {
+			if (tsc.isReExport(symbol)) return this.registerReExporter(symbol);
 
 			const name = symbol.getName();
 			const target = targetSource.declarationsMap.get(name)!;
@@ -142,71 +107,103 @@ export class Relation extends DoxConfig {
 			target.parents.push(source);
 		});
 	}
+	private mapNameSpaceExport(get: TscWrapper) {
+		notices.map.debug.call(this, 'mapNameSpaceExport');
+
+		if (!get.targetFileName) return;
+
+		const remoteFile = this.filesMap.get(get.targetFileName!)!;
+		const source = this.localDoxDeclaration;
+
+		Array.from(remoteFile.fileSymbol.exports!.values())
+			.map(reExport.bind(this))
+			.flat()
+			.forEach(setRelations);
+
+		function setRelations(symbol: ts.Symbol) {
+			const name = symbol.getName();
+			const target = remoteFile.declarationsMap.get(name)!;
+			source.children.set(name, target);
+			target.parents.push(source);
+		}
+
+		function reExport(this: Relation, symbol: ts.Symbol) {
+			return tsc.isReExport(symbol)
+				? tsc.parseReExport
+						.call(this, symbol)
+						.map((expression) => this.tsWrap(expression).tsSymbol)
+				: symbol;
+		}
+	}
 	private mapModuleDeclaration(moduleDeclaration: ts.ModuleDeclaration) {
 		notices.map.debug.call(this, 'mapModuleDeclaration');
 
-		const moduleSymbol = this.tsWrap(moduleDeclaration).tsSymbol;
 		const source = this.localDoxDeclaration;
 
-		moduleSymbol.exports?.forEach((symbol) => {
+		this.tsSourceFile.getModuleDeclarationSymbols().forEach((symbol) => {
 			const target = new TsDeclaration(this.parent, symbol);
 
 			target.parents.push(source);
 			source.children.set(target.name, target);
 		});
 	}
-	private mapNameSpaceExport(get: TscWrapper) {
-		notices.map.debug.call(this, 'mapNameSpaceExport');
+	private mapExportSpecifier(get: TscWrapper) {
+		notices.map.debug.call(this, 'mapExportSpecifier');
 
-		const remoteFile = this.filesMap.get(get.targetFileName!)!;
-		const source = this.localDoxDeclaration;
-
-		[...(remoteFile.fileSymbol.exports?.values() || [])]
-			.map(exportStars.bind(this))
-			.flat()
-			.forEach(setRelations);
-
-		function setRelations(symbol: ts.Symbol) {
-			const name = symbol.getName();
-
-			const target = remoteFile.declarationsMap?.get(name)!;
-			source.children.set(name, target);
-			target.parents.push(source);
-		}
-
-		function exportStars(this: Relation, symbol: ts.Symbol) {
-			return tsc.isStarExport(symbol)
-				? tsc.parseExportStars
-						.call(this, symbol)
-						.map((expression) => this.tsWrap(expression).tsSymbol)
-				: symbol;
-		}
+		const local = get.localTargetDeclaration!;
+		const localGet = this.tsWrap(local);
+		return this.mapRelationships(local, localGet, true);
 	}
-	private mapNameSpaceImport(get: TscWrapper) {
-		notices.map.debug.call(this, 'mapNameSpaceImport');
+	private mapImportSpecifier(
+		importSpecifier: ts.ImportSpecifier,
+		get: TscWrapper,
+	) {
+		notices.map.debug.call(this, 'mapImportSpecifier');
 
-		this.mapNameSpaceExport(get);
-	}
-	private mapImportClause(get: TscWrapper) {
-		notices.map.debug.call(this, 'mapImportClause');
+		const name = importSpecifier.name.getText();
 
-		const remoteFile = this.filesMap.get(get.targetFileName!)!;
 		const source = this.localDoxDeclaration;
-		const target = remoteFile.declarationsMap.get(this.name)!;
+		const remoteFile = this.filesMap.get(get.targetFileName!)!;
+		const target = remoteFile.declarationsMap.get(name)!;
 
+		source.children.set(name, target);
 		target.parents.push(source);
-		source.children.set(this.name, target);
 	}
+	/** Maps the "default" export */
 	private mapExportAssignment(exportAssignment: ts.ExportAssignment) {
 		notices.map.debug.call(this, 'mapExportAssignment');
 
 		const get = this.tsWrap(this.get.immediatelyAliasedSymbol!);
 		this.mapRelationships(get.tsNode, get, true);
-
-		//log.info(get.nodeDeclarationText);
-		//log.inspect(get.tsNode, ['parent', 'flowNode', 'endFlowNode']);
-		//this.mapRelationships(expressionGet.tsNode, expressionGet, true);
 	}
+
+	private registerReExporter(symbol: ts.Symbol) {
+		notices.map.debug.call(this, 'registerReExporter');
+
+		tsc.parseReExport.call(this, symbol).forEach((expression) => {
+			const get = this.tsWrap(expression);
+			this.mapReExport(get);
+		});
+	}
+
+	//Not discovered yet??
+	/*
+	private mapImportClause(get: TscWrapper) {
+		notices.map.debug.call(this, 'mapImportClause');
+
+		const name = this.name;
+
+		const source = this.localDoxDeclaration;
+		const remoteFile = this.filesMap.get(get.targetFileName!)!;
+		const target = remoteFile.declarationsMap.get(name)!;
+
+		source.children.set(name, target);
+		target.parents.push(source);
+	}
+
+	*/
+
+	static isExportSpecifier = ts.isExportSpecifier; //hack for testing stub purposes
 }
 
 const notices = {

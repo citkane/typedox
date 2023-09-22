@@ -43,8 +43,8 @@ export {
  */
 export enum DeclarationGroup {
 	unknown,
-	ExportStar,
-	ReExporter,
+	//ExportStar,
+	ReExport,
 	Module,
 	Variable,
 	Function,
@@ -95,8 +95,8 @@ export interface tscRawConfig {
 export type namedDef<def> = [string | undefined, def];
 export type namedRegistry<reg> = Record<string, reg>;
 
-export type npmPackageDefinition = [program: ts.Program, rootDir: string][];
-export type npmPackageDefinitions = namedRegistry<npmPackageDefinition>;
+export type npmPackagePrograms = [program: ts.Program, rootDir: string][];
+export type npmPackageDefinitions = namedRegistry<npmPackagePrograms>;
 
 export namespace foo {
 	const bar = 'foo';

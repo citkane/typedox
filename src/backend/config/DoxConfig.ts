@@ -31,30 +31,26 @@ export class DoxConfig {
 
 	constructor(clOptions?: string[]);
 	constructor(checker?: ts.TypeChecker, clOptions?: string[]);
-	constructor(projectOptions?: config.doxOptions, clOptions?: string[]);
+	constructor(doxOptions?: config.doxOptions, clOptions?: string[]);
 	constructor(
-		projectOptions?: config.doxOptions,
+		doxOptions?: config.doxOptions,
 		checker?: ts.TypeChecker,
 		clOptions?: string[],
 	);
 	constructor(
-		projectOrCheckerOrClArgs?:
-			| config.doxOptions
-			| ts.TypeChecker
-			| string[],
+		doxOrCheckerOrClArgs?: config.doxOptions | ts.TypeChecker | string[],
 		checkerOrClArgs?: ts.TypeChecker | string[],
 		argv = process.argv as string[],
 	) {
-		const [projectOptions, checker, clArgs] =
-			config.resolveConstructorOverload(
-				projectOrCheckerOrClArgs,
-				checkerOrClArgs,
-				argv,
-			);
+		const [doxOptions, checker, clArgs] = config.resolveConstructorOverload(
+			doxOrCheckerOrClArgs,
+			checkerOrClArgs,
+			argv,
+		);
 
 		this.checker = checker;
 
-		if (!projectOptions && !_cache)
+		if (!doxOptions && !_cache)
 			log.throwError(
 				log.identifier(this),
 				'The initial DoxConfig must include projectOptions',
@@ -62,7 +58,7 @@ export class DoxConfig {
 
 		!_cache &&
 			this._warmTheCache(
-				projectOptions! as config.doxOptions,
+				doxOptions! as config.doxOptions,
 				config.getTscParsedCommandline(clArgs),
 			);
 	}
@@ -155,6 +151,7 @@ export class DoxConfig {
 		tscCommandlineConfig: ts.ParsedCommandLine,
 	) {
 		_cache = new Cache(projectOptions, tscCommandlineConfig);
+
 		_cache.clProject = this._clProject();
 		_cache.customProject = this._customProject();
 		_cache.entryProject = this._entryProject();
@@ -199,7 +196,12 @@ export class DoxConfig {
 			this.projectRootDir,
 			ts.sys.fileExists,
 		);
-		return entryFile ? [config.ensureFileExists(entryFile)!] : undefined;
+
+		return entryFile && !entryFile.startsWith(this.projectRootDir)
+			? undefined
+			: entryFile
+			? [config.ensureFileExists(entryFile)!]
+			: undefined;
 	};
 	private _tscRawConfigs = (tsConfigs: string[]): tscRawConfig[] => {
 		const isRootInit = !!_cache.entryProject || !!_cache.clProject;
@@ -208,6 +210,7 @@ export class DoxConfig {
 			config.ensureAbsPath.bind(null, this.projectRootDir),
 			isRootInit,
 		);
+
 		return rawConfigs;
 	};
 	private _tscParsedConfigs = () => {
@@ -277,7 +280,7 @@ export class DoxConfig {
 
 				doxOptions.tsConfigs ??= defaultValue;
 				value === undefined
-					? (doxOptions.tsConfigs = value)
+					? (doxOptions.tsConfigs = undefined)
 					: !doxOptions.tsConfigs.includes(value)
 					? doxOptions.tsConfigs.push(value)
 					: null;
@@ -375,7 +378,7 @@ const notices = {
 		throwError: function (this: DoxConfig) {
 			log.throwError(
 				log.identifier(this),
-				'Could not locate any tsconfig.json files to start the documentation process:',
+				'Could not locate any tsconfig files to start the documentation process under the directory:',
 				this.options.projectRootDir,
 			);
 		},

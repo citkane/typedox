@@ -88,7 +88,7 @@ export function makeParsedConfigs(
 	);
 	const parsedConfigs = tscRawConfigs.map(parseConfig);
 
-	return parsedConfigs;
+	return parsedConfigs as ts.ParsedCommandLine[];
 }
 
 export function findAllRawConfigs(
@@ -143,6 +143,7 @@ export function discoverReferences(rawConfig: tscRawConfig) {
 export function makeRawTscConfigFromFile(fileName: string, init: boolean) {
 	const rootDir = path.dirname(fileName);
 	const rawConfig = readTscConfigFile(fileName) as tscRawConfig;
+	fileName = path.basename(fileName);
 
 	rawConfig.dox = {
 		fileName,

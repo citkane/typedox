@@ -27,7 +27,7 @@ import {
 export class Branch {
 	parent: TsReference | Branch;
 	_declarationBundle: Map<string, TsDeclaration> = new Map();
-	_exportStarBundle: Map<string, TsDeclaration> = new Map();
+	reExportBundle: Map<string, TsDeclaration> = new Map();
 	nameSpaces: Map<string, Branch> = new Map();
 	classes: Map<string, TsDeclaration> = new Map();
 	variables: Map<string, TsDeclaration> = new Map();
@@ -43,10 +43,10 @@ export class Branch {
 		this.declarationBundle.forEach(this.registerDeclaration);
 	}
 	private get reExports() {
-		return [...this._exportStarBundle.values()];
+		return Array.from(this.reExportBundle.values());
 	}
 	private get declarationBundle() {
-		return [...this._declarationBundle.values()];
+		return Array.from(this._declarationBundle.values());
 	}
 	private set Default(assignment: TsDeclaration) {
 		if (this.default)
@@ -58,9 +58,9 @@ export class Branch {
 		this.default = assignment;
 	}
 	private bundleDeclaration = (declaration: TsDeclaration) => {
-		const { kind, name } = declaration;
-		kind === DeclarationGroup.ExportStar
-			? this.bundleExportStar(declaration)
+		const { group } = declaration;
+		group === DeclarationGroup.ReExport
+			? this.bundleReExport(declaration)
 			: this._declarationBundle.set(declaration.name, declaration);
 	};
 	private mergeReExportIntoDeclarations = (declaration: TsDeclaration) => {
@@ -68,33 +68,33 @@ export class Branch {
 		this._declarationBundle.set(declaration.name, declaration);
 	};
 	private registerDeclaration = (declaration: TsDeclaration) => {
-		const { kind, name } = declaration;
+		const { group, name } = declaration;
 
-		kind === DeclarationGroup.Module
+		group === DeclarationGroup.Module
 			? this.registerNameSpace(declaration)
-			: kind === DeclarationGroup.Class
+			: group === DeclarationGroup.Class
 			? this.classes.set(name, declaration)
-			: kind === DeclarationGroup.Function
+			: group === DeclarationGroup.Function
 			? this.functions.set(name, declaration)
-			: kind === DeclarationGroup.Variable
+			: group === DeclarationGroup.Variable
 			? this.variables.set(name, declaration)
-			: kind === DeclarationGroup.Enum
+			: group === DeclarationGroup.Enum
 			? this.enums.set(name, declaration)
-			: kind === DeclarationGroup.Type
+			: group === DeclarationGroup.Type
 			? this.types.set(name, declaration)
-			: kind === DeclarationGroup.Default
+			: group === DeclarationGroup.Default
 			? (this.Default = declaration)
 			: log.error(
 					log.identifier(this),
-					'Did not find a kind for a declaration: ',
-					`${DeclarationGroup[kind]}\n`,
+					'Did not find a group for a declaration: ',
+					`${DeclarationGroup[group]}\n`,
 					declaration.get.report,
 			  );
 	};
-	private bundleExportStar = (declaration: TsDeclaration) => {
-		[...(declaration.children.values() || [])].forEach((declaration) => {
-			if (this._exportStarBundle.has(declaration.name)) return;
-			this._exportStarBundle.set(declaration.name, declaration);
+	private bundleReExport = (declaration: TsDeclaration) => {
+		Array.from(declaration.children.values()).forEach((declaration) => {
+			if (this.reExportBundle.has(declaration.name)) return;
+			this.reExportBundle.set(declaration.name, declaration);
 		});
 	};
 	private registerNameSpace = (declaration: TsDeclaration) => {
@@ -105,7 +105,6 @@ export class Branch {
 	};
 
 	private static getChildDeclarations(children: declarationMap) {
-		const values = children.values();
-		return !!values ? [...values] : [];
+		return Array.from(children.values());
 	}
 }

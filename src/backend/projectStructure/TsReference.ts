@@ -46,14 +46,6 @@ export class TsReference extends DoxConfig {
 		this.parent = parent;
 		this.entryFileList = files;
 		this.program = program;
-		/*
-		files.forEach((fileName) => {
-			const checker = program.getTypeChecker();
-			const foo = program.getSourceFile(fileName)!;
-			this.filesMap.set(fileName, new TsSourceFile(this, foo, checker));
-		});
-*/
-		//this.entryFileList = context.tsConfig.fileNames;
 	}
 	/*
 	public get toObject() {
@@ -64,30 +56,23 @@ export class TsReference extends DoxConfig {
 		this.filesMap.forEach((file) => file.discoverDeclarations());
 	};
 
-	public buildRelationships = () =>
+	public buildRelationships = () => {
 		this.filesMap.forEach((file) => file.buildRelationships());
+	};
 
 	public discoverFiles = this.discoverFilesRecursively;
 	private discoverFilesRecursively(fileList = this.entryFileList) {
 		fileList.forEach((fileName) => {
 			if (this.filesMap.has(fileName)) return;
+
 			const fileSource = this.program.getSourceFile(fileName);
 
 			if (!fileSource)
-				return log.error(
-					log.identifier(__filename),
-					'No source file was found:',
-					fileName,
-				);
-
+				return notices.discoverFiles.fileSourceError(fileName);
 			const fileSymbol = this.checker?.getSymbolAtLocation(fileSource);
 
 			if (!fileSymbol)
-				return log.info(
-					log.identifier(__filename),
-					'File was not included as part of the documentation set:',
-					fileName,
-				);
+				return notices.discoverFiles.fileSymbolWarning(fileName);
 
 			const doxSourceFile = new TsSourceFile(
 				this,
@@ -99,15 +84,28 @@ export class TsReference extends DoxConfig {
 			this.discoverFilesRecursively(doxSourceFile.childFiles);
 		});
 	}
-	public static getDeclarationRoots = (sourceFiles: TsSourceFile[]) => {
-		return this.getAllDeclarations(sourceFiles).filter(
-			(declaration) => !declaration.parents.length,
-		);
-	};
-
-	private static getAllDeclarations = (sourceFiles: TsSourceFile[]) => {
-		return sourceFiles
-			.map((fileSource) => [...fileSource.declarationsMap.values()])
-			.flat();
+	public getRootDeclarations = () => {
+		return Array.from(this.filesMap.values())
+			.map((fileSource) =>
+				Array.from(fileSource.declarationsMap.values()),
+			)
+			.flat()
+			.filter((declaration) => !declaration.parents.length);
 	};
 }
+const notices = {
+	discoverFiles: {
+		fileSourceError: (fileName: string) =>
+			log.error(
+				log.identifier(__filename),
+				'No source file was found:',
+				fileName,
+			),
+		fileSymbolWarning: (fileName: string) =>
+			log.warn(
+				log.identifier(__filename),
+				'File was not included as part of the documentation set:',
+				fileName,
+			),
+	},
+};

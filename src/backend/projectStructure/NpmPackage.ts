@@ -4,7 +4,7 @@ import {
 	DoxProject,
 	TsReference,
 	namedRegistry,
-	npmPackageDefinition,
+	npmPackagePrograms,
 	DoxConfig,
 	config,
 } from '../typedox';
@@ -38,24 +38,19 @@ export class NpmPackage extends DoxConfig {
 	constructor(
 		parent: DoxProject,
 		npmFilePath: string,
-		programs: npmPackageDefinition,
+		npmPackages: npmPackagePrograms,
 	) {
 		super();
 		const packageConfig = config.jsonFileToObject(npmFilePath);
 		const { name, version } = packageConfig;
 
 		this.parent = parent;
-		this.tsReferences = this._tsReferences(programs);
+		this.tsReferences = this._tsReferences(npmPackages);
 		this.name = name;
 		this.version = version;
 	}
 
-	public get serialNpmPackage() {
-		return {};
-		//return serialise.serialiseNpmPackage(this);
-	}
-
-	private _tsReferences = (programs: npmPackageDefinition) => {
+	private _tsReferences = (programs: npmPackagePrograms) => {
 		const nameMap = getNameMap(programs);
 		const tsReferences = programs.map((tuple) => {
 			const [program, rootDir] = tuple;
@@ -71,7 +66,7 @@ export class NpmPackage extends DoxConfig {
 	};
 }
 
-function getNameMap(programs: npmPackageDefinition) {
+export function getNameMap(programs: npmPackagePrograms) {
 	const rootDirs = programs.map((tuple) => tuple[1]);
 
 	const referenceNameMap = rootDirs
@@ -101,13 +96,3 @@ function getNameMap(programs: npmPackageDefinition) {
 
 	return referenceNameMap;
 }
-/*
-const testDirs = [
-	'/foo/bar',
-	'/foo/bar/poo/moo',
-	'/bar',
-	'/bar/none',
-	'/foo/bar/poo',
-	'/foo',
-];
-*/

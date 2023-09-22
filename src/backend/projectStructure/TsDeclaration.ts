@@ -53,15 +53,14 @@ export class TsDeclaration extends DoxConfig {
 		this.tsSymbol = this.get.tsSymbol;
 		this.tsType = this.get.tsType;
 
-		if (!this.get.isExportStarChild && !this.isSpecifierKind(this.tsKind))
-			return;
+		if (!this.get.isReExport && !this.isSpecifierKind(this.tsKind)) return;
 
 		this.parser(this.get.tsNode);
 	}
-	public get kind() {
+	public get group() {
 		const { SyntaxKind } = ts;
 
-		if (this.get.isExportStarChild) return DeclarationGroup.ExportStar;
+		if (this.get.isReExport) return DeclarationGroup.ReExport;
 
 		const tsKind = TsDeclaration.resolveTsKind(this);
 
@@ -78,7 +77,7 @@ export class TsDeclaration extends DoxConfig {
 			: isType
 			? DeclarationGroup.Type
 			: tsKind === SyntaxKind.ImportSpecifier
-			? DeclarationGroup.ReExporter
+			? DeclarationGroup.ReExport
 			: tsKind === SyntaxKind.VariableDeclaration
 			? DeclarationGroup.Variable
 			: tsKind === SyntaxKind.ClassDeclaration
@@ -103,26 +102,31 @@ export class TsDeclaration extends DoxConfig {
 			? this.parseModuleDeclaration(node)
 			: ts.isNamespaceExport(node)
 			? this.parseNamespaceExport()
-			: ts.isExportSpecifier(node)
+			: TsDeclaration.isExportSpecifier(node)
 			? this.parseExportSpecifier()
 			: ts.isImportSpecifier(node)
 			? this.parseImportSpecifier()
-			: get.isExportStarChild
-			? this.parseReExporter(get)
-			: ts.isExportAssignment(node)
-			? this.parseExportAssignment(get)
+			: get.isReExport
+			? this.parseReExport(get)
 			: ts.isNamespaceImport(node)
 			? this.parseNamespaceImport(get)
+			: ts.isExportAssignment(node)
+			? this.parseExportAssignment(get)
 			: notices.parser.deepreport.call(this, isTarget, get);
 	}
 
+	/** Parses the "default" export assignment */
 	private parseExportAssignment(get: TscWrapper) {
 		notices.parse.debug.call(this, 'parseExportAssignment');
 		//log.inspect(get.tsNode, true, ['parent']);
 	}
-	private parseReExporter(get: TscWrapper) {
-		notices.parse.debug.call(this, 'parseReExporter');
-		//this.info(get.tsSymbol.exports);
+
+	private parseReExport(get: TscWrapper) {
+		notices.parse.debug.call(this, 'parseReExport');
+		log.info(
+			'---------------------------------------------ToDo parseReExport',
+			get.name,
+		);
 	}
 	private parseModuleDeclaration(module: ts.ModuleDeclaration) {
 		notices.parse.debug.call(this, 'parseModuleDeclaration');
@@ -142,22 +146,14 @@ export class TsDeclaration extends DoxConfig {
 	private parseImportSpecifier() {
 		notices.parse.debug.call(this, 'parseImportSpecifier');
 
-		const target = this.get.immediatelyAliasedSymbol;
-		const get = this.tsWrap(target!);
-
-		//this.parser(get.tsNode, get, true);
+		const target = this.get.aliasedSymbol!;
+		const get = this.tsWrap(target);
+		this.parser(get.tsNode, get, true);
 	}
 	private parseExportSpecifier() {
 		notices.parse.debug.call(this, 'parseExportSpecifier');
 
-		const localTarget = this.get.localTargetDeclaration;
-
-		if (!localTarget)
-			return log.error(
-				log.identifier(this),
-				'No local target found:',
-				this.get.report,
-			);
+		const localTarget = this.get.localTargetDeclaration!;
 		const get = this.tsWrap(localTarget);
 		this.parser(get.tsNode, get, true);
 	}
@@ -171,9 +167,16 @@ export class TsDeclaration extends DoxConfig {
 			tsKind = get.tsNode.kind;
 		}
 		if (ts.isImportSpecifier(get.tsNode)) {
+			log.info(
+				'---------------------------------------------ToDo isImportSpecifier',
+				get.name,
+			);
 		}
 		if (ts.isExportSpecifier(get.tsNode)) {
-			log.info('---------------------------------------------');
+			log.info(
+				'---------------------------------------------ToDo isExportSpecifier',
+				get.name,
+			);
 		}
 		if (
 			tsKind === ts.SyntaxKind.VariableDeclaration &&
@@ -184,6 +187,7 @@ export class TsDeclaration extends DoxConfig {
 
 		return tsKind;
 	}
+	static isExportSpecifier = ts.isExportSpecifier; //hack for testing stub purposes
 }
 
 const notices = {

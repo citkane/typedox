@@ -43,27 +43,73 @@ export class TsSourceFile extends DoxConfig {
 		super(parent.checker);
 		this.parent = parent;
 		this.checker = this.checker!;
-
 		this.source = source;
 		this.fileName = source.fileName;
 		this.fileSymbol = fileSymbol;
 		this.fileType = this.checker.getTypeOfSymbol(this.fileSymbol);
-		const fileExports = this.fileSymbol.exports?.values();
-		this.childFiles = this.discoverFiles([...(fileExports || [])]);
+		this.childFiles = this.discoverFiles(this.fileExportsArray);
 
 		log.debug(log.identifier(this), this.fileName);
 	}
+	public getModuleDeclarationSymbols = () => {
+		return this.fileExportsArray
+			.filter(
+				(symbol) =>
+					symbol.valueDeclaration &&
+					ts.isModuleDeclaration(symbol.valueDeclaration),
+			)
+			.map((symbol) => {
+				const body = (symbol.valueDeclaration as ts.ModuleDeclaration)
+					?.body! as any;
+				return (body.statements as ts.ExpressionStatement[]).map(
+					(statement) => {
+						return statement.expression.getText();
+					},
+				);
+			})
+			.flat()
+			.map((name) => {
+				return (this.source as any).locals.get(name)! as ts.Symbol;
+			})
+			.filter((val) => !!val);
+	};
+	private getModuleDeclarationImports = () => {
+		return this.getModuleDeclarationSymbols().reduce(
+			(accumulator, symbol) => {
+				const value = this.tsWrap(symbol).tsNode;
+				const isImport =
+					ts.isImportClause(value) ||
+					ts.isImportDeclaration(value) ||
+					ts.isImportSpecifier(value);
+				isImport && accumulator.push(symbol);
 
+				return accumulator;
+			},
+			[] as ts.Symbol[],
+		);
+	};
+	private get fileExportsArray() {
+		const exports = this.fileSymbol.exports?.values();
+		return Array.from(exports || []);
+	}
 	private discoverFiles = (fileSymbols: ts.Symbol[]) => {
-		return fileSymbols.map(getFileNames.bind(this)).flat().filter(filter);
+		const allFileSymbols = [
+			...this.getModuleDeclarationImports(),
+			...fileSymbols,
+		].filter((symbol, i, array) => array[i].name === symbol.name);
+
+		return allFileSymbols
+			.map(getFileNames.bind(this))
+			.flat()
+			.filter(filter) as string[];
 
 		function getFileNames(this: TsSourceFile, symbol: ts.Symbol) {
-			return tsc.isStarExport(symbol)
+			return tsc.isReExport(symbol)
 				? discoverStars.bind(this)(symbol)
 				: this.tsWrap(symbol).targetFileName!;
 		}
 		function discoverStars(this: TsSourceFile, symbol: ts.Symbol) {
-			return tsc.parseExportStars
+			return tsc.parseReExport
 				.call(this, symbol)
 				.map((expression) => this.tsWrap(expression).targetFileName!);
 		}
@@ -75,12 +121,12 @@ export class TsSourceFile extends DoxConfig {
 		this.fileSymbol.exports?.forEach(parseSymbol.bind(this));
 
 		function parseSymbol(this: TsSourceFile, symbol: ts.Symbol) {
-			tsc.isStarExport(symbol)
+			tsc.isReExport(symbol)
 				? discoverStarExports.bind(this)(symbol)
 				: makeDeclaration.call(this, symbol);
 		}
 		function discoverStarExports(this: TsSourceFile, symbol: ts.Symbol) {
-			tsc.parseExportStars
+			tsc.parseReExport
 				.call(this, symbol)
 				.forEach(makeDeclaration.bind(this));
 		}

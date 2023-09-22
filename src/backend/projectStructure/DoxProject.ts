@@ -36,15 +36,15 @@ export class DoxProject extends DoxConfig {
 	private npmPackageDefinitions: npmPackageDefinitions;
 	private programs: ts.Program[];
 
-	constructor(projectOptions: config.doxOptions) {
-		super(projectOptions);
+	constructor(doxOptions: config.doxOptions, tscClOptions?: string[]) {
+		super(doxOptions, tscClOptions);
 
 		this.programs = this._programs(this.tscParsedConfigs);
 		this.npmPackageDefinitions = this._npmPackageDefinitions(this.programs);
-		this.npmPackages = this._nmpPackages(this.npmPackageDefinitions);
+		this.npmPackages = this._npmPackages(this.npmPackageDefinitions);
 	}
 
-	private _nmpPackages = (npmPackageDefinitions: npmPackageDefinitions) => {
+	private _npmPackages = (npmPackageDefinitions: npmPackageDefinitions) => {
 		const definitions = npmPackageDefinitions;
 		const configFiles = Object.keys(definitions);
 		const npmPackages = configFiles.map(
@@ -64,29 +64,41 @@ export class DoxProject extends DoxConfig {
 			},
 			{} as npmPackageDefinitions,
 		);
+		if (!Object.keys(npmPackageDefinitions).length)
+			notices._npmPackageDefinitions.throw();
 
 		return npmPackageDefinitions;
 	};
 	private _programs = (tscParsedConfigs: ts.ParsedCommandLine[]) => {
 		const programs = tscParsedConfigs.reduce(
-			(accumulator, parsedConfig) => {
-				if (!configHasOutDir(parsedConfig)) return accumulator;
-
-				const program = ts.createProgram(
-					parsedConfig.fileNames,
-					parsedConfig.options,
-				);
-				const { configFilePath } = parsedConfig.options;
-
-				runDiagnostics(program, configFilePath?.toLocaleString());
-				accumulator.push(program);
-
-				return accumulator;
-			},
+			makeProgramFromConfig,
 			[] as ts.Program[],
 		);
 
+		if (!programs.length)
+			notices._programs.throw(this.options.projectRootDir);
+
 		return programs;
+
+		function makeProgramFromConfig(
+			accumulator: ts.Program[],
+			parsedConfig: ts.ParsedCommandLine,
+		) {
+			const { fileNames, options } = parsedConfig;
+			const { configFilePath, outDir, out, outFile, noEmit } = options;
+
+			const noOutTarget = !out && !outFile && !outDir;
+			if (noOutTarget || noEmit) {
+				notices._programs.info(configFilePath);
+				return accumulator;
+			}
+
+			const program = ts.createProgram(fileNames, options);
+			runDiagnostics(program, String(configFilePath));
+			accumulator.push(program);
+
+			return accumulator;
+		}
 	};
 
 	public static deepReport(
@@ -120,26 +132,15 @@ function parseProgramRootDir(
 		this.options.npmFileConvention,
 	);
 	if (!npmPackage) {
-		log.error(
-			log.identifier(__filename),
-			`No npm "${this.options.npmFileConvention}" found for a compiler root directory:`,
+		notices.parseProgramRootDir.warn(
+			this.options.npmFileConvention,
 			rootDir,
 		);
 		return accumulator;
 	}
 	(accumulator[npmPackage] ??= []).push([program, rootDir]);
 }
-function configHasOutDir(parsedConfig: ts.ParsedCommandLine) {
-	const { configFilePath, outDir } = parsedConfig.options;
-	if (!outDir) {
-		log.info(
-			log.identifier(__filename),
-			configFilePath?.toLocaleString() || 'An unknown configuration',
-			"has no out directory, so it's file list is being ignored.",
-		);
-	}
-	return !!outDir;
-}
+
 function getProgramRoots(fileNames: readonly string[]) {
 	return fileNames
 		.map((file) => path.dirname(file))
@@ -148,13 +149,12 @@ function getProgramRoots(fileNames: readonly string[]) {
 }
 function runDiagnostics(program: ts.Program, fileName: string | undefined) {
 	const diagnostics = program.getGlobalDiagnostics();
-
 	diagnostics.forEach((diagnostic) => log.warn(diagnostic.messageText));
 	if (diagnostics.length)
 		log.throwError(
 			log.identifier(__filename),
 			'Error in ts.Program:',
-			fileName || 'unknown file',
+			String(fileName),
 		);
 }
 function findNpmPackage(
@@ -172,3 +172,39 @@ function findNpmPackage(
 		? undefined
 		: findNpmPackage(projectRootDir, parentDir, npmFileConvention);
 }
+
+const notices = {
+	_programs: {
+		info: (
+			configFilePath: ts.CompilerOptionsValue | ts.TsConfigSourceFile,
+		) => {
+			log.info(
+				log.identifier(__filename),
+				String(configFilePath),
+				"has no out directory or does not emit. It's file list is being ignored.",
+			);
+		},
+		throw: (rootDir: string) => {
+			log.throwError(
+				log.identifier(__filename),
+				'Did not find any typescript configs which emit and have out directories in:',
+				rootDir,
+			);
+		},
+	},
+	_npmPackageDefinitions: {
+		throw: () =>
+			log.throwError(
+				log.identifier(__filename),
+				'no npm package files were found for the project.',
+			),
+	},
+	parseProgramRootDir: {
+		warn: (fileConvention: string, rootDir: string) =>
+			log.warn(
+				log.identifier(__filename),
+				`No npm "${fileConvention}" found for a compiler root directory:`,
+				rootDir,
+			),
+	},
+};

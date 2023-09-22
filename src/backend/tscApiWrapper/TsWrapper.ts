@@ -113,11 +113,23 @@ export class TscWrapper extends TsWrapperCache {
 		return this.cacheGet('nodeDeclarationText');
 	}
 
-	public get isExportStarChild() {
+	public get isReExport() {
+		/*
 		return (
 			this.moduleSpecifier &&
 			this.symbolFlag === ts.SymbolFlags.ValueModule &&
 			this.kind === ts.SyntaxKind.StringLiteral
+		);
+		*/
+
+		const { ValueModule, ExportStar } = ts.SymbolFlags;
+		const flags = [ValueModule, ExportStar];
+		const { StringLiteral, ExportDeclaration } = ts.SyntaxKind;
+		const kinds = [StringLiteral, ExportDeclaration];
+		return (
+			!!this.moduleSpecifier &&
+			flags.includes(this.symbolFlag) &&
+			kinds.includes(this.kind)
 		);
 	}
 

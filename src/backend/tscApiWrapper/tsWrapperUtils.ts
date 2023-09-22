@@ -108,11 +108,11 @@ export function getTsSymbolFromNode(
 	}
 }
 
-export function isStarExport(symbol: ts.Symbol) {
+export function isReExport(symbol: ts.Symbol) {
 	return symbol.flags === ts.SymbolFlags.ExportStar;
 }
 
-export function parseExportStars(symbol: ts.Symbol) {
+export function parseReExport(symbol: ts.Symbol) {
 	return symbol
 		.declarations!.map((declaration) => {
 			return ts.isExportDeclaration(declaration)
