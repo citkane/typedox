@@ -85,6 +85,7 @@ it('reports diagnostics for typescript programs and throws if error', function (
 		'package.spec.json',
 	]);
 	config._deleteCache();
+	//new DoxProject(doxOptions, ['--noLib', 'true']);
 	assert.throws(
 		() => new DoxProject(doxOptions, ['--noLib', 'true']),
 		/Error in ts.Program/,

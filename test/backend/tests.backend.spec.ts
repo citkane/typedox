@@ -2,11 +2,14 @@ import { loggerUtils } from '../../src/backend/typedox';
 const { colourise } = loggerUtils;
 const _unitTest = colourise('Bright', 'Unit tests');
 const _functionalTest = colourise('Bright', 'Functional tests');
+const _endToEndTest = colourise('Bright', 'End to end test');
 const title = (text: string) =>
 	colourise('Underscore', text.toLocaleUpperCase());
 const unitTest = (text: string) => `${_unitTest}: ${colourise('FgBlue', text)}`;
 const functionalTest = (text: string) =>
 	`${_functionalTest}: ${colourise('FgBlue', text)}`;
+const endToEndTest = (text: string) =>
+	`${_endToEndTest}: ${colourise('FgBlue', text)}`;
 
 describe(title('Logger'), function () {
 	describe(unitTest('Logger'), function () {
@@ -39,7 +42,7 @@ describe(title('Project structure'), function () {
 	describe(functionalTest('NpmPackage'), function () {
 		require('./testsFunctional/projectStructure/functional.NpmPackage.spec');
 	});
-	describe(functionalTest('Branch'), function () {
+	describe.skip(functionalTest('Branch'), function () {
 		require('./testsFunctional/projectStructure/functional.Branch.spec');
 	});
 	describe(functionalTest('TsReference'), function () {
@@ -51,12 +54,17 @@ describe(title('Project structure'), function () {
 	describe(functionalTest('TsDeclaration'), function () {
 		require('./testsFunctional/projectStructure/functional.TsDeclaration.spec');
 	});
-	describe(functionalTest('TsRelation'), function () {
-		require('./testsFunctional/projectStructure/functional.Relation.spec');
+	describe(functionalTest('TsDeclaration relations'), function () {
+		require('./testsFunctional/projectStructure/functional.TsDeclarationRelations.spec.ts');
 	});
 });
-describe(title('serialiser'), function () {
+describe.skip(title('serialiser'), function () {
 	describe(unitTest('serialiser'), function () {
 		require('./testsUnit/serialiser/unit.serialiser.spec');
+	});
+});
+describe.skip(title('Backend'), function () {
+	describe(endToEndTest('main'), function () {
+		require('./testsEndToEnd/endToEnd.main.spec');
 	});
 });

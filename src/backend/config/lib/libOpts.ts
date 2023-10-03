@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
-import { logger as log, config, DoxConfig } from '../../typedox';
+import { logger as log, config } from '../../typedox';
 
 export function getDoxOptions(doxClArgsAndValues?: string[]): config.doxOptions;
 export function getDoxOptions(
@@ -28,6 +28,7 @@ export function getDoxOptions(
 	const options = customOptions || mergeOptions();
 
 	validateDoxOptions(options, doxArgs);
+
 	return options;
 
 	function mergeOptions() {
@@ -74,6 +75,16 @@ export function getTscParsedCommandline(
 ) {
 	const tscOptions = ts.parseCommandLine(tscClArgsAndValues);
 	tscOptions.errors.forEach((error) => {
+		const ignore = config
+			.getHyphenatedArgKeys(config.doxArgs)
+			.find((key) => {
+				const messageText = String(error.messageText);
+				return (
+					messageText.includes(key) || messageText.includes('--file')
+				);
+			});
+		if (ignore) return;
+
 		log.warn(
 			log.identifier(__filename),
 			log.identifier(ts.parseCommandLine),

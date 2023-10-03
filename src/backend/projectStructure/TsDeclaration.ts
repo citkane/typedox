@@ -2,12 +2,14 @@ import * as ts from 'typescript';
 import {
 	DeclarationGroup,
 	DoxConfig,
-	DoxProject,
+	TsReference,
 	TsSourceFile,
 	TscWrapper,
 	declarationMap,
 	logger as log,
+	logLevels,
 } from '../typedox';
+import { identifier } from '../logger/loggerUtils';
 
 /**
  * A container for typescript declarations:
@@ -29,202 +31,439 @@ import {
  *
  */
 export class TsDeclaration extends DoxConfig {
-	parent: TsSourceFile;
-	name: string;
-	tsKind: ts.SyntaxKind;
-	tsNode: ts.Node;
-	tsSymbol: ts.Symbol;
-	tsType: ts.Type;
-	nameSpace?: string;
-	parents: TsDeclaration[] = [];
-	children: declarationMap = new Map();
-	aliasName?: string;
-	get: TscWrapper;
+	public nameSpace?: string;
+	public parent: TsSourceFile | TsDeclaration;
+	public parents: Map<TsDeclaration, boolean> = new Map();
+	public children: declarationMap = new Map();
+	public wrappedItem: TscWrapper;
+	public valueItem?: TscWrapper;
+	public localDeclarationMap: declarationMap = new Map();
+	private groupTsKind!: ts.SyntaxKind;
+	private defaultStrings = ['default', 'export='];
+	private debug = notices.parse.debug.bind(this);
 
-	constructor(parent: TsSourceFile, item: ts.Symbol | ts.Node) {
-		super(parent.checker);
+	constructor(parent: TsSourceFile | TsDeclaration, item: ts.Symbol) {
+		super();
+
 		this.parent = parent;
+		this.wrappedItem = this.tsWrap(item);
 
-		this.get = this.tsWrap(item);
-
-		this.name = this.get.name;
-		this.tsKind = this.get.kind;
-		this.tsNode = this.get.tsNode;
-		this.tsSymbol = this.get.tsSymbol;
-		this.tsType = this.get.tsType;
-
-		if (!this.get.isReExport && !this.isSpecifierKind(this.tsKind)) return;
-
-		this.parser(this.get.tsNode);
+		this.declare(this.wrappedItem);
 	}
+
+	public get name() {
+		return this.wrappedItem.name;
+	}
+	public get checker(): ts.TypeChecker {
+		return this.parent.checker;
+	}
+	public get tsWrap(): TsReference['tsWrap'] {
+		return this.parent.tsWrap;
+	}
+
 	public get group() {
 		const { SyntaxKind } = ts;
+		const { groupTsKind, wrappedItem, valueItem } = this;
 
-		if (this.get.isReExport) return DeclarationGroup.ReExport;
-
-		const tsKind = TsDeclaration.resolveTsKind(this);
+		const kind = this.isArrowFunction
+			? ts.SyntaxKind.FunctionDeclaration
+			: valueItem?.kind || groupTsKind;
 
 		const isModule =
-			tsKind === SyntaxKind.ModuleDeclaration ||
-			tsKind === SyntaxKind.NamespaceExport ||
-			tsKind === SyntaxKind.NamespaceImport;
+			kind === SyntaxKind.ModuleDeclaration ||
+			kind === SyntaxKind.NamespaceExport ||
+			kind === SyntaxKind.NamespaceImport;
 		const isType =
-			tsKind === SyntaxKind.TypeAliasDeclaration ||
-			tsKind === SyntaxKind.InterfaceDeclaration;
+			kind === SyntaxKind.TypeAliasDeclaration ||
+			kind === SyntaxKind.InterfaceDeclaration;
 
-		const kind = isModule
+		const isReExport =
+			kind === SyntaxKind.ImportSpecifier ||
+			kind === SyntaxKind.ExportDeclaration;
+
+		const groupKind = isModule
 			? DeclarationGroup.Module
 			: isType
 			? DeclarationGroup.Type
-			: tsKind === SyntaxKind.ImportSpecifier
+			: isReExport
 			? DeclarationGroup.ReExport
-			: tsKind === SyntaxKind.VariableDeclaration
+			: kind === SyntaxKind.VariableDeclaration
 			? DeclarationGroup.Variable
-			: tsKind === SyntaxKind.ClassDeclaration
+			: kind === SyntaxKind.ClassDeclaration
 			? DeclarationGroup.Class
-			: tsKind === SyntaxKind.FunctionDeclaration
+			: kind === SyntaxKind.FunctionDeclaration
 			? DeclarationGroup.Function
-			: tsKind === SyntaxKind.EnumDeclaration
+			: kind === SyntaxKind.EnumDeclaration
 			? DeclarationGroup.Enum
-			: tsKind === SyntaxKind.ExportAssignment
+			: kind === SyntaxKind.ExportAssignment
 			? DeclarationGroup.Default
+			: this.isSpecifierKind(wrappedItem.kind)
+			? undefined
 			: DeclarationGroup.unknown;
 
-		kind === DeclarationGroup.unknown && notices.kind(tsKind, this.get);
+		groupKind === DeclarationGroup.unknown &&
+			notices.groupKind(kind, this.wrappedItem, log.stackTracer());
 
-		return kind;
+		return groupKind;
 	}
+	public mapRelationships = (get = this.wrappedItem, isTarget = false) => {
+		if (!this.isSpecifierKind(get.kind)) return;
 
-	private parser(node: ts.Node, get = this.get, isTarget = false) {
-		if (!this.isSpecifierKind(node.kind)) return;
+		type routeKey = keyof typeof TsDeclaration.relationshipRoutes;
+		const key = ts.SyntaxKind[get.kind] as routeKey;
+		const routeFunction = TsDeclaration.relationshipRoutes[key];
 
-		ts.isModuleDeclaration(node)
-			? this.parseModuleDeclaration(node)
-			: ts.isNamespaceExport(node)
-			? this.parseNamespaceExport()
-			: TsDeclaration.isExportSpecifier(node)
-			? this.parseExportSpecifier()
-			: ts.isImportSpecifier(node)
-			? this.parseImportSpecifier()
-			: get.isReExport
-			? this.parseReExport(get)
-			: ts.isNamespaceImport(node)
-			? this.parseNamespaceImport(get)
-			: ts.isExportAssignment(node)
-			? this.parseExportAssignment(get)
-			: notices.parser.deepreport.call(this, isTarget, get);
+		routeFunction
+			? routeFunction.call(this, get)
+			: notices.report.call(this, get, isTarget);
+	};
+	private declare = (get = this.wrappedItem, isTarget = false) => {
+		if (get.kind === ts.SyntaxKind.Identifier) {
+			const { valueDeclaration } = get.tsSymbol;
+			get = valueDeclaration ? this.tsWrap(valueDeclaration) : get;
+		}
+		this.groupTsKind = get.kind;
+
+		if (!this.isSpecifierKind(get.kind)) return (this.valueItem = get);
+
+		type routeKey = keyof typeof TsDeclaration.declarationRoutes;
+		const key = ts.SyntaxKind[get.kind] as routeKey;
+		const routeFunction = TsDeclaration.declarationRoutes[key];
+
+		routeFunction
+			? routeFunction.call(this, get)
+			: notices.report.call(this, get, isTarget);
+	};
+	private adopt = (child: TsDeclaration) => {
+		child.parents.set(this, true);
+		this.children.set(child.name, child);
+	};
+	private findDeclaration = (
+		get: TscWrapper,
+		fileName = get.fileName,
+		names = [get.name],
+	) => {
+		const { reference, notFound } = this;
+		const { filesMap } = reference;
+
+		const file = filesMap.get(fileName);
+		if (!file) return notFound(get, 'file');
+
+		let declaration: TsDeclaration | undefined;
+		const { declarationsMap } = file;
+		file.discoverDeclarations();
+		names.forEach((name) => {
+			declaration = declaration ??= declarationsMap.get(name);
+		});
+		return declaration || this.notFound(get, 'declaration');
+	};
+	private declareLocal = (symbol: ts.Symbol, name?: string) => {
+		const declaration = new TsDeclaration(this, symbol);
+		this.localDeclarationMap.set(name || declaration.name, declaration);
+
+		return declaration;
+	};
+	private get notFound() {
+		return notices.notFound.bind(this);
 	}
-
-	/** Parses the "default" export assignment */
-	private parseExportAssignment(get: TscWrapper) {
-		notices.parse.debug.call(this, 'parseExportAssignment');
-		//log.inspect(get.tsNode, true, ['parent']);
+	private get sourceFile() {
+		const getSourcefile = (
+			parent: TsSourceFile | TsDeclaration,
+		): TsSourceFile => {
+			return parent.isTsSourceFile
+				? (parent as TsSourceFile)
+				: getSourcefile(parent.parent as TsDeclaration);
+		};
+		return getSourcefile(this.parent);
 	}
-
-	private parseReExport(get: TscWrapper) {
-		notices.parse.debug.call(this, 'parseReExport');
-		log.info(
-			'---------------------------------------------ToDo parseReExport',
-			get.name,
+	private get reference() {
+		return this.sourceFile.parent;
+	}
+	private get isArrowFunction() {
+		return (
+			this.valueItem &&
+			ts.isVariableDeclaration(this.valueItem?.tsNode) &&
+			this.valueItem?.callSignatures.length
 		);
 	}
-	private parseModuleDeclaration(module: ts.ModuleDeclaration) {
-		notices.parse.debug.call(this, 'parseModuleDeclaration');
 
-		this.nameSpace = module.name.getText();
-	}
-	private parseNamespaceExport = () => {
-		notices.parse.debug.call(this, 'parseNamespaceExport');
+	public static isExportSpecifier = ts.isExportSpecifier; //stub hack for testing purposes
 
-		this.nameSpace = this.name;
-	};
-	private parseNamespaceImport = (get: TscWrapper) => {
-		notices.parse.debug.call(this, 'parseNamespaceImport');
+	private static relationshipRoutes = {
+		ExportAssignment(this: TsDeclaration, get: TscWrapper) {
+			this.debug('relate ExportAssignment');
 
-		this.nameSpace = this.name;
-	};
-	private parseImportSpecifier() {
-		notices.parse.debug.call(this, 'parseImportSpecifier');
+			const target = get.target && this.tsWrap(get.target);
+			target
+				? this.mapRelationships(target, true)
+				: this.notFound(get, 'target');
+		},
+		ExportDeclaration(this: TsDeclaration, get: TscWrapper) {
+			this.debug('relate ExportDeclaration');
 
-		const target = this.get.aliasedSymbol!;
-		const get = this.tsWrap(target);
-		this.parser(get.tsNode, get, true);
-	}
-	private parseExportSpecifier() {
-		notices.parse.debug.call(this, 'parseExportSpecifier');
+			const { tsWrap, notFound, reference } = this;
+			const { filesMap } = reference;
 
-		const localTarget = this.get.localTargetDeclaration!;
-		const get = this.tsWrap(localTarget);
-		this.parser(get.tsNode, get, true);
-	}
+			get.tsSymbol.declarations?.forEach(parseDeclaration.bind(this));
 
-	private static resolveTsKind(declaration: TsDeclaration) {
-		let tsKind = declaration.tsKind;
-		let { get } = declaration;
+			function parseDeclaration(
+				this: TsDeclaration,
+				declaration: ts.Declaration,
+			) {
+				const { targetFileName } = tsWrap(declaration);
+				const file = targetFileName && filesMap.get(targetFileName);
+				if (!file) return notFound(get, 'file');
 
-		if (get.localTargetDeclaration) {
-			get = declaration.tsWrap(get.localTargetDeclaration);
-			tsKind = get.tsNode.kind;
-		}
-		if (ts.isImportSpecifier(get.tsNode)) {
-			log.info(
-				'---------------------------------------------ToDo isImportSpecifier',
-				get.name,
+				file.discoverDeclarations();
+				file.declarationsMap.forEach((child) => {
+					if (['default', 'exports='].includes(child.name)) return;
+					this.adopt(child);
+				});
+			}
+		},
+		ExportSpecifier(this: TsDeclaration, get: TscWrapper) {
+			this.debug('relate ExportSpecifier');
+
+			const { tsWrap, notFound } = this;
+
+			get.moduleSpecifier
+				? parseModule.call(this, get.moduleSpecifier)
+				: parseLocal.call(this);
+
+			function parseModule(
+				this: TsDeclaration,
+				expression: ts.Expression,
+			) {
+				const { targetFileName: fileName } = tsWrap(expression);
+				const child = fileName && this.findDeclaration(get, fileName);
+				if (!child) return;
+
+				this.adopt(child);
+			}
+
+			function parseLocal(this: TsDeclaration) {
+				get.target
+					? this.mapRelationships(tsWrap(get.target))
+					: notFound(get, 'target');
+			}
+		},
+		ImportClause(this: TsDeclaration, get: TscWrapper) {
+			this.debug('relate ImportClause');
+			const { notFound, findDeclaration } = this;
+
+			const { targetFileName } = get;
+			if (!targetFileName) return notFound(get, 'target file');
+
+			const child = findDeclaration(
+				get,
+				targetFileName,
+				this.defaultStrings,
 			);
-		}
-		if (ts.isExportSpecifier(get.tsNode)) {
-			log.info(
-				'---------------------------------------------ToDo isExportSpecifier',
-				get.name,
-			);
-		}
-		if (
-			tsKind === ts.SyntaxKind.VariableDeclaration &&
-			get.callSignatures.length
+			if (!child) return;
+
+			this.adopt(child);
+		},
+		/** eg, "export import foo = moduleDeclaration" */
+		ImportEqualsDeclaration(this: TsDeclaration, get: TscWrapper) {
+			this.debug('relate ImportEqualsDeclaration');
+
+			get.target
+				? this.mapRelationships(this.tsWrap(get.target))
+				: this.notFound(get, 'target');
+		},
+		ImportSpecifier(this: TsDeclaration, get: TscWrapper) {
+			this.debug('relate ImportSpecifier');
+
+			const { targetFileName: fileName } = get;
+
+			const child = fileName && this.findDeclaration(get, fileName);
+			if (!child) return;
+
+			this.adopt(child);
+		},
+		ModuleDeclaration(this: TsDeclaration, get: TscWrapper) {
+			this.debug('relate ModuleDeclaration');
+
+			get.declaredModuleSymbols?.forEach((symbol) => {
+				const get = this.tsWrap(symbol);
+				this.mapRelationships(get);
+			});
+		},
+		NamespaceExport(
+			this: TsDeclaration,
+			get: TscWrapper,
+			skipNotice = false,
 		) {
-			tsKind = ts.SyntaxKind.FunctionDeclaration;
-		}
+			!skipNotice && this.debug('relate NamespaceExport');
 
-		return tsKind;
-	}
-	static isExportSpecifier = ts.isExportSpecifier; //hack for testing stub purposes
+			const { targetFileName: fileName } = get;
+
+			const file = fileName && this.reference.filesMap.get(fileName);
+			if (!file) return this.notFound(get, 'file');
+
+			file.declarationsMap.forEach(this.adopt);
+		},
+		NamespaceImport(this: TsDeclaration, get: TscWrapper) {
+			this.debug('relate NamespaceImport');
+
+			TsDeclaration.relationshipRoutes.NamespaceExport.call(
+				this,
+				get,
+				true,
+			);
+		},
+	};
+	private static declarationRoutes = {
+		ExportAssignment(this: TsDeclaration, get: TscWrapper) {
+			this.debug('declare ExportAssignment');
+
+			get.target
+				? this.declare(this.tsWrap(get.target))
+				: this.notFound(get, 'target');
+		},
+		ExportDeclaration(this: TsDeclaration, get: TscWrapper) {
+			this.debug('declare ExportDeclaration');
+
+			const { notFound, tsWrap, declareLocal } = this;
+			get.tsSymbol.declarations?.forEach((declaration) => {
+				const { moduleSpecifier } = tsWrap(declaration);
+				if (!moduleSpecifier) return notFound(get, 'moduleSpecifier');
+
+				const { declaredModuleSymbols } = tsWrap(moduleSpecifier);
+				declaredModuleSymbols.forEach(
+					(symbol) =>
+						!this.defaultStrings.includes(symbol.name) &&
+						declareLocal(symbol),
+				);
+			});
+		},
+		ExportSpecifier(this: TsDeclaration, get: TscWrapper) {
+			this.debug('declare ExportSpecifier');
+
+			get.target
+				? this.declare(this.tsWrap(get.target))
+				: this.notFound(get, 'target');
+		},
+		ImportClause(this: TsDeclaration, get: TscWrapper) {
+			this.debug('declare ImportClause');
+
+			const target = get.immediatelyAliasedSymbol;
+			target
+				? this.declare(this.tsWrap(target))
+				: this.notFound(get, 'immediatelyAliasedSymbol');
+		},
+		ImportEqualsDeclaration(this: TsDeclaration, get: TscWrapper) {
+			this.debug('declare ImportEqualsDeclaration');
+
+			get.target
+				? this.declare(this.tsWrap(get.target))
+				: this.notFound(get, 'target');
+		},
+		ImportSpecifier(this: TsDeclaration, get: TscWrapper) {
+			this.debug('declare ImportSpecifier');
+
+			const target = get.immediatelyAliasedSymbol;
+			target
+				? this.declare(this.tsWrap(target))
+				: this.notFound(get, 'immediatelyAliasedSymbol');
+		},
+		ModuleDeclaration(this: TsDeclaration, get: TscWrapper) {
+			this.debug('declare ModuleDeclaration');
+
+			const node = get.tsNode as ts.ModuleDeclaration;
+			this.nameSpace = node.name.getText();
+
+			get.declaredModuleSymbols?.forEach((symbol) => {
+				const get = this.tsWrap(symbol);
+				!this.isSpecifierKind(get.kind) && this.declareLocal(symbol);
+			});
+			this.valueItem = get;
+		},
+		NamespaceExport(
+			this: TsDeclaration,
+			get: TscWrapper,
+			skipNotice = false,
+		) {
+			!skipNotice && this.debug('declare NamespaceExport');
+
+			this.nameSpace = get.name;
+			this.groupTsKind = ts.SyntaxKind.ModuleDeclaration;
+		},
+		NamespaceImport(this: TsDeclaration, get: TscWrapper) {
+			this.debug('declare NamespaceImport');
+
+			const fnc = TsDeclaration.declarationRoutes.NamespaceExport;
+			fnc.call(this, get, true);
+		},
+	};
 }
 
 const notices = {
-	kind: function (tsKind: ts.SyntaxKind, get: TscWrapper) {
+	groupKind: function (
+		tsKind: ts.SyntaxKind | undefined,
+		get: TscWrapper,
+		stack: string,
+	) {
 		log.error(
 			log.identifier(__filename),
-			'Did not discover a kind:',
-			ts.SyntaxKind[tsKind],
+			'Did not discover a group kind:',
+			tsKind ? ts.SyntaxKind[tsKind] : 'undefined',
 			get.report,
+			stack,
 		);
-	},
-	parser: {
-		deepreport: function (
-			this: TsDeclaration,
-			isLocalTarget: boolean,
-			get: TscWrapper,
-		) {
-			const reportType = isLocalTarget ? 'localTargetNode' : 'node';
-			const reportMessage = `Did not parse a ${reportType}`;
-			DoxProject.deepReport.call(
-				this,
-				__filename,
-				'error',
-				reportMessage,
-				get,
-				isLocalTarget,
-			);
-		},
 	},
 	parse: {
 		debug: function (this: TsDeclaration, fncName: string) {
 			log.debug(
 				log.identifier(this),
 				`[${fncName}]`,
-				`[${log.toLine(this.get.nodeText)}]`,
-				log.toLine(this.get.nodeDeclarationText),
+				`[${log.toLine(this.wrappedItem.nodeText, 40)}]`,
+				log.toLine(this.wrappedItem.nodeDeclarationText, 110),
 			);
 		},
 	},
+	report: function (this: TsDeclaration, get: TscWrapper, local: boolean) {
+		const errorMessage = `Did not map a ${
+			local ? 'localTargetNode' : 'node'
+		} relationship`;
+		deepReport.call(this, __filename, 'error', errorMessage, get, local);
+	},
+	notFound: function (
+		this: TsDeclaration,
+		get: TscWrapper,
+		notFound: string,
+	) {
+		log.error(
+			identifier(this),
+			`[${get.kindString}]`,
+			'Did not find a',
+			notFound,
+			log.stackTracer(),
+		);
+		return undefined;
+	},
 };
+
+function deepReport(
+	this: TsDeclaration,
+	location: string,
+	logLevel: keyof typeof logLevels,
+	message: string,
+	get: TscWrapper,
+	isLocalTarget: boolean,
+) {
+	log[logLevel](log.identifier(location), message, {
+		filename: this.wrappedItem.fileName,
+		sourceReport: this.wrappedItem.report,
+		sourceDeclaration: this.wrappedItem.nodeDeclarationText,
+
+		targetReport: isLocalTarget
+			? /* istanbul ignore next */
+			  get.report
+			: undefined,
+		targetDeclaration: isLocalTarget
+			? /* istanbul ignore next */
+			  get.nodeDeclarationText
+			: undefined,
+	});
+}

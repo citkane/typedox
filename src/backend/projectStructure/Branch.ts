@@ -49,12 +49,7 @@ export class Branch {
 		return Array.from(this._declarationBundle.values());
 	}
 	private set Default(assignment: TsDeclaration) {
-		if (this.default)
-			log.throwError(
-				log.identifier(this),
-				'Can have only one default on a branch',
-				log.stackTracer,
-			);
+		if (this.default) notices.Default.throw(this, log.stackTracer());
 		this.default = assignment;
 	}
 	private bundleDeclaration = (declaration: TsDeclaration) => {
@@ -69,6 +64,7 @@ export class Branch {
 	};
 	private registerDeclaration = (declaration: TsDeclaration) => {
 		const { group, name } = declaration;
+		if (!group) return;
 
 		group === DeclarationGroup.Module
 			? this.registerNameSpace(declaration)
@@ -88,7 +84,7 @@ export class Branch {
 					log.identifier(this),
 					'Did not find a group for a declaration: ',
 					`${DeclarationGroup[group]}\n`,
-					declaration.get.report,
+					declaration.wrappedItem.report,
 			  );
 	};
 	private bundleReExport = (declaration: TsDeclaration) => {
@@ -98,7 +94,8 @@ export class Branch {
 		});
 	};
 	private registerNameSpace = (declaration: TsDeclaration) => {
-		if (this.nameSpaces.has(declaration.name)) return;
+		if (this.nameSpaces.has(declaration.name))
+			return notices.registerNameSpace.warn(this, declaration.name);
 		const children = Branch.getChildDeclarations(declaration.children);
 		const newBranch = new Branch(this, children);
 		this.nameSpaces.set(declaration.name, newBranch);
@@ -108,3 +105,24 @@ export class Branch {
 		return Array.from(children.values());
 	}
 }
+
+const notices = {
+	registerNameSpace: {
+		warn: (branch: Branch, name: string) => {
+			return log.warn(
+				log.identifier(branch),
+				'A namespace was already registered. Ignoring this instance:',
+				name,
+			);
+		},
+	},
+	Default: {
+		throw: (branch: Branch, trace: string) => {
+			log.throwError(
+				log.identifier(branch),
+				'Can have only one default on a branch',
+				trace,
+			);
+		},
+	},
+};

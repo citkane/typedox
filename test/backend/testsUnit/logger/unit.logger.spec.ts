@@ -83,7 +83,7 @@ describe('logging tools', function () {
 
 		const foo = 'foo';
 		const bar = undefined;
-		const circular = { foo, bar };
+		const circular = { foo, bar } as any;
 		circular['self'] = circular;
 		const circularArray: any[] = [];
 		circularArray.push(circularArray);
@@ -101,5 +101,18 @@ describe('logging tools', function () {
 		assert.equal(valueString!, "[ [ '[circular]' ] ]");
 
 		stubLog.restore();
+	});
+
+	it('shortens a string', function () {
+		const string = '12345678910111213';
+		assert.equal(loggerUtils.shortenString(string), string);
+		assert.equal(loggerUtils.shortenString(string, 8), '1234 ... 1213');
+		assert.equal(loggerUtils.shortenString('hello', 8), 'hello');
+	});
+	it('formats bytes', function () {
+		assert.equal(loggerUtils.formatBytes(0), '0 Bytes');
+		assert.equal(loggerUtils.formatBytes(10), '10 Bytes');
+		assert.equal(loggerUtils.formatBytes(10000), '9.77 KiB');
+		assert.equal(loggerUtils.formatBytes(10000, -1), '10 KiB');
 	});
 });

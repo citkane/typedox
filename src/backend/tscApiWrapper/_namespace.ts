@@ -1,3 +1,8 @@
 export * from './tsWrapperUtils';
-export { wrap, cache } from './TsWrapperCache';
+
+export {
+	wrap,
+	/* istanbul ignore next */
+	cache,
+} from './TsWrapperCache';
 export { TscWrapper } from './TsWrapper';

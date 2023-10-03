@@ -1,22 +1,14 @@
 import * as path from 'path';
 import * as ts from 'typescript';
-import * as fs from 'fs';
 
 import {
 	logger as log,
 	tscRawConfig,
 	config,
 	TscWrapper,
-	tsItem,
-	serialise,
-	DoxProject,
-	NpmPackage,
-	TsReference,
-	tsc,
 	logLevels,
 	logLevelKeys,
 } from '../typedox';
-import { ensureFileExists } from './_namespace';
 
 /** get a handle for future jsconfig etc fun */
 export const tsFileSpecifier = 'tsconfig';
@@ -27,28 +19,16 @@ export function _deleteCache() {
 }
 
 export class DoxConfig {
-	public checker?: ts.TypeChecker;
-
 	constructor(clOptions?: string[]);
-	constructor(checker?: ts.TypeChecker, clOptions?: string[]);
 	constructor(doxOptions?: config.doxOptions, clOptions?: string[]);
 	constructor(
-		doxOptions?: config.doxOptions,
-		checker?: ts.TypeChecker,
-		clOptions?: string[],
-	);
-	constructor(
-		doxOrCheckerOrClArgs?: config.doxOptions | ts.TypeChecker | string[],
-		checkerOrClArgs?: ts.TypeChecker | string[],
+		doxOrClArgs?: config.doxOptions | string[],
 		argv = process.argv as string[],
 	) {
-		const [doxOptions, checker, clArgs] = config.resolveConstructorOverload(
-			doxOrCheckerOrClArgs,
-			checkerOrClArgs,
+		const [doxOptions, clArgs] = config.resolveConstructorOverload(
+			doxOrClArgs,
 			argv,
 		);
-
-		this.checker = checker;
 
 		if (!doxOptions && !_cache)
 			log.throwError(
@@ -73,18 +53,6 @@ export class DoxConfig {
 			npmFileConvention: this.npmFileConvention,
 			typedox: _cache.typedox,
 		};
-	}
-
-	public get toObject() {
-		const constructor = this.constructor.name;
-		const self = this as unknown;
-		return constructor === 'DoxProject'
-			? serialise.serialiseProject(self as DoxProject)
-			: constructor === 'NpmPackage'
-			? serialise.serialiseNpmPackage(self as NpmPackage)
-			: constructor === 'TsReference'
-			? serialise.serialiseTsReference(self as TsReference)
-			: notices.toObject(constructor);
 	}
 
 	protected get tscParsedConfigs() {
@@ -116,36 +84,52 @@ export class DoxConfig {
 	private get npmFileConvention() {
 		return _cache.projectOptions.npmFileConvention!;
 	}
+	public get isDoxProject() {
+		return this.constructor.name === 'DoxProject';
+	}
+	public get isNpmPackage() {
+		return this.constructor.name === 'NpmPackage';
+	}
+	public get isTsReference() {
+		return this.constructor.name === 'TsReference';
+	}
+	public get isTsDeclaration() {
+		return this.constructor.name === 'TsDeclaration';
+	}
+	public get isTsSourceFile() {
+		return this.constructor.name === 'TsSourceFile';
+	}
+	public get isBranch() {
+		return this.constructor.name === 'Branch';
+	}
 
 	public isSpecifierKind = (kind: ts.SyntaxKind) => {
 		const {
-			NamespaceExport,
-			NamespaceImport,
-			ModuleDeclaration,
+			ExportAssignment,
 			ExportDeclaration,
 			ExportSpecifier,
-			ExportAssignment,
 			ImportClause,
+			ImportEqualsDeclaration,
 			ImportSpecifier,
+			ModuleDeclaration,
+			NamespaceExport,
+			NamespaceImport,
 		} = ts.SyntaxKind;
 		const specifiers = [
-			NamespaceExport,
-			NamespaceImport,
-			ModuleDeclaration,
+			ExportAssignment,
 			ExportDeclaration,
 			ExportSpecifier,
-			ExportAssignment,
 			ImportClause,
+			ImportEqualsDeclaration,
 			ImportSpecifier,
+			ModuleDeclaration,
+			NamespaceExport,
+			NamespaceImport,
 		];
 
 		return specifiers.includes(kind);
 	};
 
-	protected tsWrap = (item: tsItem): TscWrapper => {
-		!this.checker && notices.tsWrap.throw(log.stackTracer());
-		return tsc.wrap(this.checker!, item);
-	};
 	private _warmTheCache(
 		projectOptions: config.doxOptions,
 		tscCommandlineConfig: ts.ParsedCommandLine,
@@ -196,7 +180,6 @@ export class DoxConfig {
 			this.projectRootDir,
 			ts.sys.fileExists,
 		);
-
 		return entryFile && !entryFile.startsWith(this.projectRootDir)
 			? undefined
 			: entryFile
@@ -359,21 +342,6 @@ class Cache {
 }
 
 const notices = {
-	tsWrap: {
-		throw: function (trace: string) {
-			log.throwError(
-				log.identifier(__filename),
-				'Typechecker has not been registered yet',
-				trace,
-			);
-		},
-	},
-	toObject: (constructor: string) =>
-		log.error(
-			log.identifier(__filename),
-			'Call made to unknown serialiser:',
-			constructor,
-		),
 	_warmTheCache: {
 		throwError: function (this: DoxConfig) {
 			log.throwError(

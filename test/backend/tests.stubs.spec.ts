@@ -1,6 +1,8 @@
+export type factoryFolders = 'configs' | 'groups' | 'specifiers';
 import * as path from 'path';
 import * as ts from 'typescript';
 import {
+	logger as log,
 	Branch,
 	DoxProject,
 	TsSourceFile,
@@ -38,7 +40,59 @@ function getExportSymbol(this: ts.Symbol, key: string) {
 
 	return symbol;
 }
-export { rootDir, ensureAbsPath, spacer, getDeclaration, getExportSymbol };
+function logSpecifierHelp() {
+	const rep = 80;
+	log.info(
+		'\n\n',
+		'-'.repeat(rep),
+		'\n',
+		colourise('Bright', 'Examples of the import / export specifier kinds:'),
+		'\n',
+		'-'.repeat(rep),
+		'\n',
+		{
+			ExportAssignment: [
+				'export default clause;',
+				'export = nameSpace;',
+				'export = nameSpace.clause;',
+			],
+			ExportDeclaration: ["export * from './child/child';"],
+			ExportSpecifier: [
+				"export { child } from './child/child';",
+				'export { localVar, grandchild, grandchildSpace };',
+			],
+			ImportClause: [
+				"import TypeScript from 'typescript';",
+				"import clause from './child/child';",
+			],
+			ImportEqualsDeclaration: [
+				'export import childSpace = childSpace;',
+				'export import bar = local.bar;',
+				'export import bar = local.bar;',
+			],
+			ImportSpecifier: [
+				"import { grandchild, childSpace } from './grandchild/grandchild'",
+			],
+			ModuleDeclaration: [
+				'export namespace moduleDeclaration { local; childSpace; }',
+				"declare namespace local {foo = 'foo'}",
+			],
+			NamespaceExport: ["export * as childSpace from './child/child';"],
+			NamespaceImport: ["import * as childSpace from '../child/child';"],
+		},
+		'\n',
+		'-'.repeat(rep),
+		'\n\n',
+	);
+}
+export {
+	rootDir,
+	ensureAbsPath,
+	spacer,
+	getDeclaration,
+	getExportSymbol,
+	logSpecifierHelp,
+};
 
 /** strips color information from a string */
 export function unColour(string: string) {
@@ -58,7 +112,10 @@ export const configs = {
 
 const factoryFolder = 'test/backend/projectFactory';
 /** Get a ready made test project from the test "projectScenarios" folder */
-export function compilerFactory(folder: string, tsconfig = 'tsconfig.json') {
+export function compilerFactory(
+	folder: factoryFolders,
+	tsconfig = 'tsconfig.json',
+) {
 	/** The absolute path to the project root */
 	const projectDir = path.join(rootDir, factoryFolder, folder);
 	/** The absolute path to the root tsconfig */
@@ -84,9 +141,9 @@ export function compilerFactory(folder: string, tsconfig = 'tsconfig.json') {
 		 * @param file The relative file name under the "projectScenario/<projectFolder>" folder
 		 * @returns
 		 */
-		function getFile(filePath = program.getRootFileNames()[0]) {
+		const getFile = (filePath = 'index.ts') => {
 			filePath = path.join(projectDir, filePath);
-			const sourceFile = program.getSourceFile(filePath)!;
+			const sourceFile = program.getSourceFile(filePath);
 			assert.exists(sourceFile);
 			const sourceSymbol = checker.getSymbolAtLocation(sourceFile!)!;
 			const sourceType = checker.getTypeOfSymbol(sourceSymbol!);
@@ -102,7 +159,7 @@ export function compilerFactory(folder: string, tsconfig = 'tsconfig.json') {
 				sourceType,
 				starExport,
 			};
-		}
+		};
 		return { program, checker, getFile };
 	};
 	return { projectDir, tsConfigPath, tsconfig, compiler };
@@ -116,8 +173,10 @@ function warnAboutDefaults(name: string) {
 		),
 	);
 }
-const { projectDir, tsConfigPath } = compilerFactory('groups');
-const specProject = (mute = false) => {
+
+const specProject = (folder: factoryFolders = 'groups', mute = false) => {
+	const { projectDir, tsConfigPath } = compilerFactory(folder);
+
 	config._deleteCache();
 	!mute && warnAboutDefaults('defaultProject');
 
@@ -133,17 +192,22 @@ const specProject = (mute = false) => {
 	return doxProject;
 };
 const specNpmPackageDefinitions = (
-	project = specProject(true),
+	folder: factoryFolders = 'groups',
+	project = specProject(folder, true),
 	mute = false,
 ) => {
 	!mute && warnAboutDefaults('specNpmPackageDefinitions');
 	return (project as any).npmPackageDefinitions as npmPackageDefinitions;
 };
 const specNpmPackage = (
+	folder: factoryFolders = 'groups',
 	index = 0,
-	doxProject = specProject(true),
+	doxProject = specProject(folder, true),
 	mute = false,
 ) => {
+	//const logLevel = (log as any).logLevel;
+	//log.setLogLevel(logLevels.error);
+	//const errorStub = stub(log, 'error');
 	!mute && warnAboutDefaults('specNpmPackage');
 	const len = doxProject.npmPackages.length;
 	if (index >= len) throw Error(`doxProject only has ${len} npmPackages`);
@@ -165,12 +229,14 @@ const specNpmPackage = (
 			reference.treeBranches.set(reference.name, treeBranch);
 		});
 	});
-
+	//errorStub.restore();
+	//log.setLogLevel(logLevel);
 	return doxProject.npmPackages[index]!;
 };
 const specReference = (
+	folder: factoryFolders = 'groups',
 	index = 0,
-	npmPackage = specNpmPackage(undefined, undefined, true),
+	npmPackage = specNpmPackage(folder, undefined, undefined, true),
 	mute = false,
 ) => {
 	!mute && warnAboutDefaults('specReference');
@@ -178,9 +244,6 @@ const specReference = (
 	if (index >= len)
 		throw Error(`npmPackage.tsReferences only has ${len} members`);
 	const reference = npmPackage.tsReferences[index];
-	reference.discoverFiles();
-	reference.discoverDeclarations();
-	reference.buildRelationships();
 
 	const rootDeclarations = reference.getRootDeclarations();
 	const treeBranch = new Branch(reference, rootDeclarations);
@@ -190,10 +253,12 @@ const specReference = (
 };
 
 const specTsSourceFile = (
-	reference = specReference(undefined, undefined, true),
+	folder: factoryFolders = 'groups',
+	reference = specReference(folder, undefined, undefined, true),
 	fileName = 'index.ts',
 	mute = false,
 ) => {
+	const projectDir = reference.options.projectRootDir;
 	!mute && warnAboutDefaults('specTsSourceFile');
 	const filePath = path.join(projectDir, fileName);
 	if (!reference.filesMap.has(filePath))

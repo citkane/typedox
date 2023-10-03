@@ -7,7 +7,6 @@ import {
 	Branch,
 	DoxProject,
 	NpmPackage,
-	Relation,
 	TsDeclaration,
 	TsReference,
 	TsSourceFile,
@@ -31,7 +30,6 @@ export {
 	Branch,
 	DoxProject,
 	NpmPackage,
-	Relation,
 	TsSourceFile,
 	TsDeclaration,
 	TsReference,
@@ -76,9 +74,10 @@ export type logableObjects = TsDeclaration;
 export type tsItem = ts.Node | ts.Symbol;
 
 export interface rawDox {
-	fileName: string;
 	init: boolean;
 	rootDir: string;
+	fileName: string;
+	filePath: string;
 }
 export interface tscRawConfig {
 	dox: rawDox;

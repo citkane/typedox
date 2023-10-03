@@ -1,16 +1,18 @@
 import * as ts from 'typescript';
 import * as path from 'path';
 import * as fs from 'fs';
+import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
 import {
 	logger as log,
 	config,
 	NpmPackage,
 	TsDeclaration,
-	Relation,
 	TscWrapper,
 	npmPackageDefinitions,
 	DoxConfig,
 	logLevels,
+	serialise,
+	loggerUtils,
 } from '../typedox';
 
 /**
@@ -31,10 +33,10 @@ import {
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
  */
 export class DoxProject extends DoxConfig {
-	public npmPackages: NpmPackage[];
+	public npmPackages!: NpmPackage[];
 
-	private npmPackageDefinitions: npmPackageDefinitions;
-	private programs: ts.Program[];
+	private npmPackageDefinitions!: npmPackageDefinitions;
+	private programs!: ts.Program[];
 
 	constructor(doxOptions: config.doxOptions, tscClOptions?: string[]) {
 		super(doxOptions, tscClOptions);
@@ -44,6 +46,9 @@ export class DoxProject extends DoxConfig {
 		this.npmPackages = this._npmPackages(this.npmPackageDefinitions);
 	}
 
+	public get toObject() {
+		return serialise.serialiseProject(this);
+	}
 	private _npmPackages = (npmPackageDefinitions: npmPackageDefinitions) => {
 		const definitions = npmPackageDefinitions;
 		const configFiles = Object.keys(definitions);
@@ -70,55 +75,55 @@ export class DoxProject extends DoxConfig {
 		return npmPackageDefinitions;
 	};
 	private _programs = (tscParsedConfigs: ts.ParsedCommandLine[]) => {
-		const programs = tscParsedConfigs.reduce(
+		//const programs = [] as ts.Program[];
+		const programMap = new Map<string, ts.Program>();
+
+		for (let i in tscParsedConfigs) {
+			const parsedConfig = tscParsedConfigs[i];
+			const memoryUsed = loggerUtils.formatBytes(
+				process.memoryUsage().rss,
+			);
+			log.info(
+				`Creating tsc program ${Number(i) + 1} of ${
+					tscParsedConfigs.length
+				}:`,
+				parsedConfig.options.configFilePath,
+				loggerUtils.colourise('FgGray', memoryUsed),
+			);
+
+			const program = makeProgramFromConfig(parsedConfig);
+			!!program &&
+				programMap.set(
+					parsedConfig.options.configFilePath!.toString(),
+					program,
+				);
+		}
+
+		const programs = Array.from(programMap.values());
+
+		/*
+		const programs = await tscParsedConfigs.reduce(
 			makeProgramFromConfig,
 			[] as ts.Program[],
 		);
-
+*/
 		if (!programs.length)
 			notices._programs.throw(this.options.projectRootDir);
 
 		return programs;
 
-		function makeProgramFromConfig(
-			accumulator: ts.Program[],
-			parsedConfig: ts.ParsedCommandLine,
-		) {
+		function makeProgramFromConfig(parsedConfig: ts.ParsedCommandLine) {
 			const { fileNames, options } = parsedConfig;
 			const { configFilePath, outDir, out, outFile, noEmit } = options;
-
 			const noOutTarget = !out && !outFile && !outDir;
 			if (noOutTarget || noEmit) {
-				notices._programs.info(configFilePath);
-				return accumulator;
+				return notices._programs.info(configFilePath);
 			}
-
 			const program = ts.createProgram(fileNames, options);
 			runDiagnostics(program, String(configFilePath));
-			accumulator.push(program);
-
-			return accumulator;
+			return program;
 		}
 	};
-
-	public static deepReport(
-		this: TsDeclaration | Relation,
-		location: string,
-		logLevel: keyof typeof logLevels,
-		message: string,
-		get: TscWrapper,
-		isLocalTarget: boolean,
-	) {
-		log[logLevel](log.identifier(location), message, {
-			filename: this.get.fileName,
-			sourceReport: this.get.report,
-			sourceDeclaration: this.get.nodeDeclarationText,
-			targetReport: isLocalTarget ? get.report : undefined,
-			targetDeclaration: isLocalTarget
-				? get.nodeDeclarationText
-				: undefined,
-		});
-	}
 }
 function parseProgramRootDir(
 	this: DoxProject,
@@ -150,12 +155,7 @@ function getProgramRoots(fileNames: readonly string[]) {
 function runDiagnostics(program: ts.Program, fileName: string | undefined) {
 	const diagnostics = program.getGlobalDiagnostics();
 	diagnostics.forEach((diagnostic) => log.warn(diagnostic.messageText));
-	if (diagnostics.length)
-		log.throwError(
-			log.identifier(__filename),
-			'Error in ts.Program:',
-			String(fileName),
-		);
+	if (diagnostics.length) notices.diagnostics.throw(String(fileName));
 }
 function findNpmPackage(
 	projectRootDir: string,
@@ -174,6 +174,14 @@ function findNpmPackage(
 }
 
 const notices = {
+	diagnostics: {
+		throw: (fileName: string) =>
+			log.throwError(
+				log.identifier(__filename),
+				'Error in ts.Program:',
+				String(fileName),
+			),
+	},
 	_programs: {
 		info: (
 			configFilePath: ts.CompilerOptionsValue | ts.TsConfigSourceFile,

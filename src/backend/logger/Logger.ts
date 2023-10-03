@@ -5,6 +5,7 @@ import { Console } from 'console';
 export { logLevels } from './loggerUtils';
 export class Logger extends Console {
 	private logLevel: utils.logLevels;
+	public isLogLevelSet = false;
 
 	/* istanbul ignore next */
 	constructor(logLevel = utils.logLevels.info) {
@@ -14,6 +15,7 @@ export class Logger extends Console {
 
 	public setLogLevel = (logLevel: utils.logLevels) => {
 		this.logLevel = logLevel;
+		this.isLogLevelSet = true;
 	};
 
 	public inspect = utils.inspect;

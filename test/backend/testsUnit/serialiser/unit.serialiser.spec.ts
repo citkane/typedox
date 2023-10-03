@@ -25,16 +25,20 @@ before(function () {
 
 	project = stubs.projectFactory.specProject();
 
-	npmPackage = stubs.projectFactory.specNpmPackage(0, project);
-	reference = stubs.projectFactory.specReference(0, npmPackage);
-	sourceFile = stubs.projectFactory.specTsSourceFile(reference, 'index.ts');
+	npmPackage = stubs.projectFactory.specNpmPackage(undefined, 0, project);
+	reference = stubs.projectFactory.specReference(undefined, 0, npmPackage);
+	sourceFile = stubs.projectFactory.specTsSourceFile(
+		undefined,
+		reference,
+		'index.ts',
+	);
 
 	reference.discoverFiles();
 	reference.discoverDeclarations();
 	reference.buildRelationships();
 });
 it('serialises a reference', function () {
-	referenceObject = serialise.serialiseTsReference(reference);
+	referenceObject = reference.toObject;
 	assert.exists(referenceObject);
 	assert.doesNotThrow(() => JSON.stringify(referenceObject));
 	assert.hasAllKeys(referenceObject, [
@@ -49,8 +53,8 @@ it('serialises a reference', function () {
 		'grandchildSpace',
 		'emptySpace',
 		'childSpace',
-		'moduleDeclaration',
 		'emptyDeclaration',
+		'rabbitHole',
 	]);
 	assert.hasAllKeys(referenceObject.classes, ['Class', 'LocalClass']);
 	assert.hasAllKeys(referenceObject.functions, [
@@ -71,7 +75,7 @@ it('serialises a reference', function () {
 	]);
 });
 it('serialises a npm package', function () {
-	npmPackageObject = serialise.serialiseNpmPackage(npmPackage);
+	npmPackageObject = npmPackage.toObject;
 	assert.exists(npmPackageObject);
 	assert.doesNotThrow(() => JSON.stringify(npmPackageObject));
 	assert.hasAllKeys(npmPackageObject, ['name', 'version', 'references']);
@@ -81,7 +85,7 @@ it('serialises a npm package', function () {
 	assert.equal(npmPackageObject.version, '0.0.0');
 });
 it('serialises a dox project', function () {
-	projectObject = serialise.serialiseProject(project);
+	projectObject = project.toObject;
 	assert.exists(projectObject);
 	assert.doesNotThrow(() => JSON.stringify(projectObject));
 	assert.hasAllKeys(projectObject, ['packages']);

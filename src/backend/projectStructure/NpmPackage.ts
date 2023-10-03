@@ -7,6 +7,7 @@ import {
 	npmPackagePrograms,
 	DoxConfig,
 	config,
+	serialise,
 } from '../typedox';
 
 /**
@@ -48,6 +49,9 @@ export class NpmPackage extends DoxConfig {
 		this.tsReferences = this._tsReferences(npmPackages);
 		this.name = name;
 		this.version = version;
+	}
+	public get toObject() {
+		return serialise.serialiseNpmPackage(this);
 	}
 
 	private _tsReferences = (programs: npmPackagePrograms) => {

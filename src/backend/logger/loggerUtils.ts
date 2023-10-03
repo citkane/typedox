@@ -96,8 +96,25 @@ export const logLevelKeyStrings = Object.keys(logLevels).filter(
 	(v) => !Number(v) && v !== '0',
 );
 
-export function toLine(string: string) {
-	return string.replace(/\s+/g, ' ').trim();
+export function stripComments(string: string) {
+	return string.replace(
+		/((?:(?:^\h*)?(?:\/\*[^*]*\*+(?:[^\/*][^*]*\*+)*\/(?:\h*\n(?=\h*(?:\n|\/\*|\/\/)))?|\/\/(?:[^\\]|\\\n?)*?(?:\n(?=\h*(?:\n|\/\*|\/\/))|(?=\n))))+)|("(?:\\[\S\s]|[^"\\])*"|'(?:\\[\S\s]|[^'\\])*'|[\S\s][^\/"'\\\s]*)/gm,
+		'$2',
+	);
+}
+export function shortenString(string: string, maxLength?: number) {
+	if (!maxLength) return string;
+	const len = string.length;
+	const holder = Math.abs(maxLength / 2);
+	return string.length <= maxLength
+		? string
+		: `${string.slice(0, holder)} ... ${string.slice(holder * -1)}`;
+}
+export function toLine(string: string, maxLength?: number) {
+	return shortenString(
+		stripComments(string).replace(/\s+/g, ' ').trim(),
+		maxLength,
+	);
 }
 
 export function inspect(object: any, ignoreKeys?: string[]): void;
@@ -192,4 +209,26 @@ export function inspect(
 			  ) as object);
 		return objectCopy;
 	}
+}
+
+export function formatBytes(bytes: number, decimals = 2) {
+	if (!+bytes) return '0 Bytes';
+
+	const k = 1024;
+	const dm = decimals < 0 ? 0 : decimals;
+	const sizes = [
+		'Bytes',
+		'KiB',
+		'MiB',
+		'GiB',
+		'TiB',
+		'PiB',
+		'EiB',
+		'ZiB',
+		'YiB',
+	];
+
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }

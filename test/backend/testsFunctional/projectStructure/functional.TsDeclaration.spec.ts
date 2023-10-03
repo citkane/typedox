@@ -34,9 +34,9 @@ afterEach(function () {
 	errorStub.restore();
 });
 it('creates a class instance', function () {
-	const item = getSymbol('localDeclaration');
+	const item = getSymbol('localDeclaration')!;
 	new TsDeclaration(tsSourceFile, item);
-	assert.doesNotThrow(() => new TsDeclaration(tsSourceFile, item!));
+	assert.doesNotThrow(() => new TsDeclaration(tsSourceFile, item));
 	assert.lengthOf(errorReports, 0, JSON.stringify(errorReports, null, 4));
 });
 
@@ -117,7 +117,7 @@ it('creates an error report if an unknown item is encountered', function () {
 it('creates an error if an unknown group is encountered', function () {
 	const kindResolverStub = stub(
 		TsDeclaration as any,
-		'resolveTsKind',
+		'resolveGroupKind',
 	).callsFake(() => ts.SyntaxKind.AmpersandAmpersandEqualsToken);
 
 	const symbol = getSymbol('localDeclaration');

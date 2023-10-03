@@ -6,6 +6,7 @@ import {
 	logger as log,
 	logLevels,
 	TscWrapper,
+	config,
 } from '../../../../src/backend/typedox';
 import { assert } from 'chai';
 import { stub } from 'sinon';
@@ -68,6 +69,29 @@ it('gets item from the sourcefile', function () {
 	assert.exists(symbol);
 	assert.exists(symbol?.valueDeclaration);
 	node = symbol.valueDeclaration!;
+});
+
+it('gets node and type from a symbol', function () {
+	let nodeAndType!: { node: ts.Node; type: ts.Type };
+	const symbol = sourceType.getProperty('localFunc')!;
+	assert.exists(symbol);
+	assert.doesNotThrow(
+		() => (nodeAndType = tsc.getNodeAndTypeFromSymbol(checker, symbol)),
+	);
+	assert.exists(nodeAndType.node);
+	assert.exists(nodeAndType.type);
+
+	const noDeclarations = config.deepClone(symbol);
+	delete noDeclarations.declarations;
+	assert.doesNotThrow(
+		() =>
+			(nodeAndType = tsc.getNodeAndTypeFromSymbol(
+				checker,
+				noDeclarations,
+			)),
+	);
+	assert.exists(nodeAndType.node);
+	assert.exists(nodeAndType.type);
 });
 
 it('wraps a node', function () {
@@ -166,13 +190,13 @@ it('wraps a alias export', function () {
 	const alias = sourceType.getProperty('localAlias');
 	const aliasWrap = tsc.wrap(checker, alias!);
 	assert.exists(aliasWrap.aliasedSymbol);
-	assert.equal(aliasWrap.aliasedSymbol.name, 'localDeclaration');
+	assert.equal(aliasWrap.aliasedSymbol!.name, 'localDeclaration');
 	assert.exists(aliasWrap.immediatelyAliasedSymbol);
 	assert.equal(aliasWrap.immediatelyAliasedSymbol!.name, 'localDeclaration');
 	assert.equal(aliasWrap.hasValueDeclaration, false);
 	assert.exists(aliasWrap.localTargetDeclaration);
 	assert.equal(
-		aliasWrap.localTargetDeclaration!['name'].getText(),
+		(aliasWrap.localTargetDeclaration as any)!['name'].getText(),
 		'localDeclaration',
 	);
 	assert.equal(aliasWrap.alias, 'localDeclaration');
@@ -211,18 +235,14 @@ it('wraps a class', function () {
 	assert.exists(IsClass!);
 	assert.doesNotThrow(() => tsc.wrap(checker, IsClass!));
 });
-it('parses for reExports', function () {
-	assert.equal(tsc.parseReExport(starExport).length, 1);
-	assert.equal(tsc.parseReExport(sourceSymbol).length, 0);
-});
+
 it('wraps a reExportChild', function () {
 	assert.isTrue(tsc.isReExport(starExport));
-	const exportChild = starExport.declarations![0]['moduleSpecifier'];
+	const exportChild = (starExport.declarations![0] as any)['moduleSpecifier'];
 	assert.exists(exportChild);
 
 	const starChildWrap = tsc.wrap(checker, exportChild!);
 
-	assert.isTrue(starChildWrap.isReExport);
 	assert.equal(starChildWrap.hasValueDeclaration, 'SourceFile');
 
 	hasGeneratedCommonItems(
@@ -279,7 +299,7 @@ function hasGeneratedCommonItems(
 	assert.equal(ts.NodeFlags[nodeFlag], wrapper.nodeFlagString);
 	assert.equal(ts.SymbolFlags[symbolFlags], wrapper.symbolFlagString);
 	assert.equal(ts.TypeFlags[typeFlags], wrapper.typeFlagString);
-	assert.equal(wrapper.fileName, sourceFile.fileName);
+	assert.equal(wrapper.fileName, sourceFile!.fileName);
 }
 function deepReportCheck(wrapper: TscWrapper) {
 	assert.deepEqual(

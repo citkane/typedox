@@ -11,58 +11,19 @@ import {
 } from '../../typedox';
 
 export function resolveConstructorOverload(
-	projectOrCheckerOrClArgs?: config.doxOptions | ts.TypeChecker | string[],
-	checkerOrClArgs?: ts.TypeChecker | string[],
+	projectOrClArgs?: config.doxOptions | string[],
 	argv = process.argv,
-): [config.doxOptions | undefined, ts.TypeChecker | undefined, string[]] {
-	const arg0is = whatIs(projectOrCheckerOrClArgs);
-	const arg1is = whatIs(checkerOrClArgs);
-
-	return [getIndexValue(0), getIndexValue(1), getIndexValue(2)] as any;
-
-	function getIndexValue(index: 0 | 1 | 2) {
-		const positions = {
-			project: 0,
-			checker: 1,
-			argv: 2,
-		};
-		return arg0is && positions[arg0is] === index
-			? projectOrCheckerOrClArgs
-			: index === 0
-			? undefined
-			: arg1is && positions[arg1is] === index
-			? checkerOrClArgs
-			: index === 1
-			? undefined
-			: argv;
-	}
-
-	function whatIs(object: any) {
-		const defaultOpts = config.getDefaultDoxOptions();
-		return !object
-			? undefined
-			: Array.isArray(object)
-			? 'argv'
-			: isEqual(object, defaultOpts)
-			? 'project'
-			: 'checker';
-	}
-	function isEqual(value: any, value2: any) {
-		const keys = Object.keys(value);
-		const keys2 = Object.keys(value2);
-
-		return (
-			keys.length === keys2.length &&
-			keys.every((key) => keys2.includes(key))
-		);
-	}
+): [config.doxOptions | undefined, string[]] {
+	return Array.isArray(projectOrClArgs)
+		? [undefined, projectOrClArgs]
+		: [projectOrClArgs, argv];
 }
 export function makeParsedConfig(
 	dependTypes: string[],
 	existingOptions: ts.CompilerOptions,
 	tscRawConfig: tscRawConfig,
 ) {
-	const { rootDir, fileName } = tscRawConfig.dox;
+	let { rootDir, fileName } = tscRawConfig.dox;
 	const { compilerOptions } = tscRawConfig.config;
 	compilerOptions && (compilerOptions.types = dependTypes);
 
@@ -97,10 +58,14 @@ export function findAllRawConfigs(
 	isRootInit: boolean,
 	accumulator: tscRawConfig[] = [],
 ): tscRawConfig[] {
-	const tscRawConfigs = configFilePaths.reduce(
-		mergeConfigReferences.bind(null, isRootInit),
-		accumulator,
-	);
+	const seen: string[] = [];
+	const tscRawConfigs = configFilePaths
+		.reduce(mergeConfigReferences.bind(null, isRootInit), accumulator)
+		.filter((config) => {
+			if (seen.includes(config.dox.filePath)) return false;
+			seen.push(config.dox.filePath);
+			return true;
+		});
 	return tscRawConfigs;
 
 	function mergeConfigReferences(
@@ -140,15 +105,16 @@ export function discoverReferences(rawConfig: tscRawConfig) {
 	}
 }
 
-export function makeRawTscConfigFromFile(fileName: string, init: boolean) {
-	const rootDir = path.dirname(fileName);
-	const rawConfig = readTscConfigFile(fileName) as tscRawConfig;
-	fileName = path.basename(fileName);
+export function makeRawTscConfigFromFile(filePath: string, init: boolean) {
+	const rootDir = path.dirname(filePath);
+	const rawConfig = readTscConfigFile(filePath) as tscRawConfig;
+	const fileName = path.basename(filePath);
 
 	rawConfig.dox = {
-		fileName,
 		init,
 		rootDir,
+		fileName,
+		filePath,
 	};
 
 	return rawConfig;

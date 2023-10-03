@@ -73,9 +73,10 @@ const cacheCallbacks = {
 	targetFileName: function (this: wrapper) {
 		const { wrapper, checker } = this;
 		const target = wrapper.localTargetDeclaration;
+		if (target && ts.isSourceFile(target)) return target.fileName;
 		const get = target ? wrap(checker, target) : wrapper;
-
 		if (!get.moduleSpecifier) return undefined;
+
 		return checker
 			.getSymbolAtLocation(get.moduleSpecifier)
 			?.valueDeclaration!.getSourceFile().fileName;
@@ -110,13 +111,37 @@ const cacheCallbacks = {
 	},
 	aliasedSymbol: function (this: wrapper) {
 		const { wrapper, checker } = this;
-
-		return checker.getAliasedSymbol(wrapper.tsSymbol);
+		try {
+			return checker.getAliasedSymbol(wrapper.tsSymbol);
+		} catch (err) {
+			return undefined;
+		}
 	},
 	immediateAliasedSymbol: function (this: wrapper) {
 		const { wrapper, checker } = this;
-
-		return checker.getImmediateAliasedSymbol(wrapper.tsSymbol);
+		try {
+			return checker.getImmediateAliasedSymbol(wrapper.tsSymbol);
+		} catch (err) {
+			return undefined;
+		}
+	},
+	declaredModuleSymbols: function (this: wrapper) {
+		const { wrapper, checker } = this;
+		const exportSymbols = Array.from(
+			wrapper.tsSymbol.exports?.values() || [],
+		);
+		const expressionSymbols = Array.from(
+			(wrapper.tsNode as any).body?.statements || [],
+		)
+			.map((_node) => {
+				const node = _node as ts.ExpressionStatement;
+				return node.expression
+					? checker.getSymbolAtLocation(node.expression)
+					: undefined;
+			})
+			.filter((symbol) => !!symbol) as ts.Symbol[];
+		const symbols = [...exportSymbols, ...expressionSymbols];
+		return symbols;
 	},
 };
 

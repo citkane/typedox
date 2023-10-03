@@ -5,6 +5,7 @@ import {
 	NpmPackage,
 	Branch,
 	logger as log,
+	logLevels,
 } from './typedox';
 
 export default function main(customOptions?: config.doxOptions) {
@@ -16,18 +17,26 @@ export default function main(customOptions?: config.doxOptions) {
 	buildRelationShips(tsReferences);
 	growDocumentBranches(tsReferences);
 
-	//log.inspect(doxProject.toObject);
+	const serialised = doxProject.toObject;
+
+	log.debug(JSON.stringify(serialised, null, 4));
+
+	return serialised;
 }
 
 function makeDoxProject(customOptions?: config.doxOptions) {
+	log.info('Making a typedox project');
 	const projectOptions = config.getDoxOptions(customOptions);
+	/* istanbul ignore if */
+	if (!log.isLogLevelSet) log.setLogLevel(logLevels[projectOptions.logLevel]);
 	const doxProject = new DoxProject(projectOptions);
-	log.setLogLevel(doxProject.options.logLevel);
 
 	return doxProject;
 }
 function getNpmPackages(doxProject: DoxProject) {
-	return doxProject.npmPackages;
+	const npmPackages = doxProject.npmPackages;
+	log.info(`Found ${npmPackages.length} npm packages`);
+	return npmPackages;
 }
 
 function getTsReferences(npmPackages: NpmPackage[]) {

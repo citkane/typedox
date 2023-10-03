@@ -6,5 +6,6 @@
 		"target": "ES6",
 		"moduleResolution": "NodeNext",
 		"module": "NodeNext",
+		"strict": true
 	}
 }
