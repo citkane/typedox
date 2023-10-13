@@ -6,10 +6,10 @@ import { DoxConfig } from './config/_namespace';
 import {
 	Branch,
 	DoxProject,
-	NpmPackage,
-	TsDeclaration,
-	TsReference,
-	TsSourceFile,
+	DoxPackage,
+	DoxDeclaration,
+	DoxReference,
+	DoxSourceFile,
 } from './projectStructure/_namespace';
 import { TscWrapper } from './tscApiWrapper/_namespace';
 
@@ -29,19 +29,18 @@ export {
 	DoxConfig,
 	Branch,
 	DoxProject,
-	NpmPackage,
-	TsSourceFile,
-	TsDeclaration,
-	TsReference,
+	DoxPackage,
+	DoxSourceFile,
+	DoxDeclaration,
+	DoxReference,
 	TscWrapper,
 };
 
 /**
- * An enumerator for dox groups used to categorise `tsDeclarations`.
+ * An enumerator for dox groups used to categorise `doxDeclarations`.
  */
 export enum DeclarationGroup {
 	unknown,
-	//ExportStar,
 	ReExport,
 	Module,
 	Variable,
@@ -49,7 +48,10 @@ export enum DeclarationGroup {
 	Class,
 	Enum,
 	Type,
-	Default,
+}
+
+export interface DeclarationFlags {
+	default?: boolean;
 }
 
 export type logLevelKeys = keyof typeof logLevels;
@@ -58,8 +60,8 @@ export type referenceName = string;
 
 export * from './projectStructure/_namespace';
 
-export type fileMap = Map<string, TsSourceFile>;
-export type declarationMap = Map<string, TsDeclaration>;
+export type fileMap = Map<string, DoxSourceFile>;
+export type declarationsMap = Map<string, DoxDeclaration>;
 
 export type referencedExport =
 	| ts.NamespaceExport
@@ -69,7 +71,7 @@ export type referencedExport =
 export type localDeclaration = ts.VariableDeclaration | ts.ClassDeclaration;
 export type declaration = referencedExport | localDeclaration;
 
-export type logableObjects = TsDeclaration;
+export type logableObjects = DoxDeclaration;
 
 export type tsItem = ts.Node | ts.Symbol;
 
@@ -94,8 +96,8 @@ export interface tscRawConfig {
 export type namedDef<def> = [string | undefined, def];
 export type namedRegistry<reg> = Record<string, reg>;
 
-export type npmPackagePrograms = [program: ts.Program, rootDir: string][];
-export type npmPackageDefinitions = namedRegistry<npmPackagePrograms>;
+export type doxPackagePrograms = [program: ts.Program, rootDir: string][];
+export type doxPackageDefinitions = namedRegistry<doxPackagePrograms>;
 
 export namespace foo {
 	const bar = 'foo';

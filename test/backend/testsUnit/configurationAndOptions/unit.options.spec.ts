@@ -12,12 +12,16 @@ import {
 	tscRawConfig,
 } from '../../../../src/backend/typedox';
 import { doxOptions } from '../../../../src/backend/config/doxConfigApi';
+import { globalLogLevel } from '../../tests.backend.spec';
+import { compilerFactory } from '../../compilerFactory';
+
+const localLogLevel = logLevels.silent;
 
 const { configurators } = DoxConfig;
-const { tsConfigPath, tsconfig } = stubs.compilerFactory('configs');
+const { tsConfigPath, tsconfig } = compilerFactory('configs');
 let warnStub: any;
 before(function () {
-	log.setLogLevel(logLevels.error);
+	log.setLogLevel(globalLogLevel || localLogLevel);
 });
 afterEach(function () {
 	if (warnStub) warnStub.restore();
@@ -73,13 +77,11 @@ describe('Commandline arguments', function () {
 		const options = config.parseDoxClArgsToOptions(orphanArgs, doxArgs);
 		assert.deepEqual(options, { typedox: true } as any);
 	});
-
 	it('should get dox cl arguments', function () {
 		const args = config.getClArgs(argvStub, config.doxArgs).doxClArgs;
 
 		assert.deepEqual(args, doxArgVstub);
 	});
-
 	it('should get tsc cl arguments', function () {
 		const args = config.getClArgs(argvStub).tscClArgs;
 		assert.deepEqual(args.slice(2), tscArgVStub);
@@ -117,7 +119,6 @@ describe('Commandline arguments', function () {
 			'--typedox',
 			'typedox.json1',
 		]);
-
 		assert.equal(configFile, stubs.configs.defaultDoxConfigPath + 1);
 	});
 	it('should get the dox config file path from an absolute cl argument', function () {
@@ -434,16 +435,16 @@ describe('config parsing', function () {
 		});
 	});
 	it('parses a raw config', function () {
-		const parsedConfig = config.makeParsedConfig([], {}, rawConfig());
+		const parsedConfig = config.makeParsedConfig({}, rawConfig());
 		assert.exists(parsedConfig.options);
 		assert.containsAllKeys(parsedConfig.options, [
 			'outDir',
-			'types',
+			'suppressImplicitAnyIndexErrors',
 			'configFilePath',
 		]);
 	});
 	it('parses raw configs', function () {
-		const parsedConfigs = config.makeParsedConfigs(rawConfigs(), [], {});
+		const parsedConfigs = config.makeParsedConfigs(rawConfigs(), {});
 
 		assert.isArray(parsedConfigs);
 		assert.lengthOf(parsedConfigs, stubs.configs.expectedConfigLength);

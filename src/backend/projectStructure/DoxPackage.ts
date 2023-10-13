@@ -2,12 +2,13 @@ import * as path from 'path';
 import {
 	logger as log,
 	DoxProject,
-	TsReference,
+	DoxReference,
 	namedRegistry,
-	npmPackagePrograms,
+	doxPackagePrograms,
 	DoxConfig,
 	config,
 	serialise,
+	DoxSourceFile,
 } from '../typedox';
 
 /**
@@ -15,23 +16,24 @@ import {
  *
  * &emsp;DoxProject\
  * &emsp;&emsp;|\
- * &emsp;&emsp;--- **NpmPackage**[]\
+ * &emsp;&emsp;--- **DoxPackage**[]\
  * &emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;--- TsReference[]\
+ * &emsp;&emsp;&emsp;--- DoxReference[]\
  * &emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;--- TsSourceFile[]\
+ * &emsp;&emsp;&emsp;&emsp;--- DoxSourceFile[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;&emsp;--- TsDeclaration[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;--- DoxDeclaration[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;--- Branch[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...DoxDeclaration...
  *
  *
  */
-export class NpmPackage extends DoxConfig {
+export class DoxPackage extends DoxConfig {
 	public parent: DoxProject;
-	public tsReferences: TsReference[];
+	public doxReferences: DoxReference[];
+	public filesMap = new Map<string, DoxSourceFile>();
 
 	public version: string;
 	public name: string;
@@ -39,38 +41,38 @@ export class NpmPackage extends DoxConfig {
 	constructor(
 		parent: DoxProject,
 		npmFilePath: string,
-		npmPackages: npmPackagePrograms,
+		doxPackages: doxPackagePrograms,
 	) {
 		super();
 		const packageConfig = config.jsonFileToObject(npmFilePath);
 		const { name, version } = packageConfig;
 
 		this.parent = parent;
-		this.tsReferences = this._tsReferences(npmPackages);
+		this.doxReferences = this._doxReferences(doxPackages);
 		this.name = name;
 		this.version = version;
 	}
 	public get toObject() {
-		return serialise.serialiseNpmPackage(this);
+		return serialise.serialiseDoxPackage(this);
 	}
 
-	private _tsReferences = (programs: npmPackagePrograms) => {
+	private _doxReferences = (programs: doxPackagePrograms) => {
 		const nameMap = getNameMap(programs);
-		const tsReferences = programs.map((tuple) => {
+		const doxReferences = programs.map((tuple) => {
 			const [program, rootDir] = tuple;
 			const name = nameMap[rootDir];
 			const files = program
 				.getRootFileNames()
 				.filter((fileName) => fileName.startsWith(rootDir));
 
-			return new TsReference(this, name, program, files);
+			return new DoxReference(this, name, program, files);
 		});
 
-		return tsReferences;
+		return doxReferences;
 	};
 }
 
-export function getNameMap(programs: npmPackagePrograms) {
+export function getNameMap(programs: doxPackagePrograms) {
 	const rootDirs = programs.map((tuple) => tuple[1]);
 
 	const referenceNameMap = rootDirs

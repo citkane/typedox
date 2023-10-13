@@ -1,47 +1,68 @@
-import * as stubs from '../../tests.stubs.spec';
 import { assert } from 'chai';
-
 import {
 	DoxProject,
-	NpmPackage,
-	TsReference,
-	TsSourceFile,
+	DoxPackage,
+	DoxReference,
+	DoxSourceFile,
 	logger as log,
 	logLevels,
 	serialise,
 } from '../../../../src/backend/typedox';
+import { globalLogLevel } from '../../tests.backend.spec';
+import { projectFactory } from '../../projectFactory';
 
-let project: DoxProject,
-	npmPackage: NpmPackage,
-	sourceFile: TsSourceFile,
-	reference: TsReference;
+const localLogLevel = logLevels.silent;
+const localFactory = 'groups';
 
-let referenceObject: ReturnType<(typeof serialise)['serialiseTsReference']>,
-	npmPackageObject: ReturnType<(typeof serialise)['serialiseNpmPackage']>,
-	projectObject: ReturnType<(typeof serialise)['serialiseProject']>;
-
+declare module 'mocha' {
+	export interface Context {
+		project: DoxProject;
+		doxPackage: DoxPackage;
+		sourceFile: DoxSourceFile;
+		reference: DoxReference;
+		referenceObject: ReturnType<
+			(typeof serialise)['serialiseDoxReference']
+		>;
+		doxPackageObject: ReturnType<(typeof serialise)['serialiseDoxPackage']>;
+		projectObject: ReturnType<(typeof serialise)['serialiseProject']>;
+	}
+}
 before(function () {
-	log.setLogLevel(logLevels.error);
+	log.setLogLevel(globalLogLevel || localLogLevel);
 
-	project = stubs.projectFactory.specProject();
-
-	npmPackage = stubs.projectFactory.specNpmPackage(undefined, 0, project);
-	reference = stubs.projectFactory.specReference(undefined, 0, npmPackage);
-	sourceFile = stubs.projectFactory.specTsSourceFile(
-		undefined,
-		reference,
+	this.project = projectFactory.specDoxProject(localFactory);
+	this.doxPackage = projectFactory.specDoxPackage(
+		localFactory,
+		0,
+		this.project,
+	);
+	this.reference = projectFactory.specDoxReference(
+		localFactory,
+		0,
+		this.doxPackage,
+	);
+	this.sourceFile = projectFactory.specDoxSourceFile(
+		localFactory,
+		this.reference,
 		'index.ts',
 	);
+	assert.exists(this.project);
+	assert.exists(this.doxPackage);
+	assert.exists(this.reference);
+	assert.exists(this.sourceFile);
 
-	reference.discoverFiles();
-	reference.discoverDeclarations();
-	reference.buildRelationships();
+	//this.reference.discoverFiles();
+	//this.reference.discoverDeclarations();
+	//this.reference.buildRelationships();
+
+	this.referenceObject = this.reference.toObject;
+	this.doxPackageObject = this.doxPackage.toObject;
+	this.projectObject = this.project.toObject;
 });
 it('serialises a reference', function () {
-	referenceObject = reference.toObject;
-	assert.exists(referenceObject);
-	assert.doesNotThrow(() => JSON.stringify(referenceObject));
-	assert.hasAllKeys(referenceObject, [
+	assert.exists(this.referenceObject);
+	assert.doesNotThrow(() => JSON.stringify(this.referenceObject));
+	assert.hasAllKeys(this.referenceObject, [
 		'default',
 		'namespaces',
 		'classes',
@@ -49,46 +70,51 @@ it('serialises a reference', function () {
 		'enums',
 		'variables',
 	]);
-	assert.hasAllKeys(referenceObject.namespaces, [
+	assert.hasAllKeys(this.referenceObject.namespaces, [
 		'grandchildSpace',
-		'emptySpace',
 		'childSpace',
 		'emptyDeclaration',
 		'rabbitHole',
+		'default',
+		'moduleDeclaration',
 	]);
-	assert.hasAllKeys(referenceObject.classes, ['Class', 'LocalClass']);
-	assert.hasAllKeys(referenceObject.functions, [
+	assert.hasAllKeys(this.referenceObject.classes, ['Class', 'LocalClass']);
+	assert.hasAllKeys(this.referenceObject.functions, [
 		'localFunc',
 		'func',
 		'arrowFunc',
 	]);
-	assert.hasAllKeys(referenceObject.enums, ['enumerator']);
-	assert.hasAllKeys(referenceObject.variables, [
+	assert.hasAllKeys(this.referenceObject.enums, ['enumerator']);
+	assert.hasAllKeys(this.referenceObject.variables, [
 		'grandchild',
 		'localExport',
 		'localDeclaration',
 		'localAlias',
 		'variable',
-		'greatGrandchild',
 		'child',
 		'stars',
+		'defaultExport',
 	]);
 });
 it('serialises a npm package', function () {
-	npmPackageObject = npmPackage.toObject;
-	assert.exists(npmPackageObject);
-	assert.doesNotThrow(() => JSON.stringify(npmPackageObject));
-	assert.hasAllKeys(npmPackageObject, ['name', 'version', 'references']);
-	assert.hasAllKeys(npmPackageObject.references, ['groups']);
-	assert.deepEqual(npmPackageObject.references.groups, referenceObject);
-	assert.equal(npmPackageObject.name, 'typedoxTesting');
-	assert.equal(npmPackageObject.version, '0.0.0');
+	assert.exists(this.doxPackageObject);
+	assert.doesNotThrow(() => JSON.stringify(this.doxPackageObject));
+	assert.hasAllKeys(this.doxPackageObject, ['name', 'version', 'references']);
+	assert.hasAllKeys(this.doxPackageObject.references, ['groups']);
+	assert.deepEqual(
+		this.doxPackageObject.references.groups,
+		this.referenceObject,
+	);
+	assert.equal(this.doxPackageObject.name, 'typedoxTesting');
+	assert.equal(this.doxPackageObject.version, '0.0.0');
 });
 it('serialises a dox project', function () {
-	projectObject = project.toObject;
-	assert.exists(projectObject);
-	assert.doesNotThrow(() => JSON.stringify(projectObject));
-	assert.hasAllKeys(projectObject, ['packages']);
-	assert.hasAllKeys(projectObject.packages, ['typedoxTesting']);
-	assert.deepEqual(projectObject.packages.typedoxTesting, npmPackageObject);
+	assert.exists(this.projectObject);
+	assert.doesNotThrow(() => JSON.stringify(this.projectObject));
+	assert.hasAllKeys(this.projectObject, ['packages']);
+	assert.hasAllKeys(this.projectObject.packages, ['typedoxTesting']);
+	assert.deepEqual(
+		this.projectObject.packages.typedoxTesting,
+		this.doxPackageObject,
+	);
 });

@@ -39,6 +39,7 @@ export class Logger extends Console {
 		super.warn(utils.colourise('FgYellow', '[warning]'), ...args);
 
 	public error = (...args: any) =>
+		this.shouldLog(utils.logLevels.error) &&
 		super.error(utils.colourise('FgRed', '[error]'), ...args);
 
 	public throwError = (...args: any) => {

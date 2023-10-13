@@ -1,93 +1,94 @@
-import { assert } from 'chai';
 import * as stubs from '../../tests.stubs.spec';
+import { assert } from 'chai';
 import {
 	Branch,
-	TsDeclaration,
-	TsReference,
+	DoxDeclaration,
+	DoxReference,
 	config,
 	logger as log,
 	logLevels,
 } from '../../../../src/backend/typedox';
 import { stub } from 'sinon';
+import { globalLogLevel } from '../../tests.backend.spec';
+import { projectFactory } from '../../projectFactory';
 
-let specBranch: () => Branch;
-let reference: TsReference;
-let declarations: TsDeclaration[];
-let errorStub: any;
-let warningStub: any;
+const localLogLevel = logLevels.silent;
+const localFactory = 'specifiers';
+
+let _doxReference: DoxReference;
+const reference = () =>
+	(_doxReference ??= projectFactory.specDoxReference(localFactory));
+let _declarations: DoxDeclaration[];
+const declarations = () => {
+	return (_declarations ??= reference().getRootDeclarations());
+};
+declare module 'mocha' {
+	export interface Context {
+		errorStub?: ReturnType<typeof stub>;
+		warningStub?: ReturnType<typeof stub>;
+	}
+}
 
 before(function () {
-	log.setLogLevel(logLevels.error);
-
-	reference = stubs.projectFactory.specReference();
-	reference.buildRelationships();
-	declarations = reference.getRootDeclarations();
-
-	specBranch = () => new Branch(reference, declarations);
+	log.setLogLevel(globalLogLevel || localLogLevel);
 });
 afterEach(function () {
-	if (errorStub) errorStub.restore();
-	if (warningStub) warningStub.restore();
+	if (this.errorStub) this.errorStub.restore();
+	if (this.warningStub) this.warningStub.restore();
+});
+after(function () {
+	projectFactory.flushCache();
 });
 it('creates a class instance', function () {
 	let branch!: Branch;
+	const reference = stubs.doxReference(localFactory);
+	const declarations = [stubs.doxDeclaration(localFactory, 'localVar')];
 	assert.doesNotThrow(() => (branch = new Branch(reference, declarations)));
 	assert.exists(branch);
 });
-it('has set "default" on the branch', function () {
-	const branch = specBranch();
-	assert.exists(branch.default);
-});
-it('throws an error if "default" is set twice', function () {
-	const branch = specBranch();
-	const declaration = declarations[1];
-	assert.throws(
-		() => ((branch as any).Default = declaration),
-		/Can have only one default on a branch/,
+
+it('merges reExports into the declarations', function () {
+	const branch = new Branch(reference(), declarations());
+	let declaration = declarations()[1];
+	assert.isTrue(
+		(branch as any).declarations.has(declaration),
+		declaration.name,
 	);
-});
-it.skip('merges reExports into the declarations', function () {
-	/*
-	const branch = specBranch();
-	let declaration = declarations[1];
-	assert.isTrue((branch as any)._declarationBundle.has(declaration.name));
 	assert.doesNotThrow(() =>
 		(branch as any).mergeReExportIntoDeclarations(declaration),
 	);
-	declaration = config.deepClone(declaration) as TsDeclaration;
-	declaration.name = 'unique';
+	declaration = config.deepClone(declaration) as DoxDeclaration;
+	(declaration as any).name = 'unique';
 	assert.doesNotThrow(() =>
 		(branch as any).mergeReExportIntoDeclarations(declaration),
 	);
-	assert.isTrue((branch as any)._declarationBundle.has('unique'));
-	(branch as any)._declarationBundle.delete('unique');
-	*/
+	assert.isTrue((branch as any).declarations.has(declaration));
 });
 it('reports an error if an unknown kind is encountered', function () {
-	const branch = specBranch();
 	let report = '';
-	errorStub = stub(log, 'error').callsFake((...args) => {
+	this.errorStub = stub(log, 'error').callsFake((...args) => {
 		report = args[1];
 	});
-	const badDeclaration = config.deepClone(declarations[0]);
+
+	const branch = new Branch(reference(), declarations());
+
+	const badDeclaration = config.deepClone(declarations()[0]);
 	badDeclaration.group = 500;
 	(branch as any).registerDeclaration(badDeclaration);
 	assert.include(report, 'Did not find a group for a declaration', report);
 });
 
 it('ignores namespace names already registered', function () {
-	const branch = specBranch();
 	let warning = '';
-	warningStub = stub(log, 'warn').callsFake((...args) => {
-		warning = args[1];
+	this.warningStub = stub(log, 'warn').callsFake((...args) => {
+		warning = args[2];
 	});
-	const declaration = declarations.find(
+
+	const branch = new Branch(reference(), declarations());
+
+	const declaration = declarations().find(
 		(declaration) => declaration.name === 'childSpace',
 	);
 	(branch as any).registerNameSpace(declaration);
-	assert.include(
-		warning,
-		'A namespace was already registered. Ignoring this instance',
-		warning,
-	);
+	assert.include(warning, 'A namespace was already registered', warning);
 });

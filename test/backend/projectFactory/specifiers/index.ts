@@ -3,6 +3,7 @@ import clause from './child/child';
 import { grandchild, childSpace } from './grandchild/grandchild';
 import * as grandchildSpace from './grandchild/grandchild';
 
+type localType = typeof localVar;
 const localVar = 'localVar';
 
 declare namespace local {
@@ -20,15 +21,16 @@ export namespace moduleDeclaration {
 }
 
 export {
+	localType,
 	localVar,
 	grandchild,
 	grandchildSpace,
 	childSpace as nsImportSpecifier,
 };
-export { child } from './child/child';
+export { child, grandchild as remote } from './child/child';
+export type { childType, grandchildType } from './child/child';
 
 export * from './child/child';
-export * from './grandchild/grandchild';
 
 export * as childSpace from './child/child';
 export import TypeScript = TypeScript;

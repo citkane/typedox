@@ -1,8 +1,8 @@
 import {
 	config,
-	TsReference,
+	DoxReference,
 	DoxProject,
-	NpmPackage,
+	DoxPackage,
 	Branch,
 	logger as log,
 	logLevels,
@@ -10,16 +10,16 @@ import {
 
 export default function main(customOptions?: config.doxOptions) {
 	const doxProject = makeDoxProject(customOptions);
-	const npmPackages = getNpmPackages(doxProject);
-	const tsReferences = getTsReferences(npmPackages);
+	const doxPackages = getDoxPackages(doxProject);
+	const doxReferences = getDoxReferences(doxPackages);
 
-	discoverFilesAndDeclarations(tsReferences);
-	buildRelationShips(tsReferences);
-	growDocumentBranches(tsReferences);
+	discoverFilesAndDeclarations(doxReferences);
+	buildRelationShips(doxReferences);
+	growDocumentBranches(doxReferences);
 
 	const serialised = doxProject.toObject;
 
-	log.debug(JSON.stringify(serialised, null, 4));
+	//log.info(JSON.stringify(serialised, null, 4));
 
 	return serialised;
 }
@@ -33,31 +33,31 @@ function makeDoxProject(customOptions?: config.doxOptions) {
 
 	return doxProject;
 }
-function getNpmPackages(doxProject: DoxProject) {
-	const npmPackages = doxProject.npmPackages;
-	log.info(`Found ${npmPackages.length} npm packages`);
-	return npmPackages;
+function getDoxPackages(doxProject: DoxProject) {
+	const doxPackages = doxProject.doxPackages;
+	log.info(`Found ${doxPackages.length} npm packages`);
+	return doxPackages;
 }
 
-function getTsReferences(npmPackages: NpmPackage[]) {
-	return npmPackages.map((npmPackage) => npmPackage.tsReferences).flat();
+function getDoxReferences(doxPackages: DoxPackage[]) {
+	return doxPackages.map((doxPackage) => doxPackage.doxReferences).flat();
 }
 
-function discoverFilesAndDeclarations(tsReferences: TsReference[]) {
-	tsReferences.forEach((tsReference) => {
-		tsReference.discoverFiles();
-		tsReference.discoverDeclarations();
+function discoverFilesAndDeclarations(doxReferences: DoxReference[]) {
+	doxReferences.forEach((doxReference) => {
+		doxReference.discoverFiles();
+		doxReference.discoverDeclarations();
 	});
 }
 
-function buildRelationShips(tsReferences: TsReference[]) {
-	tsReferences.forEach((tsReference) => tsReference.buildRelationships());
+function buildRelationShips(doxReferences: DoxReference[]) {
+	doxReferences.forEach((doxReference) => doxReference.buildRelationships());
 }
 
-function growDocumentBranches(tsReferences: TsReference[]) {
-	tsReferences.forEach((tsReference) => {
-		const rootDeclarations = tsReference.getRootDeclarations();
-		const treeBranch = new Branch(tsReference, rootDeclarations);
-		tsReference.treeBranches.set(tsReference.name, treeBranch);
+function growDocumentBranches(doxReferences: DoxReference[]) {
+	doxReferences.forEach((doxReference) => {
+		const rootDeclarations = doxReference.getRootDeclarations();
+		const treeBranch = new Branch(doxReference, rootDeclarations);
+		doxReference.treeBranches.set(doxReference.name, treeBranch);
 	});
 }

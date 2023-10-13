@@ -5,7 +5,6 @@ import {
 	logger as log,
 	tscRawConfig,
 	config,
-	TscWrapper,
 	logLevels,
 	logLevelKeys,
 } from '../typedox';
@@ -87,23 +86,20 @@ export class DoxConfig {
 	public get isDoxProject() {
 		return this.constructor.name === 'DoxProject';
 	}
-	public get isNpmPackage() {
-		return this.constructor.name === 'NpmPackage';
+	public get isDoxPackage() {
+		return this.constructor.name === 'DoxPackage';
 	}
-	public get isTsReference() {
-		return this.constructor.name === 'TsReference';
+	public get isDoxReference() {
+		return this.constructor.name === 'DoxReference';
 	}
-	public get isTsDeclaration() {
-		return this.constructor.name === 'TsDeclaration';
+	public get isDoxDeclaration() {
+		return this.constructor.name === 'DoxDeclaration';
 	}
-	public get isTsSourceFile() {
-		return this.constructor.name === 'TsSourceFile';
+	public get isDoxSourceFile() {
+		return this.constructor.name === 'DoxSourceFile';
 	}
-	public get isBranch() {
-		return this.constructor.name === 'Branch';
-	}
-
-	public isSpecifierKind = (kind: ts.SyntaxKind) => {
+	public isSpecifierKind = DoxConfig.isSpecifierKind;
+	public static isSpecifierKind = (kind: ts.SyntaxKind) => {
 		const {
 			ExportAssignment,
 			ExportDeclaration,
@@ -114,6 +110,8 @@ export class DoxConfig {
 			ModuleDeclaration,
 			NamespaceExport,
 			NamespaceImport,
+			//BindingElement,
+			//ObjectLiteralExpression,
 		} = ts.SyntaxKind;
 		const specifiers = [
 			ExportAssignment,
@@ -125,6 +123,8 @@ export class DoxConfig {
 			ModuleDeclaration,
 			NamespaceExport,
 			NamespaceImport,
+			//BindingElement,
+			//ObjectLiteralExpression,
 		];
 
 		return specifiers.includes(kind);
@@ -199,10 +199,11 @@ export class DoxConfig {
 	private _tscParsedConfigs = () => {
 		const isRootLevel = !!_cache.entryProject || !!_cache.clProject;
 		const existingOptions = isRootLevel ? this.tscCommandLineOptions : {};
+		//existingOptions.module = ts.ModuleKind.NodeNext;
+		existingOptions.types = this.options.typeDependencies;
 
 		const parsedConfigs = config.makeParsedConfigs(
 			_cache.tscRawConfigs,
-			this.typeDependencies,
 			existingOptions,
 		);
 

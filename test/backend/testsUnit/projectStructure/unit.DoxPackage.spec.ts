@@ -3,15 +3,18 @@ import * as ts from 'typescript';
 import {
 	logger as log,
 	logLevels,
-	npmPackagePrograms,
+	doxPackagePrograms,
 } from '../../../../src/backend/typedox';
-import { getNameMap } from '../../../../src/backend/projectStructure/NpmPackage';
+import { getNameMap } from '../../../../src/backend/projectStructure/DoxPackage';
+import { globalLogLevel } from '../../tests.backend.spec';
+
+const localLogLevel = logLevels.silent;
 
 before(function () {
-	log.setLogLevel(logLevels.error);
+	log.setLogLevel(globalLogLevel || localLogLevel);
 });
 it('maps typescript programs to unique namespace identifiers', function () {
-	const testDirs: npmPackagePrograms = [
+	const testDirs: doxPackagePrograms = [
 		'/foo/bar',
 		'/foo/bar/poo/moo',
 		'/bar',

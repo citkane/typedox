@@ -10,7 +10,7 @@ export const reportKeys: (keyof TscWrapper)[] = [
 	'targetFileName',
 	'nodeText',
 	'nodeDeclarationText',
-	'localTargetDeclaration',
+	'localDeclaration',
 	'name',
 	'alias',
 	'kindString',
@@ -20,28 +20,18 @@ export const reportKeys: (keyof TscWrapper)[] = [
 	'moduleSpecifier',
 	'hasValueDeclaration',
 ];
+export const badFilePrefix = '_ignored';
 export function parseReportKey(this: TscWrapper, key: keyof TscWrapper) {
 	let value = this[key];
 
 	key === 'moduleSpecifier' &&
 		value &&
 		(value = (value as ts.Node).getText());
-	key === 'localTargetDeclaration' &&
+	key === 'localDeclaration' &&
 		value &&
 		(value = (value as ts.Node).getText());
 
 	return value;
-}
-
-export function getLocalTargetDeclaration(
-	declaration: ts.Identifier | ts.ExportSpecifier,
-	checker: ts.TypeChecker,
-) {
-	const localDeclaration = checker
-		.getExportSpecifierLocalTargetSymbol(declaration)
-		?.getDeclarations()![0];
-	if (localDeclaration && ts.isSourceFile(localDeclaration)) return undefined;
-	return localDeclaration;
 }
 
 export function getNodeAndTypeFromSymbol(
@@ -79,7 +69,7 @@ export function getTsSymbolFromNode(
 		? (node.symbol as ts.Symbol)
 		: notFound(node);
 
-	return symbol ? symbol : notices.getTsSymbolFromNode.throw(node)!;
+	return symbol!;
 
 	function mapNodes(symbol: ts.Symbol) {
 		symbol.declarations!.forEach((declaration) => {

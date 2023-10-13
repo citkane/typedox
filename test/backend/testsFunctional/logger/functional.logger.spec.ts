@@ -1,14 +1,18 @@
 import * as ts from 'typescript';
+import * as stubs from '../../tests.stubs.spec';
 import { assert } from 'chai';
 import { stub } from 'sinon';
 import { logger as log, logLevels } from '../../../../src/backend/typedox';
 import { Logger } from '../../../../src/backend/logger/Logger';
+import { globalLogLevel } from '../../tests.backend.spec';
+
+const localLogLevel = logLevels.silent;
 
 describe('class Logger', function () {
 	const getTestLog = (level = logLevels.debug) => new Logger(level);
 
 	before(function () {
-		log.setLogLevel(logLevels.error);
+		log.setLogLevel(globalLogLevel || localLogLevel);
 	});
 
 	it('creates a class', function () {
@@ -18,7 +22,7 @@ describe('class Logger', function () {
 		const testLog = getTestLog();
 
 		['debug', 'info', 'warn'].forEach((l) => {
-			const level = l as keyof typeof logLevels;
+			const level = l as Exclude<keyof typeof logLevels, 'silent'>;
 			const logLevel = logLevels[level];
 
 			testLog.setLogLevel(Number(logLevel) + 1);

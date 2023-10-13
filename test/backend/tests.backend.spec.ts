@@ -1,15 +1,10 @@
-import { loggerUtils } from '../../src/backend/typedox';
+import { logLevels, loggerUtils } from '../../src/backend/typedox';
+export const globalLogLevel: logLevels | undefined = undefined;
+
 const { colourise } = loggerUtils;
 const _unitTest = colourise('Bright', 'Unit tests');
 const _functionalTest = colourise('Bright', 'Functional tests');
 const _endToEndTest = colourise('Bright', 'End to end test');
-const title = (text: string) =>
-	colourise('Underscore', text.toLocaleUpperCase());
-const unitTest = (text: string) => `${_unitTest}: ${colourise('FgBlue', text)}`;
-const functionalTest = (text: string) =>
-	`${_functionalTest}: ${colourise('FgBlue', text)}`;
-const endToEndTest = (text: string) =>
-	`${_endToEndTest}: ${colourise('FgBlue', text)}`;
 
 describe(title('Logger'), function () {
 	describe(unitTest('Logger'), function () {
@@ -36,35 +31,48 @@ describe(title('Project structure'), function () {
 	describe(functionalTest('DoxProject'), function () {
 		require('./testsFunctional/projectStructure/functional.DoxProject.spec');
 	});
-	describe(unitTest('NpmPackage'), function () {
-		require('./testsUnit/projectStructure/unit.NpmPackage.spec');
+	describe(unitTest('DoxPackage'), function () {
+		require('./testsUnit/projectStructure/unit.DoxPackage.spec');
 	});
-	describe(functionalTest('NpmPackage'), function () {
-		require('./testsFunctional/projectStructure/functional.NpmPackage.spec');
+	describe(functionalTest('DoxPackage'), function () {
+		require('./testsFunctional/projectStructure/functional.DoxPackage.spec');
 	});
-	describe.skip(functionalTest('Branch'), function () {
+	describe(functionalTest('DoxReference'), function () {
+		require('./testsFunctional/projectStructure/functional.DoxReference.spec');
+	});
+	describe(functionalTest('DoxSourceFile'), function () {
+		require('./testsFunctional/projectStructure/functional.DoxSourceFile.spec');
+	});
+	describe(functionalTest('DoxDeclaration'), function () {
+		require('./testsFunctional/projectStructure/functional.DoxDeclaration.spec');
+	});
+	describe(functionalTest('DoxDeclaration relations'), function () {
+		require('./testsFunctional/projectStructure/functional.DoxDeclarationRelations.spec.ts');
+	});
+	describe(functionalTest('Branch'), function () {
 		require('./testsFunctional/projectStructure/functional.Branch.spec');
 	});
-	describe(functionalTest('TsReference'), function () {
-		require('./testsFunctional/projectStructure/functional.TsReference.spec');
-	});
-	describe(functionalTest('TsSourceFile'), function () {
-		require('./testsFunctional/projectStructure/functional.TsSourceFile.spec');
-	});
-	describe(functionalTest('TsDeclaration'), function () {
-		require('./testsFunctional/projectStructure/functional.TsDeclaration.spec');
-	});
-	describe(functionalTest('TsDeclaration relations'), function () {
-		require('./testsFunctional/projectStructure/functional.TsDeclarationRelations.spec.ts');
-	});
 });
-describe.skip(title('serialiser'), function () {
+describe(title('serialiser'), function () {
 	describe(unitTest('serialiser'), function () {
 		require('./testsUnit/serialiser/unit.serialiser.spec');
 	});
 });
-describe.skip(title('Backend'), function () {
+describe(title('Backend'), function () {
 	describe(endToEndTest('main'), function () {
 		require('./testsEndToEnd/endToEnd.main.spec');
 	});
 });
+
+function title(text: string) {
+	return colourise('Underscore', text.toLocaleUpperCase());
+}
+function unitTest(text: string) {
+	return `${_unitTest}: ${colourise('FgBlue', text)}`;
+}
+function functionalTest(text: string) {
+	return `${_functionalTest}: ${colourise('FgBlue', text)}`;
+}
+function endToEndTest(text: string) {
+	return `${_endToEndTest}: ${colourise('FgBlue', text)}`;
+}

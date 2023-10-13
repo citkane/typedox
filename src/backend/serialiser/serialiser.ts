@@ -1,28 +1,28 @@
 import {
 	Branch,
 	DoxProject,
-	NpmPackage,
-	TsDeclaration,
-	TsReference,
+	DoxPackage,
+	DoxDeclaration,
+	DoxReference,
 	logger as log,
 } from '../typedox';
 
 export function serialiseProject(project: DoxProject) {
-	const packageMap = new Map<string, NpmPackage>();
-	project.npmPackages.forEach((pack) => packageMap.set(pack.name, pack));
-	const packages = mapToObject<npmPackage>(packageMap, serialiseNpmPackage);
+	const packageMap = new Map<string, DoxPackage>();
+	project.doxPackages.forEach((pack) => packageMap.set(pack.name, pack));
+	const packages = mapToObject<doxPackage>(packageMap, serialiseDoxPackage);
 
 	return {
 		packages,
 	};
 }
-export function serialiseNpmPackage(npmPackage: NpmPackage) {
-	const { version, name, tsReferences } = npmPackage;
-	const referenceMap = new Map<string, TsReference>();
-	tsReferences.forEach((ref) => referenceMap.set(ref.name, ref));
-	const references = mapToObject<tsReference>(
+export function serialiseDoxPackage(doxPackage: DoxPackage) {
+	const { version, name, doxReferences: doxReferences } = doxPackage;
+	const referenceMap = new Map<string, DoxReference>();
+	doxReferences.forEach((ref) => referenceMap.set(ref.name, ref));
+	const references = mapToObject<doxReference>(
 		referenceMap,
-		serialiseTsReference,
+		serialiseDoxReference,
 	);
 
 	return {
@@ -32,7 +32,7 @@ export function serialiseNpmPackage(npmPackage: NpmPackage) {
 	};
 }
 
-export function serialiseTsReference(reference: TsReference) {
+export function serialiseDoxReference(reference: DoxReference) {
 	const branches = mapToObject<branch>(reference.treeBranches, branch);
 	const branchName = reference.name;
 
@@ -95,15 +95,15 @@ function mapToObject<T extends targetFunction>(
 }
 
 type sourceMapTypes =
-	| Map<string, NpmPackage>
-	| Map<string, TsReference>
+	| Map<string, DoxPackage>
+	| Map<string, DoxReference>
 	| Map<string, Branch>
-	| Map<string, TsDeclaration>;
+	| Map<string, DoxDeclaration>;
 
-type targetFunctionTypes = npmPackage | tsReference | branch;
+type targetFunctionTypes = doxPackage | doxReference | branch;
 type targetFunction = (...args: any) => any;
-type npmPackage = typeof serialiseNpmPackage;
-type tsReference = typeof serialiseTsReference;
+type doxPackage = typeof serialiseDoxPackage;
+type doxReference = typeof serialiseDoxReference;
 type branch = typeof branch;
 type nameSpaces = typeof nameSpacesGroup;
 type classes = typeof classesGroup;

@@ -1,9 +1,10 @@
 import {
 	DeclarationGroup,
-	TsDeclaration,
-	TsReference,
-	declarationMap,
+	DoxDeclaration,
+	DoxReference,
+	declarationsMap,
 	logger as log,
+	loggerUtils,
 } from '../typedox';
 
 /**
@@ -11,60 +12,60 @@ import {
  *
  * &emsp;DoxProject\
  * &emsp;&emsp;|\
- * &emsp;&emsp;--- NpmPackage[]\
+ * &emsp;&emsp;--- DoxPackage[]\
  * &emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;--- TsReference[]\
+ * &emsp;&emsp;&emsp;--- DoxReference[]\
  * &emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;--- TsSourceFile[]\
+ * &emsp;&emsp;&emsp;&emsp;--- DoxSourceFile[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;&emsp;--- TsDeclaration[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;--- DoxDeclaration[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;--- **Branch**[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...DoxDeclaration...
  *
  */
 export class Branch {
-	parent: TsReference | Branch;
-	_declarationBundle: Map<string, TsDeclaration> = new Map();
-	reExportBundle: Map<string, TsDeclaration> = new Map();
+	parent: DoxReference | Branch;
+	declarations: Map<DoxDeclaration, string> = new Map();
+	reExports: Map<string, DoxDeclaration> = new Map();
 	nameSpaces: Map<string, Branch> = new Map();
-	classes: Map<string, TsDeclaration> = new Map();
-	variables: Map<string, TsDeclaration> = new Map();
-	functions: Map<string, TsDeclaration> = new Map();
-	enums: Map<string, TsDeclaration> = new Map();
-	types: Map<string, TsDeclaration> = new Map();
-	default?: TsDeclaration;
+	classes: Map<string, DoxDeclaration> = new Map();
+	variables: Map<string, DoxDeclaration> = new Map();
+	functions: Map<string, DoxDeclaration> = new Map();
+	enums: Map<string, DoxDeclaration> = new Map();
+	types: Map<string, DoxDeclaration> = new Map();
+	default?: DoxDeclaration;
 
-	constructor(parent: TsReference | Branch, declarations: TsDeclaration[]) {
+	constructor(parent: DoxReference | Branch, declarations: DoxDeclaration[]) {
 		this.parent = parent;
 		declarations.forEach(this.bundleDeclaration);
 		this.reExports.forEach(this.mergeReExportIntoDeclarations);
-		this.declarationBundle.forEach(this.registerDeclaration);
+		Array.from(this.declarations.keys()).forEach(this.registerDeclaration);
 	}
-	private get reExports() {
-		return Array.from(this.reExportBundle.values());
+	public get doxReference() {
+		type parents = DoxReference | Branch;
+		const { parent } = this;
+		return getReference();
+		function getReference(item: parents = parent): DoxReference {
+			return item.constructor.name === 'Branch'
+				? getReference(item.parent as parents)
+				: (item as DoxReference);
+		}
 	}
-	private get declarationBundle() {
-		return Array.from(this._declarationBundle.values());
-	}
-	private set Default(assignment: TsDeclaration) {
-		if (this.default) notices.Default.throw(this, log.stackTracer());
-		this.default = assignment;
-	}
-	private bundleDeclaration = (declaration: TsDeclaration) => {
-		const { group } = declaration;
+	private bundleDeclaration = (declaration: DoxDeclaration) => {
+		const { group, flags } = declaration;
+		flags.default && (this.default = declaration);
 		group === DeclarationGroup.ReExport
 			? this.bundleReExport(declaration)
-			: this._declarationBundle.set(declaration.name, declaration);
+			: this.declarations.set(declaration, declaration.name);
 	};
-	private mergeReExportIntoDeclarations = (declaration: TsDeclaration) => {
-		if (this._declarationBundle.has(declaration.name)) return;
-		this._declarationBundle.set(declaration.name, declaration);
+	private mergeReExportIntoDeclarations = (declaration: DoxDeclaration) => {
+		if (this.declarations.has(declaration)) return;
+		this.declarations.set(declaration, declaration.name);
 	};
-	private registerDeclaration = (declaration: TsDeclaration) => {
+	private registerDeclaration = (declaration: DoxDeclaration) => {
 		const { group, name } = declaration;
-		if (!group) return;
 
 		group === DeclarationGroup.Module
 			? this.registerNameSpace(declaration)
@@ -78,8 +79,6 @@ export class Branch {
 			? this.enums.set(name, declaration)
 			: group === DeclarationGroup.Type
 			? this.types.set(name, declaration)
-			: group === DeclarationGroup.Default
-			? (this.Default = declaration)
 			: log.error(
 					log.identifier(this),
 					'Did not find a group for a declaration: ',
@@ -87,42 +86,46 @@ export class Branch {
 					declaration.wrappedItem.report,
 			  );
 	};
-	private bundleReExport = (declaration: TsDeclaration) => {
-		Array.from(declaration.children.values()).forEach((declaration) => {
-			if (this.reExportBundle.has(declaration.name)) return;
-			this.reExportBundle.set(declaration.name, declaration);
-		});
-	};
-	private registerNameSpace = (declaration: TsDeclaration) => {
-		if (this.nameSpaces.has(declaration.name))
-			return notices.registerNameSpace.warn(this, declaration.name);
-		const children = Branch.getChildDeclarations(declaration.children);
-		const newBranch = new Branch(this, children);
-		this.nameSpaces.set(declaration.name, newBranch);
+	private bundleReExport = (declaration: DoxDeclaration) => {
+		const { name, group, children } = declaration;
+		const reReExport = group === DeclarationGroup.ReExport;
+		const isDuplicate = this.reExports.has(name);
+		return reReExport
+			? children.forEach(this.bundleReExport)
+			: !isDuplicate && this.reExports.set(name, declaration);
 	};
 
-	private static getChildDeclarations(children: declarationMap) {
-		return Array.from(children.values());
-	}
+	private registerNameSpace = (declaration: DoxDeclaration) => {
+		const { warn } = notices.registerNameSpace;
+		const { name, children } = declaration;
+		const { nameSpaces } = this;
+		if (nameSpaces.has(name)) return warn(this, declaration);
+
+		const values = [...children.values()].filter(
+			(declaration) => !this.declarations.has(declaration),
+		);
+		const newBranch = new Branch(this, values);
+		nameSpaces.set(declaration.name, newBranch);
+	};
 }
 
+const seenNameSpaces: string[] = [];
 const notices = {
 	registerNameSpace: {
-		warn: (branch: Branch, name: string) => {
-			return log.warn(
-				log.identifier(branch),
-				'A namespace was already registered. Ignoring this instance:',
-				name,
-			);
-		},
-	},
-	Default: {
-		throw: (branch: Branch, trace: string) => {
-			log.throwError(
-				log.identifier(branch),
-				'Can have only one default on a branch',
-				trace,
-			);
+		warn: (branch: Branch, declaration: DoxDeclaration) => {
+			const { wrappedItem } = declaration;
+			const { nodeDeclarationText, fileName, tsNode } = wrappedItem;
+
+			const id = nodeDeclarationText + fileName;
+			if (!seenNameSpaces.includes(id))
+				return log.warn(
+					log.identifier(branch),
+					`[${branch.doxReference.name}]`,
+					'A namespace was already registered:',
+					loggerUtils.toLine(nodeDeclarationText, 30),
+					fileName,
+				);
+			seenNameSpaces.push(id);
 		},
 	},
 };

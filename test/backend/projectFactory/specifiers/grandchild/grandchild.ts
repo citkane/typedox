@@ -1,4 +1,3 @@
-import * as childSpace from '../child/child';
+export * as childSpace from '../child/child';
 export const grandchild = 'grandchild';
-
-export import childSpace = childSpace;
+export type grandchildType = typeof grandchild;

@@ -5,10 +5,10 @@ import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
 import {
 	logger as log,
 	config,
-	NpmPackage,
-	TsDeclaration,
+	DoxPackage,
+	DoxDeclaration,
 	TscWrapper,
-	npmPackageDefinitions,
+	doxPackageDefinitions,
 	DoxConfig,
 	logLevels,
 	serialise,
@@ -20,46 +20,46 @@ import {
  *
  * &emsp;**DoxProject**\
  * &emsp;&emsp;|\
- * &emsp;&emsp;--- NpmPackage[]\
+ * &emsp;&emsp;--- DoxPackage[]\
  * &emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;--- TsReference[]\
+ * &emsp;&emsp;&emsp;--- DoxReference[]\
  * &emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;--- TsSourceFile[]\
+ * &emsp;&emsp;&emsp;&emsp;--- DoxSourceFile[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;&emsp;--- TsDeclaration[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;--- DoxDeclaration[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;--- Branch[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...DoxDeclaration...
  */
 export class DoxProject extends DoxConfig {
-	public npmPackages!: NpmPackage[];
+	public doxPackages!: DoxPackage[];
 
-	private npmPackageDefinitions!: npmPackageDefinitions;
+	private doxPackageDefinitions!: doxPackageDefinitions;
 	private programs!: ts.Program[];
 
 	constructor(doxOptions: config.doxOptions, tscClOptions?: string[]) {
 		super(doxOptions, tscClOptions);
 
 		this.programs = this._programs(this.tscParsedConfigs);
-		this.npmPackageDefinitions = this._npmPackageDefinitions(this.programs);
-		this.npmPackages = this._npmPackages(this.npmPackageDefinitions);
+		this.doxPackageDefinitions = this._doxPackageDefinitions(this.programs);
+		this.doxPackages = this._doxPackages(this.doxPackageDefinitions);
 	}
 
 	public get toObject() {
 		return serialise.serialiseProject(this);
 	}
-	private _npmPackages = (npmPackageDefinitions: npmPackageDefinitions) => {
-		const definitions = npmPackageDefinitions;
+	private _doxPackages = (doxPackageDefinitions: doxPackageDefinitions) => {
+		const definitions = doxPackageDefinitions;
 		const configFiles = Object.keys(definitions);
-		const npmPackages = configFiles.map(
-			(filePath) => new NpmPackage(this, filePath, definitions[filePath]),
+		const doxPackages = configFiles.map(
+			(filePath) => new DoxPackage(this, filePath, definitions[filePath]),
 		);
 
-		return npmPackages;
+		return doxPackages;
 	};
-	private _npmPackageDefinitions = (programs: ts.Program[]) => {
-		const npmPackageDefinitions = programs.reduce(
+	private _doxPackageDefinitions = (programs: ts.Program[]) => {
+		const doxPackageDefinitions = programs.reduce(
 			(accumulator, program) => {
 				const rootDirs = getProgramRoots(program.getRootFileNames());
 				rootDirs.forEach(
@@ -67,12 +67,12 @@ export class DoxProject extends DoxConfig {
 				);
 				return accumulator;
 			},
-			{} as npmPackageDefinitions,
+			{} as doxPackageDefinitions,
 		);
-		if (!Object.keys(npmPackageDefinitions).length)
-			notices._npmPackageDefinitions.throw();
+		if (!Object.keys(doxPackageDefinitions).length)
+			notices._doxPackageDefinitions.throw();
 
-		return npmPackageDefinitions;
+		return doxPackageDefinitions;
 	};
 	private _programs = (tscParsedConfigs: ts.ParsedCommandLine[]) => {
 		//const programs = [] as ts.Program[];
@@ -101,12 +101,6 @@ export class DoxProject extends DoxConfig {
 
 		const programs = Array.from(programMap.values());
 
-		/*
-		const programs = await tscParsedConfigs.reduce(
-			makeProgramFromConfig,
-			[] as ts.Program[],
-		);
-*/
 		if (!programs.length)
 			notices._programs.throw(this.options.projectRootDir);
 
@@ -127,23 +121,23 @@ export class DoxProject extends DoxConfig {
 }
 function parseProgramRootDir(
 	this: DoxProject,
-	accumulator: npmPackageDefinitions,
+	accumulator: doxPackageDefinitions,
 	program: ts.Program,
 	rootDir: string,
 ) {
-	const npmPackage = findNpmPackage(
+	const doxPackage = findDoxPackage(
 		this.options.projectRootDir,
 		rootDir,
 		this.options.npmFileConvention,
 	);
-	if (!npmPackage) {
+	if (!doxPackage) {
 		notices.parseProgramRootDir.warn(
 			this.options.npmFileConvention,
 			rootDir,
 		);
 		return accumulator;
 	}
-	(accumulator[npmPackage] ??= []).push([program, rootDir]);
+	(accumulator[doxPackage] ??= []).push([program, rootDir]);
 }
 
 function getProgramRoots(fileNames: readonly string[]) {
@@ -157,7 +151,7 @@ function runDiagnostics(program: ts.Program, fileName: string | undefined) {
 	diagnostics.forEach((diagnostic) => log.warn(diagnostic.messageText));
 	if (diagnostics.length) notices.diagnostics.throw(String(fileName));
 }
-function findNpmPackage(
+function findDoxPackage(
 	projectRootDir: string,
 	absDir: string,
 	npmFileConvention: string,
@@ -170,7 +164,7 @@ function findNpmPackage(
 		? npmFilePath
 		: atFsRoot || atProjectRoot
 		? undefined
-		: findNpmPackage(projectRootDir, parentDir, npmFileConvention);
+		: findDoxPackage(projectRootDir, parentDir, npmFileConvention);
 }
 
 const notices = {
@@ -200,7 +194,7 @@ const notices = {
 			);
 		},
 	},
-	_npmPackageDefinitions: {
+	_doxPackageDefinitions: {
 		throw: () =>
 			log.throwError(
 				log.identifier(__filename),

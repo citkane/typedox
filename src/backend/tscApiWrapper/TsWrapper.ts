@@ -7,10 +7,11 @@ import { logger as log, tsc, tsItem } from '../typedox';
  */
 export class TscWrapper extends TsWrapperCache {
 	private objectClass: string;
+	private tsItem: tsItem;
 
 	constructor(checker: ts.TypeChecker, tsItem: tsItem) {
 		super(checker);
-
+		this.tsItem = tsItem;
 		this.objectClass = tsItem.constructor.name;
 
 		if (!this.isNode && !this.isSymbol)
@@ -19,7 +20,7 @@ export class TscWrapper extends TsWrapperCache {
 		this.isNode && this.cacheSet('tsNode', tsItem as ts.Node);
 		this.isSymbol && this.cacheSet('tsSymbol', tsItem as ts.Symbol);
 
-		if (!this.tsNode || !this.tsSymbol)
+		if (!this.tsNode || !this.tsSymbol || !this.tsType)
 			notices.constructor.throw.unsuccessful(
 				this,
 				log.stackTracer(),
@@ -38,6 +39,7 @@ export class TscWrapper extends TsWrapperCache {
 	public get isSymbol() {
 		return this.objectClass === 'SymbolObject';
 	}
+
 	/*
 	public get isType() {
 		return this.objectClass === 'TypeObject';
@@ -96,14 +98,15 @@ export class TscWrapper extends TsWrapperCache {
 	public get fileName(): tsc.cache['fileName'] {
 		return this.cacheGet('fileName');
 	}
-	public get localTargetDeclaration(): tsc.cache['localTargetDeclaration'] {
-		return this.cacheGet('localTargetDeclaration');
+	public get localDeclaration(): tsc.cache['localDeclaration'] {
+		return this.cacheGet('localDeclaration');
 	}
 	public get immediatelyAliasedSymbol(): tsc.cache['immediateAliasedSymbol'] {
 		return this.cacheGet('immediateAliasedSymbol');
 	}
-	public get target() {
-		return this.localTargetDeclaration || this.immediatelyAliasedSymbol;
+	public get target(): TscWrapper | undefined {
+		const target = this.cacheGet('target');
+		return target ? tsc.wrap(this.checker, target) : undefined;
 	}
 	public get aliasedSymbol(): tsc.cache['aliasedSymbol'] {
 		return this.cacheGet('aliasedSymbol');
@@ -170,7 +173,9 @@ const notices = {
 			wrongType: (wrapper: TscWrapper, trace: string) =>
 				log.throwError(
 					log.identifier(wrapper),
-					(wrapper as any).objectClass,
+					`Expected a Node or Symbol, got a: ${
+						(wrapper as any).objectClass
+					}`,
 					trace,
 				),
 			unsuccessful: (

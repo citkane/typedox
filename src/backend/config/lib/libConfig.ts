@@ -19,35 +19,28 @@ export function resolveConstructorOverload(
 		: [projectOrClArgs, argv];
 }
 export function makeParsedConfig(
-	dependTypes: string[],
 	existingOptions: ts.CompilerOptions,
 	tscRawConfig: tscRawConfig,
 ) {
-	let { rootDir, fileName } = tscRawConfig.dox;
-	const { compilerOptions } = tscRawConfig.config;
-	compilerOptions && (compilerOptions.types = dependTypes);
+	let { rootDir, filePath } = tscRawConfig.dox;
 
 	const parsedConfig = ts.parseJsonConfigFileContent(
 		tscRawConfig.config,
 		ts.sys,
 		rootDir,
 		existingOptions,
-		fileName,
+		filePath,
 	) as ts.ParsedCommandLine;
 
 	return parsedConfig;
 }
 export function makeParsedConfigs(
 	tscRawConfigs: tscRawConfig[],
-	dependTypes: string[],
 	existingOptions: ts.CompilerOptions,
 ) {
-	const parseConfig = makeParsedConfig.bind(
-		null,
-		dependTypes,
-		existingOptions,
+	const parsedConfigs = tscRawConfigs.map((config) =>
+		makeParsedConfig(existingOptions, config),
 	);
-	const parsedConfigs = tscRawConfigs.map(parseConfig);
 
 	return parsedConfigs as ts.ParsedCommandLine[];
 }

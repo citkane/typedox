@@ -8,14 +8,18 @@ import {
 	logLevels,
 } from '../../../../src/backend/typedox';
 import { stub } from 'sinon';
+import { globalLogLevel } from '../../tests.backend.spec';
+import { compilerFactory } from '../../compilerFactory';
 
-const { projectDir, tsconfig } = stubs.compilerFactory('configs');
+const localLogLevel = logLevels.silent;
+
+const { projectDir, tsconfig } = compilerFactory('configs');
 let infoStub: any;
 let warningStub: any;
 let doxOptions: config.doxOptions;
 
 before(function () {
-	log.setLogLevel(logLevels.error);
+	log.setLogLevel(globalLogLevel || localLogLevel);
 });
 beforeEach(function () {
 	config._deleteCache();
@@ -29,17 +33,18 @@ after(function () {
 });
 
 it('creates a doxProject instance', function () {
-	let doxProject!: DoxProject;
 	doxOptions = config.getDoxOptions([
 		'--projectRootDir',
 		projectDir,
 		'--npmFileConvention',
 		'package.spec.json',
 	]);
-	assert.doesNotThrow(() => (doxProject = new DoxProject(doxOptions)));
+	let project!: DoxProject;
+	assert.doesNotThrow(() => (project = new DoxProject(doxOptions)));
+	assert.isTrue(project.isDoxProject);
 });
 
-it('ignores tsconfigs that do not emit', function () {
+it('ignores tsConfigs that do not emit', function () {
 	const ignoredMessages: string[] = [];
 	infoStub = stub(log, 'info').callsFake((...args) => {
 		const message = `${args[1]} ${args[2]}`;
@@ -85,7 +90,6 @@ it('reports diagnostics for typescript programs and throws if error', function (
 		'package.spec.json',
 	]);
 	config._deleteCache();
-	//new DoxProject(doxOptions, ['--noLib', 'true']);
 	assert.throws(
 		() => new DoxProject(doxOptions, ['--noLib', 'true']),
 		/Error in ts.Program/,

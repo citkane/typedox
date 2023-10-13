@@ -1,76 +1,77 @@
 import * as ts from 'typescript';
 import * as path from 'path';
-import * as stubs from '../../tests.stubs.spec';
 import {
 	tsc,
 	logger as log,
 	logLevels,
 	TscWrapper,
 	config,
+	DoxConfig,
+	loggerUtils,
 } from '../../../../src/backend/typedox';
 import { assert } from 'chai';
 import { stub } from 'sinon';
+import { globalLogLevel } from '../../tests.backend.spec';
+import { compilerFactory } from '../../compilerFactory';
 
-const { compiler, projectDir, tsConfigPath } = stubs.compilerFactory('groups');
-const { program, checker, getFile } = compiler();
-const { sourceFile, sourceSymbol, sourceType, starExport, filePath } =
-	getFile('index.ts');
-const confChild = path.join(projectDir, 'child/child.ts');
+const localLogLevel = logLevels.silent;
+const localFactory = 'groups';
 
-let node: ts.Node;
-let symbol: ts.Symbol;
-let wrap: TscWrapper;
-let errorStub: any;
+const { compiler, projectDir } = compilerFactory(localFactory);
+
+let sourceFile: ts.SourceFile | undefined,
+	sourceSymbol: ts.Symbol,
+	sourceType: ts.Type,
+	starExport: ts.Symbol,
+	filePath: string,
+	errorStub: ReturnType<typeof stub>,
+	warningStub: ReturnType<typeof stub>,
+	program: ts.Program,
+	checker: ts.TypeChecker;
 
 before(function () {
-	log.setLogLevel(logLevels.error);
+	log.setLogLevel(globalLogLevel || localLogLevel);
+	const _compiler = compiler();
+
+	({ program, checker } = _compiler);
+	({ sourceFile, sourceSymbol, sourceType, starExport, filePath } =
+		_compiler.getFile('index.ts'));
 });
 afterEach(function () {
 	if (errorStub) errorStub.restore();
+	if (warningStub) warningStub.restore();
 });
-it('gets symbols from nodes', function () {
-	sourceFile?.forEachChild((node) => {
-		const { EndOfFileToken, FirstStatement, ImportDeclaration } =
-			ts.SyntaxKind;
-		const skip = [EndOfFileToken, FirstStatement, ImportDeclaration];
-		if (skip.includes(node.kind)) {
-			assert.throws(
-				() => (
-					tsc.getTsSymbolFromNode(checker, node),
-					/Invalid node for conversion to symbol/
-				),
-			);
-			return;
-		}
-
-		let symbol: ts.Symbol | undefined = undefined;
-
-		assert.doesNotThrow(
-			() => (symbol = tsc.getTsSymbolFromNode(checker, node)),
-		);
-
-		if (!symbol) {
-			log.info(ts.isMetaProperty(node));
-			log.infoKind(node.kind);
-		}
-		assert.exists(symbol);
-	});
-});
-
-it('has created the test program correctly', function () {
+it('has a valid program', function () {
 	assert.isTrue(program.getGlobalDiagnostics().length === 0);
+});
+it('throws on invalid kinds', function () {
+	const invalid = sourceFile?.getChildAt(0);
+	assert.exists(invalid);
+	assert.throws(() => {
+		tsc.wrap(checker, invalid!);
+	}, /Did not wrap a/);
+});
+it('throws on malformed kind', function () {
+	assert.throws(() => {
+		tsc.wrap(checker, {} as ts.Node);
+	}, /Expected a Node or Symbol, got a/);
+});
+it('wraps a valid kind', function () {
+	sourceFile?.forEachChild((node) => {
+		if (!DoxConfig.isSpecifierKind(node.kind)) return;
+		let wrap!: TscWrapper;
+		assert.doesNotThrow(() => (wrap = tsc.wrap(checker, node)));
+		wrap.cacheFlush();
+	});
 });
 it('gets a ts.SourceFile', function () {
 	assert.isTrue(sourceFile && ts.isSourceFile(sourceFile));
 });
-
 it('gets item from the sourcefile', function () {
-	symbol = sourceType.getProperty('localExport')!;
+	const symbol = sourceType.getProperty('localExport')!;
 	assert.exists(symbol);
 	assert.exists(symbol?.valueDeclaration);
-	node = symbol.valueDeclaration!;
 });
-
 it('gets node and type from a symbol', function () {
 	let nodeAndType!: { node: ts.Node; type: ts.Type };
 	const symbol = sourceType.getProperty('localFunc')!;
@@ -93,10 +94,11 @@ it('gets node and type from a symbol', function () {
 	assert.exists(nodeAndType.node);
 	assert.exists(nodeAndType.type);
 });
-
 it('wraps a node', function () {
+	const node = sourceType.getProperty('localExport')!.valueDeclaration!;
+	assert.exists(node);
 	assert.doesNotThrow(() => tsc.wrap(checker, node));
-	wrap = tsc.wrap(checker, node); // should hit the cache to complete coverage
+	const wrap = tsc.wrap(checker, node); // should hit the cache to complete coverage
 	assert.isTrue(wrap.isNode);
 	assert.isFalse(wrap.isSymbol);
 	assert.equal(wrap.nodeText, "localExport = 'localExport'", wrap.nodeText);
@@ -106,7 +108,7 @@ it('wraps a node', function () {
 		wrap.nodeDeclarationText,
 	);
 	assert.equal(wrap.targetFileName, undefined, wrap.targetFileName);
-	assert.equal(wrap.localTargetDeclaration, undefined);
+	assert.equal(wrap.localDeclaration, undefined);
 	assert.equal(wrap.moduleSpecifier, undefined);
 	assert.equal(wrap.alias, undefined);
 
@@ -120,15 +122,9 @@ it('wraps a node', function () {
 	);
 	deepReportCheck(wrap);
 });
-
-it('errors if cache is set twice', function () {
-	errorStub = stub(log, 'error').callsFake((...args) => {
-		assert.equal(args[1], 'Tried to set existing cache key:');
-	});
-	(wrap as any).cacheSet('tsNode', {});
-});
-
 it('wraps a symbol', function () {
+	const symbol = sourceType.getProperty('localExport')!;
+	let wrap!: TscWrapper;
 	assert.doesNotThrow(() => (wrap = new TscWrapper(checker, symbol))); //avoids the cached symbol from previous test
 	assert.isFalse(wrap.isNode);
 	assert.isTrue(wrap.isSymbol);
@@ -143,6 +139,101 @@ it('wraps a symbol', function () {
 	);
 
 	assert.exists(wrap.report);
+});
+it('errors if cache is set twice', function () {
+	const wrap = tsc.wrap(checker, sourceType.getProperty('localExport')!);
+	errorStub = stub(log, 'error').callsFake((...args) => {
+		assert.equal(args[1], 'Tried to set existing cache key:');
+	});
+	(wrap as any).cacheSet('tsNode', {});
+});
+it('retrieves local export declaration', function () {
+	const alias = sourceType.getProperty('localAlias');
+	assert.exists(alias, 'alias');
+	const aliasWrap = tsc.wrap(checker, alias!);
+	assert.exists(aliasWrap, 'aliasWrap');
+	assert.exists(aliasWrap.localDeclaration, 'localTargetDeclaration');
+	assert.equal(
+		aliasWrap.localDeclaration?.kind,
+		ts.SyntaxKind.VariableDeclaration,
+	);
+});
+it('retrieves local import declaration', function () {
+	const alias = sourceType.getProperty('child');
+	assert.exists(alias, 'alias');
+	const aliasWrap = tsc.wrap(checker, alias!);
+	assert.exists(aliasWrap, 'aliasWrap');
+	assert.exists(aliasWrap.localDeclaration, 'localTargetDeclaration');
+	const kind = aliasWrap.localDeclaration?.kind;
+
+	assert.equal(kind, ts.SyntaxKind.ImportSpecifier);
+});
+it('retrieves local exportImport declaration', function () {
+	const alias = sourceType.getProperty('rabbitHole');
+	assert.exists(alias, 'alias');
+	const aliasWrap = tsc.wrap(checker, alias!);
+	assert.exists(aliasWrap, 'aliasWrap');
+	assert.exists(aliasWrap.localDeclaration, 'localTargetDeclaration');
+	const kind = aliasWrap.localDeclaration?.kind;
+
+	log.info(ts.SyntaxKind[kind!]);
+	assert.equal(kind, ts.SyntaxKind.ModuleDeclaration);
+});
+it('gets a targetFileName from a namespaceExport', function () {
+	const confChild = path.join(projectDir, 'child/child.ts');
+	const specifier = sourceType.getProperty('childSpace');
+	assert.exists(specifier, 'specifier');
+	assert.isTrue(ts.isNamespaceExport(specifier!.declarations![0]));
+	const wrap = tsc.wrap(checker, specifier!);
+	assert.equal(confChild, wrap.targetFileName);
+});
+it('gets a targetFileName from a namespaceImport', function () {
+	const confChild = path.join(projectDir, 'grandchild/grandchild.ts');
+	const specifier = sourceType.getProperty('grandchildSpace');
+	assert.exists(specifier, 'specifier');
+
+	const importer = tsc.wrap(checker, specifier!).localDeclaration;
+	assert.isTrue(ts.isNamespaceImport(importer!));
+	const wrap = tsc.wrap(checker, specifier!);
+	assert.equal(confChild, wrap.targetFileName);
+});
+it('gets a targetFileName from a importSpecifier', function () {
+	const confChild = path.join(projectDir, 'child/child.ts');
+	const specifier = sourceType.getProperty('child');
+	assert.exists(specifier, 'specifier');
+	const importer = tsc.wrap(checker, specifier!).localDeclaration;
+	assert.exists(importer, 'importer');
+	assert.isTrue(ts.isImportSpecifier(importer!));
+	const wrap = tsc.wrap(checker, importer!);
+	assert.equal(confChild, wrap.targetFileName);
+});
+it('gets a targetFileName from a exportSpecifier', function () {
+	const confChild = path.join(projectDir, 'child/kinds.ts');
+	const specifier = sourceType.getProperty('func');
+	assert.exists(specifier, 'specifier');
+	assert.isTrue(ts.isExportSpecifier(specifier!.declarations![0]));
+	const wrap = tsc.wrap(checker, specifier!);
+	assert.equal(confChild, wrap.targetFileName);
+});
+it('gets a targetFileName from a ExportDeclaration', function () {
+	const confChild = path.join(projectDir, 'child/child.ts');
+	const specifier = sourceSymbol.exports?.get('__export' as any);
+	assert.exists(specifier, 'specifier');
+	const declaration = specifier!.declarations![0];
+	assert.exists(declaration);
+	assert.isTrue(ts.isExportDeclaration(declaration));
+	const wrap = tsc.wrap(checker, declaration!);
+	assert.equal(confChild, wrap.targetFileName);
+});
+it('gets a targetFileName from a importClause', function () {
+	const confChild = path.join(projectDir, 'child/child.ts');
+	const specifier = sourceType.getProperty('defaultExport');
+	assert.exists(specifier, 'specifier');
+	const importer = tsc.wrap(checker, specifier!).localDeclaration;
+	assert.exists(importer, 'importer');
+	assert.isTrue(ts.isImportClause(importer!));
+	const wrap = tsc.wrap(checker, importer!);
+	assert.equal(confChild, wrap.targetFileName);
 });
 it('wraps a loner type export', function () {
 	let isTypeOnly = sourceSymbol.exports?.get('isTypeOnly' as any);
@@ -177,26 +268,31 @@ it('wraps a local export', function () {
 	assert.notExists(exWrap.targetFileName);
 	assert.exists(exWrap.report);
 });
+
 it('wraps a remote export', function () {
 	const remoteExport = sourceType.getProperty('child');
-	assert.exists(remoteExport);
+	assert.exists(remoteExport, 'remoteExport');
 	const remoteExportWrap = tsc.wrap(checker, remoteExport!);
 
 	assert.notExists(remoteExportWrap.alias);
-	assert.equal(remoteExportWrap.targetFileName, confChild);
 	assert.exists(remoteExportWrap.report);
 });
 it('wraps a alias export', function () {
 	const alias = sourceType.getProperty('localAlias');
+	assert.exists(alias, 'alias');
 	const aliasWrap = tsc.wrap(checker, alias!);
-	assert.exists(aliasWrap.aliasedSymbol);
+	assert.exists(aliasWrap, 'aliasWrap');
+	assert.exists(aliasWrap.aliasedSymbol, 'aliasedSymbol');
 	assert.equal(aliasWrap.aliasedSymbol!.name, 'localDeclaration');
-	assert.exists(aliasWrap.immediatelyAliasedSymbol);
+	assert.exists(
+		aliasWrap.immediatelyAliasedSymbol,
+		'immediatelyAliasedSymbol',
+	);
 	assert.equal(aliasWrap.immediatelyAliasedSymbol!.name, 'localDeclaration');
 	assert.equal(aliasWrap.hasValueDeclaration, false);
-	assert.exists(aliasWrap.localTargetDeclaration);
+	assert.exists(aliasWrap.localDeclaration, 'localTargetDeclaration');
 	assert.equal(
-		(aliasWrap.localTargetDeclaration as any)!['name'].getText(),
+		(aliasWrap.localDeclaration as any)!['name'].getText(),
 		'localDeclaration',
 	);
 	assert.equal(aliasWrap.alias, 'localDeclaration');
@@ -237,6 +333,7 @@ it('wraps a class', function () {
 });
 
 it('wraps a reExportChild', function () {
+	const confChild = path.join(projectDir, 'child/child.ts');
 	assert.isTrue(tsc.isReExport(starExport));
 	const exportChild = (starExport.declarations![0] as any)['moduleSpecifier'];
 	assert.exists(exportChild);

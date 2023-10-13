@@ -7,6 +7,7 @@
 		"typedox": "bin/typedox.js"
 	},
 	"scripts": {
+		"scratch": "npx ts-node test/scratch",
 		"build:test": "npx tsc --project test/backend/tsconfig.json -w",
 		"build:watch": "node .build.js -b -w",
 		"backend": "node -r source-map-support/register dist/bin/typedox",

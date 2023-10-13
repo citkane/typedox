@@ -1,6 +1,7 @@
 /docs
 /temp
 /test/**/coverage
+/test/scratch
 
 dist
 node_modules

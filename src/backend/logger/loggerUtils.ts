@@ -7,6 +7,7 @@ export enum logLevels {
 	info,
 	warn,
 	error,
+	silent,
 }
 
 export function initLowerCamel(word: string) {
@@ -57,6 +58,52 @@ export function logApplicationHelp() {
 		log.groupEnd();
 	});
 	return true;
+}
+export function logSpecifierHelp() {
+	const rep = 80;
+	log.info(
+		'\n\n',
+		'-'.repeat(rep),
+		'\n',
+		colourise('Bright', 'Examples of the import / export specifier kinds:'),
+		'\n',
+		'-'.repeat(rep),
+		'\n',
+		{
+			ExportAssignment: [
+				'export default clause;',
+				'export = nameSpace;',
+				'export = nameSpace.clause;',
+				"export = {foo:'foo, bar:'bar'}",
+			],
+			ExportDeclaration: ["export * from './child/child';"],
+			ExportSpecifier: [
+				"export { child } from './child/child';",
+				'export { localVar, grandchild, grandchildSpace };',
+			],
+			ImportClause: [
+				"import TypeScript from 'typescript';",
+				"import clause from './child/child';",
+			],
+			ImportEqualsDeclaration: [
+				'export import childSpace = childSpace;',
+				'export import bar = local.bar;',
+				'export import bar = local.bar;',
+			],
+			ImportSpecifier: [
+				"import { grandchild, childSpace } from './grandchild/grandchild'",
+			],
+			ModuleDeclaration: [
+				'export namespace moduleDeclaration { local; childSpace; }',
+				"declare namespace local {foo = 'foo'}",
+			],
+			NamespaceExport: ["export * as childSpace from './child/child';"],
+			NamespaceImport: ["import * as childSpace from '../child/child';"],
+		},
+		'\n',
+		'-'.repeat(rep),
+		'\n\n',
+	);
 }
 
 export function identifier(subject: string | object | number) {

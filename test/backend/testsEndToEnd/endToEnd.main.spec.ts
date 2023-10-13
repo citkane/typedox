@@ -5,16 +5,19 @@ import {
 	serialise,
 	config,
 } from '../../../src/backend/typedox';
-import * as stubs from '../tests.stubs.spec';
+import { compilerFactory } from '../compilerFactory';
+import { globalLogLevel } from '../tests.backend.spec';
 import { assert } from 'chai';
+
+const localLogLevel = logLevels.silent;
 
 type projectObject = ReturnType<typeof serialise.serialiseProject>;
 
 before(function () {
-	log.setLogLevel(logLevels.error);
+	log.setLogLevel(globalLogLevel || localLogLevel);
 });
 it('runs the backend', function () {
-	const { projectDir } = stubs.compilerFactory('groups');
+	const { projectDir } = compilerFactory('groups');
 	const projectConfig = config.getDoxOptions([
 		'--projectRootDir',
 		projectDir,

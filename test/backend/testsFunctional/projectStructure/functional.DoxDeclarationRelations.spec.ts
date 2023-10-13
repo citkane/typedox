@@ -1,13 +1,19 @@
+import * as ts from 'typescript';
 import { assert } from 'chai';
-import * as stubs from '../../tests.stubs.spec';
 import {
 	DeclarationGroup,
-	TsDeclaration,
+	DoxDeclaration,
 	logger as log,
 	logLevels,
+	loggerUtils,
 } from '../../../../src/backend/typedox';
 import { stub } from 'sinon';
 import { Context } from 'mocha';
+import { globalLogLevel } from '../../tests.backend.spec';
+import { projectFactory } from '../../projectFactory';
+
+const localLogLevel = logLevels.info;
+const localFactory = 'specifiers';
 
 declare module 'mocha' {
 	export interface Context {
@@ -20,18 +26,21 @@ declare module 'mocha' {
 }
 
 before(function () {
-	log.setLogLevel(logLevels.error);
+	log.setLogLevel(globalLogLevel || localLogLevel);
 
 	this.errors = [];
 	this.files = makeFiles();
 	this.getDeclaration = getDeclaration.bind(this);
 	this.testSpecifier = testSpecifier.bind(this);
 
-	stubs.logSpecifierHelp();
+	loggerUtils.logSpecifierHelp();
 });
 afterEach(function () {
 	if (this.errorStub) this.errorStub.restore();
 	this.errors = [];
+});
+after(function () {
+	projectFactory.flushCache();
 });
 
 it('maps a imported ExportAssignment', function () {
@@ -47,9 +56,10 @@ it('maps a imported ExportAssignment', function () {
 		DeclarationGroup[declaration.group!],
 	);
 	assert.equal(declaration.nameSpace, undefined);
+	assert.isTrue(declaration.flags.default);
 });
 it('maps a export= ExportAssignment', function () {
-	const result = this.testSpecifier('export=', 'common');
+	const result = this.testSpecifier('export=', 'exportEqual');
 	const { children, declaration } = result;
 	assert.sameMembers(children, []);
 	assert.equal(declaration.valueItem?.name, 'common');
@@ -63,6 +73,7 @@ it('maps a export= ExportAssignment', function () {
 		'bar',
 	]);
 	assert.equal(declaration.nameSpace, 'common');
+	assert.isTrue(declaration.flags.default);
 });
 it('maps a local ExportAssignment', function () {
 	const result = this.testSpecifier('default', 'child');
@@ -79,7 +90,13 @@ it('maps a local ExportAssignment', function () {
 it('maps an ExportDeclaration', function () {
 	const result = this.testSpecifier('__export');
 	const { children, declaration } = result;
-	assert.sameMembers(children, ['grandchild', 'childSpace', 'child']);
+	assert.sameMembers(children, [
+		'grandchild',
+		'childSpace',
+		'child',
+		'grandchildType',
+		'childType',
+	]);
 	assert.equal(declaration.valueItem, undefined);
 	assert.equal(
 		declaration.group,
@@ -112,6 +129,18 @@ it('maps a reExport variable ExportSpecifier', function () {
 	);
 	assert.equal(declaration.nameSpace, undefined);
 });
+it('maps a remote variable ExportSpecifier', function () {
+	const result = this.testSpecifier('remote');
+	const { children, declaration } = result;
+	assert.sameDeepMembers(children, ['grandchild']);
+	assert.equal(declaration.valueItem?.name, 'grandchild');
+	assert.equal(
+		declaration.group,
+		DeclarationGroup.Variable,
+		DeclarationGroup[declaration.group!],
+	);
+	assert.equal(declaration.nameSpace, undefined);
+});
 it('maps a export variable ExportSpecifier', function () {
 	const result = this.testSpecifier('child');
 	const { children, declaration } = result;
@@ -120,6 +149,41 @@ it('maps a export variable ExportSpecifier', function () {
 	assert.equal(
 		declaration.group,
 		DeclarationGroup.Variable,
+		DeclarationGroup[declaration.group!],
+	);
+	assert.equal(declaration.nameSpace, undefined);
+});
+it('maps a local type ExportSpecifier', function () {
+	const result = this.testSpecifier('localType');
+	const { children, declaration } = result;
+	assert.equal(declaration.valueItem?.name, 'localType');
+	assert.equal(
+		declaration.group,
+		DeclarationGroup.Type,
+		DeclarationGroup[declaration.group!],
+	);
+	assert.equal(declaration.nameSpace, undefined);
+});
+it('maps a type ExportSpecifier', function () {
+	const result = this.testSpecifier('childType');
+	const { children, declaration } = result;
+	assert.sameMembers(children, ['childType']);
+	assert.equal(declaration.valueItem?.name, 'childType');
+	assert.equal(
+		declaration.group,
+		DeclarationGroup.Type,
+		DeclarationGroup[declaration.group!],
+	);
+	assert.equal(declaration.nameSpace, undefined);
+});
+it('maps a remote type ExportSpecifier', function () {
+	const result = this.testSpecifier('grandchildType');
+	const { children, declaration } = result;
+	assert.sameMembers(children, ['grandchildType']);
+	assert.equal(declaration.valueItem?.name, 'grandchildType');
+	assert.equal(
+		declaration.group,
+		DeclarationGroup.Type,
 		DeclarationGroup[declaration.group!],
 	);
 	assert.equal(declaration.nameSpace, undefined);
@@ -215,10 +279,10 @@ it('maps a namespace ImportSpecifier', function () {
 it('maps an export ModuleDeclaration', function () {
 	const result = this.testSpecifier('moduleDeclaration');
 	const { children, declaration } = result;
+	const localKeys = Array.from(declaration.localDeclarationMap.keys());
+
 	assert.sameMembers(children, ['childSpace']);
-	assert.sameMembers(Array.from(declaration.localDeclarationMap.keys()), [
-		'local',
-	]);
+	assert.sameMembers(localKeys, ['local']);
 	assert.equal(declaration.valueItem?.name, 'moduleDeclaration');
 	assert.equal(
 		declaration.group,
@@ -247,7 +311,14 @@ it('maps a local ModuleDeclaration', function () {
 it('maps a NamespaceExport', function () {
 	const result = this.testSpecifier('childSpace');
 	const { children, declaration } = result;
-	assert.sameMembers(children, ['default', 'child']);
+	assert.sameMembers(children, [
+		'default',
+		'child',
+		'grandchild',
+		'childSpace',
+		'grandchildType',
+		'childType',
+	]);
 	assert.equal(declaration.valueItem?.name, undefined);
 	assert.equal(
 		declaration.group,
@@ -259,7 +330,11 @@ it('maps a NamespaceExport', function () {
 it('maps a NamespaceImport', function () {
 	const result = this.testSpecifier('grandchildSpace');
 	const { children, declaration } = result;
-	assert.sameMembers(children, ['grandchild', 'childSpace']);
+	assert.sameMembers(children, [
+		'grandchild',
+		'childSpace',
+		'grandchildType',
+	]);
 	assert.equal(declaration.valueItem?.name, undefined);
 	assert.equal(
 		declaration.group,
@@ -269,56 +344,114 @@ it('maps a NamespaceImport', function () {
 	assert.equal(declaration.nameSpace, 'grandchildSpace');
 });
 
-function getDeclaration(
-	this: Context,
-	key: string,
-	file: keyof typeof this.files = 'specifiers',
-) {
-	return this.files[file].declarationsMap.get(key)!;
-}
-type testReturn = { children: string[]; declaration: TsDeclaration };
+it.only('maps a Common export', function () {
+	const result = this.testSpecifier('export=', 'common');
+	const { declaration } = result;
+	const { tsWrap, checker } = declaration;
+	const node = result.declaration.valueItem?.tsNode;
+	if (ts.isObjectLiteralExpression(node as ts.Node)) {
+		(node as any).properties?.forEach(
+			(prop: ts.ShorthandPropertyAssignment) => {
+				log.info(ts.SyntaxKind[tsWrap(prop).localDeclaration?.kind!]);
+				//log.info(tsWrap(prop).aliasedSymbol);
+			},
+		);
+	}
+
+	/*
+	const { children, declaration } = result;
+	log.info(declaration.name, declaration.valueItem);
+	assert.equal(declaration.valueItem?.name, 'child');
+	assert.equal(
+		declaration.group,
+		DeclarationGroup.Variable,
+		DeclarationGroup[declaration.group!],
+	);
+	assert.equal(declaration.nameSpace, undefined);
+	*/
+});
+/*
+it('test', function () {
+	const file = makeFiles().test;
+});
+*/
+
+type testReturn = { children: string[]; declaration: DoxDeclaration };
 function testSpecifier(
 	specifier: string,
 	specifier2?: keyof ReturnType<typeof makeFiles>,
 ): testReturn;
-function testSpecifier(declaration: TsDeclaration | undefined): testReturn;
+function testSpecifier(declaration: DoxDeclaration | undefined): testReturn;
 function testSpecifier(
 	this: Context,
-	specifierOrDeclaration: string | TsDeclaration | undefined,
+	specifierOrDeclaration: string | DoxDeclaration | undefined,
 	specifier2?: keyof typeof this.files,
 ) {
-	if (this.errorStub) this.errorStub.restore();
-	this.errorStub = stub(log, 'error').callsFake((...args) => {
-		console.log(args);
-		this.errors.push(args[1]);
-	});
-	const declaration =
-		typeof specifierOrDeclaration === 'string'
-			? this.getDeclaration.call(this, specifierOrDeclaration, specifier2)
-			: specifierOrDeclaration;
+	resetErrors.call(this);
+	const overload = typeof specifierOrDeclaration === 'string';
+	const declaration = overload
+		? this.getDeclaration(specifierOrDeclaration, specifier2)
+		: specifierOrDeclaration;
+
 	assert.exists(declaration, 'declaration');
-	assert.doesNotThrow(() => declaration!.mapRelationships());
-	assert.lengthOf(this.errors, 0);
+	const { relate: mapRelationships, wrappedItem } = declaration!;
+
+	assert.doesNotThrow(() => mapRelationships(wrappedItem, false));
+	assert.lengthOf(this.errors, 0, JSON.stringify(this.error, null, 4));
 
 	return { children: Array.from(declaration!.children.keys()), declaration };
+
+	function resetErrors(this: Context) {
+		if (this.errorStub) this.errorStub.restore();
+		this.errorStub = stub(log, 'error').callsFake((...args) => {
+			this.errors.push(args[1]);
+		});
+	}
+}
+
+function getDeclaration(
+	this: Context,
+	key: string,
+	file: keyof typeof this.files = localFactory,
+) {
+	log.info(key, this.files[file].declarationsMap.keys());
+	return this.files[file].declarationsMap.get(key)!;
 }
 const makeFiles = () => {
 	return {
-		specifiers: stubs.projectFactory.specTsSourceFile('specifiers'),
-		child: stubs.projectFactory.specTsSourceFile(
-			'specifiers',
+		specifiers: projectFactory.specDoxSourceFile(localFactory),
+		child: projectFactory.specDoxSourceFile(
+			localFactory,
 			undefined,
 			'./child/child.ts',
+			true,
 		),
-		grandchild: stubs.projectFactory.specTsSourceFile(
-			'specifiers',
+		grandchild: projectFactory.specDoxSourceFile(
+			localFactory,
 			undefined,
 			'./grandchild/grandchild.ts',
+			true,
 		),
-		common: stubs.projectFactory.specTsSourceFile(
-			'specifiers',
+		exportEqual: projectFactory.specDoxSourceFile(
+			localFactory,
+			undefined,
+			'./exportEqual/exportEqual.ts',
+			true,
+		),
+
+		common: projectFactory.specDoxSourceFile(
+			localFactory,
 			undefined,
 			'./common/common.ts',
+			true,
 		),
+		/*
+		test: (fileCache.test ??= stubs.projectFactory.specDoxSourceFile(
+			'specifiers',
+			undefined,
+			'./test.ts',
+			true,
+		)),
+		*/
 	};
 };

@@ -1,6 +1,6 @@
 export { DoxProject } from './DoxProject';
-export { NpmPackage } from './NpmPackage';
-export { TsReference } from './TsReference';
-export { TsSourceFile } from './TsSourceFile';
-export { TsDeclaration } from './TsDeclaration';
+export { DoxPackage } from './DoxPackage';
+export { DoxReference } from './DoxReference';
+export { DoxSourceFile } from './DoxSourceFile';
+export { DoxDeclaration } from './DoxDeclaration';
 export { Branch } from './Branch';

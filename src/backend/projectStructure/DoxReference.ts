@@ -4,8 +4,8 @@ import * as path from 'path';
 import {
 	Branch,
 	DoxConfig,
-	NpmPackage,
-	TsSourceFile,
+	DoxPackage,
+	DoxSourceFile,
 	TscWrapper,
 	logger as log,
 	serialise,
@@ -19,35 +19,37 @@ import {
  *
  * &emsp;DoxProject\
  * &emsp;&emsp;|\
- * &emsp;&emsp;--- NpmPackage[]\
+ * &emsp;&emsp;--- DoxPackage[]\
  * &emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;--- **TsReference**[]\
+ * &emsp;&emsp;&emsp;--- **DoxReference**[]\
  * &emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;--- TsSourceFile[]\
+ * &emsp;&emsp;&emsp;&emsp;--- DoxSourceFile[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;&emsp;--- TsDeclaration[]\
+ * &emsp;&emsp;&emsp;&emsp;&emsp;--- DoxDeclaration[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;--- Branch[]\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
- * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...TsDeclaration...
+ * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...DoxDeclaration...
  *
  */
-export class TsReference extends DoxConfig {
+export class DoxReference extends DoxConfig {
 	public name: string;
-	public parent: NpmPackage;
-	public filesMap = new Map<string, TsSourceFile>();
+	public parent: DoxPackage;
+	public filesMap = new Map<string, DoxSourceFile>();
 	public treeBranches: Map<string, Branch> = new Map();
 	public entryFileList: string[];
 	public checker: ts.TypeChecker;
-	private program: ts.Program;
+	public program: ts.Program;
+	private ignoredFiles = [] as string[];
 
 	constructor(
-		parent: NpmPackage,
+		parent: DoxPackage,
 		name: string,
 		program: ts.Program,
 		files: string[],
 	) {
 		super();
+		//this.filesMap = parent.filesMap;
 		this.checker = program.getTypeChecker();
 		this.name = name;
 		this.parent = parent;
@@ -56,24 +58,42 @@ export class TsReference extends DoxConfig {
 	}
 
 	public get toObject() {
-		return serialise.serialiseTsReference(this);
+		return serialise.serialiseDoxReference(this);
 	}
 	public tsWrap = (item: tsItem): TscWrapper => {
 		return tsc.wrap(this.checker, item);
 	};
 	public discoverFiles(fileList = this.entryFileList) {
 		fileList.forEach((fileName) => {
-			if (this.filesMap.has(fileName)) return;
+			if (
+				this.filesMap.has(fileName) ||
+				this.ignoredFiles.includes(fileName)
+			) {
+				return;
+			}
 
+			if (fileName.startsWith(tsc.badFilePrefix)) {
+				this.ignoredFiles.push(fileName);
+				return notices.discoverFiles.fileSourceError(
+					fileName.replace(tsc.badFilePrefix, ''),
+				);
+			}
 			const fileSource = this.program.getSourceFile(fileName);
+
 			if (!fileSource)
 				return notices.discoverFiles.fileSourceError(fileName);
 
-			const fileSymbol = this.checker!.getSymbolAtLocation(fileSource);
-			if (!fileSymbol)
-				return notices.discoverFiles.fileSymbolWarning(fileName);
+			const fileSymbol = this.checker.getSymbolAtLocation(fileSource);
 
-			const doxSourceFile = new TsSourceFile(
+			if (!fileSymbol) {
+				this.ignoredFiles.push(fileName);
+				return notices.discoverFiles.fileSymbolWarning(
+					fileName,
+					'No ts.Symbol for a ts.SourceFile.',
+				);
+			}
+
+			const doxSourceFile = new DoxSourceFile(
 				this,
 				fileSource,
 				fileSymbol,
@@ -99,54 +119,22 @@ export class TsReference extends DoxConfig {
 			.flat()
 			.filter((declaration) => !declaration.parents.size);
 	};
-	public validateSpecifier(item: ts.Symbol | ts.Node) {
-		const isNode = item.constructor.name === 'NodeObject';
-		if (!isNode) return true;
-		item = item as ts.Node;
-		const isImportExport =
-			ts.isExportDeclaration(item.parent) ||
-			ts.isImportDeclaration(item.parent);
-		if (isImportExport) {
-			const exists = ts.isImportClause(item)
-				? !!this.checker.getTypeAtLocation(item)?.symbol
-				: ts.isNamespaceExport(item)
-				? !!fs.existsSync(this.tsWrap(item).targetFileName!)
-				: !!this.checker.getSymbolAtLocation(item);
-			!exists && notices.noFileWarning(this, item);
-			return exists;
-		}
-
-		return true;
-	}
 }
 const notices = {
 	discoverFiles: {
 		fileSourceError: (fileName: string) =>
 			log.error(
 				log.identifier(__filename),
-				'No source file was found:',
+				'No source file was found for:',
 				fileName,
 			),
-		fileSymbolWarning: (fileName: string) =>
+		fileSymbolWarning: (fileName: string, message: string) =>
 			log.warn(
 				log.identifier(__filename),
+				message,
 				'File was not included as part of the documentation set:',
 				fileName,
 			),
-	},
-	noFileWarning: (location: any, item: ts.Node) => {
-		const dir = path.dirname(item.getSourceFile().fileName);
-		const file = item.getText().replace(/"/g, '');
-		const filePath = path.join(dir, file);
-		const id = log.identifier(location) + filePath;
-		if (!seenFileError.includes(id)) {
-			log.warn(
-				log.identifier(location),
-				'File does not exist:',
-				filePath,
-			);
-		}
-		seenFileError.push(id);
 	},
 };
 const seenFileError: string[] = [];

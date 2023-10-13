@@ -8,20 +8,24 @@ import {
 	logger as log,
 	logLevels,
 } from '../../../../src/backend/typedox';
+import { globalLogLevel } from '../../tests.backend.spec';
+import { compilerFactory } from '../../compilerFactory';
+
+const localLogLevel = logLevels.silent;
 
 describe('class DoxConfig', function () {
-	const { tsConfigPath } = stubs.compilerFactory('configs');
+	const { tsConfigPath } = compilerFactory('configs');
 	const getDoxConfig = () => {
 		config._deleteCache();
 		return new DoxConfig(config.getDoxOptions(), []);
 	};
-	let errorStub: any;
 
 	before(function () {
-		log.setLogLevel(logLevels.info);
+		log.setLogLevel(globalLogLevel || localLogLevel);
 	});
-	afterEach(function () {
-		if (errorStub) errorStub.restore();
+
+	after(function () {
+		config._deleteCache();
 	});
 
 	it('requires initial options', function () {
@@ -54,7 +58,7 @@ describe('class DoxConfig', function () {
 
 	it('errors if entry conf is not under the root directory', function () {
 		config._deleteCache();
-		const { projectDir } = stubs.compilerFactory('groups');
+		const { projectDir } = compilerFactory('groups');
 		const options = config.getDoxOptions([
 			'--projectRootDir',
 			path.join(projectDir, 'child'),
@@ -118,6 +122,6 @@ describe('class DoxConfig', function () {
 		const values = Object.values(ts.SyntaxKind)
 			.map((kind) => doxConfig.isSpecifierKind(kind as any))
 			.filter((value) => !!value);
-		assert.equal(values.length, 9);
+		assert.equal(values.length, 11);
 	});
 });

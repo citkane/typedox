@@ -9,8 +9,8 @@ import {
 } from '../../../../src/backend/typedox';
 
 describe('logging tools', function () {
-	let stubLog: any;
-	let stubGroup: any;
+	let stubLog: ReturnType<typeof stub>;
+	let stubGroup: ReturnType<typeof stub>;
 	this.afterEach(function () {
 		if (stubLog) stubLog.restore();
 		if (stubGroup) stubGroup.restore();

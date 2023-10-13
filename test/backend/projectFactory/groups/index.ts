@@ -1,10 +1,9 @@
 import { child } from './child/child';
 import { greatGrandchild } from './greatGrandchild/greatGrandchild';
 import * as grandchildSpace from './grandchild/grandchild';
-// @ts-ignore
-import * as emptySpace from './emptyFile';
+import defaultExport from './child/child';
 
-export { child, emptySpace, grandchildSpace };
+export { child, grandchildSpace, defaultExport };
 
 export import grandchild = grandchildSpace.grandchild;
 
@@ -25,8 +24,12 @@ const localDeclaration = 'localDeclaration';
 export type localDeclaration = typeof localDeclaration;
 export { localDeclaration, localDeclaration as localAlias };
 
-export { func, arrowFunc, variable, enumerator, Class } from './child/kinds';
+export { func, arrowFunc, enumerator, Class } from './child/kinds';
 export function localFunc() {}
-export class LocalClass {}
+export class LocalClass {
+	static localMember = 'localMemberValue';
+}
+
+const { localMember } = LocalClass;
 
 export default moduleDeclaration;
