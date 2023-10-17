@@ -6,11 +6,8 @@ import {
 	logger as log,
 	config,
 	DoxPackage,
-	DoxDeclaration,
-	TscWrapper,
 	doxPackageDefinitions,
 	DoxConfig,
-	logLevels,
 	serialise,
 	loggerUtils,
 } from '../typedox';

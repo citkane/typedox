@@ -1,5 +1,5 @@
 import { logLevels, loggerUtils } from '../../src/backend/typedox';
-export const globalLogLevel: logLevels | undefined = undefined;
+export const globalLogLevel: logLevels | undefined = undefined; //logLevels.error;
 
 const { colourise } = loggerUtils;
 const _unitTest = colourise('Bright', 'Unit tests');
@@ -8,59 +8,59 @@ const _endToEndTest = colourise('Bright', 'End to end test');
 
 describe(title('Logger'), function () {
 	describe(unitTest('Logger'), function () {
-		require('./testsUnit/logger/unit.logger.spec');
+		require('./tests/logger/unit.logger.spec');
 	});
 	describe(functionalTest('Logger'), function () {
-		require('./testsFunctional/logger/functional.logger.spec');
+		require('./tests/logger/functional.logger.spec');
 	});
 });
 describe(title('Configuration and options'), function () {
 	describe(unitTest('Configuration and options'), function () {
-		require('./testsUnit/configurationAndOptions/unit.options.spec');
+		require('./tests/config/unit.config.spec');
 	});
 	describe(functionalTest('Configuration and options'), function () {
-		require('./testsFunctional/configurationAndOptions/functional.options.spec');
+		require('./tests/config/functional.config.spec');
 	});
 });
-describe(title('tscApiWrapper'), function () {
-	describe(functionalTest('tscApiWrapper'), function () {
-		require('./testsFunctional/configurationAndOptions/functional.tscWrapper.spec');
+describe(title('tsWrapper'), function () {
+	describe(functionalTest('tsWrapper'), function () {
+		require('./tests/tsWrapper/functional.tsWrapper.spec');
 	});
 });
 describe(title('Project structure'), function () {
 	describe(functionalTest('DoxProject'), function () {
-		require('./testsFunctional/projectStructure/functional.DoxProject.spec');
+		require('./tests/projectStructure/functional.DoxProject.spec');
 	});
 	describe(unitTest('DoxPackage'), function () {
-		require('./testsUnit/projectStructure/unit.DoxPackage.spec');
+		require('./tests/projectStructure/unit.DoxPackage.spec');
 	});
 	describe(functionalTest('DoxPackage'), function () {
-		require('./testsFunctional/projectStructure/functional.DoxPackage.spec');
+		require('./tests//projectStructure/functional.DoxPackage.spec');
 	});
 	describe(functionalTest('DoxReference'), function () {
-		require('./testsFunctional/projectStructure/functional.DoxReference.spec');
+		require('./tests/projectStructure/functional.DoxReference.spec');
 	});
 	describe(functionalTest('DoxSourceFile'), function () {
-		require('./testsFunctional/projectStructure/functional.DoxSourceFile.spec');
+		require('./tests/projectStructure/functional.DoxSourceFile.spec');
 	});
 	describe(functionalTest('DoxDeclaration'), function () {
-		require('./testsFunctional/projectStructure/functional.DoxDeclaration.spec');
+		require('./tests/projectStructure/functional.DoxDeclaration.spec');
 	});
 	describe(functionalTest('DoxDeclaration relations'), function () {
-		require('./testsFunctional/projectStructure/functional.DoxDeclarationRelations.spec.ts');
+		require('./tests/projectStructure/functional.DoxDeclarationRelations.spec.ts');
 	});
 	describe(functionalTest('Branch'), function () {
-		require('./testsFunctional/projectStructure/functional.Branch.spec');
+		require('./tests/projectStructure/functional.Branch.spec');
 	});
 });
 describe(title('serialiser'), function () {
 	describe(unitTest('serialiser'), function () {
-		require('./testsUnit/serialiser/unit.serialiser.spec');
+		require('./tests/serialiser/unit.serialiser.spec');
 	});
 });
 describe(title('Backend'), function () {
 	describe(endToEndTest('main'), function () {
-		require('./testsEndToEnd/endToEnd.main.spec');
+		require('./tests/endToEnd.main.spec');
 	});
 });
 

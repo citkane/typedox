@@ -5,10 +5,11 @@ import {
 	DoxConfig,
 	DoxReference,
 	DoxSourceFile,
-	TscWrapper,
+	TsWrapper,
 	declarationsMap,
 	logger as log,
 	logLevels,
+	loggerUtils,
 } from '../typedox';
 import { identifier } from '../logger/loggerUtils';
 
@@ -36,8 +37,8 @@ export class DoxDeclaration extends DoxConfig {
 	public parent: DoxSourceFile | DoxDeclaration;
 	public parents: Map<DoxDeclaration, boolean> = new Map();
 	public children: declarationsMap = new Map();
-	public wrappedItem: TscWrapper;
-	public valueItem?: TscWrapper;
+	public wrappedItem: TsWrapper;
+	public valueNode?: ts.Node;
 	public localDeclarationMap: declarationsMap = new Map();
 	public flags: DeclarationFlags = {};
 	private groupTsKind!: ts.SyntaxKind;
@@ -48,6 +49,7 @@ export class DoxDeclaration extends DoxConfig {
 		super();
 
 		this.parent = parent;
+
 		this.wrappedItem = this.tsWrap(item);
 
 		this.declare(this.wrappedItem);
@@ -58,26 +60,29 @@ export class DoxDeclaration extends DoxConfig {
 	}
 	public get group() {
 		const {
-			VariableDeclaration,
-			ClassDeclaration,
-			FunctionDeclaration,
-			EnumDeclaration,
-		} = ts.SyntaxKind;
-		const { kind, isModule, isType, isReExport } = this.parseGroup();
+			kind,
+			isModule,
+			isType,
+			isReExport,
+			isFunction,
+			isClass,
+			isVariable,
+			isEnum,
+		} = parseGroup(this.groupTsKind, this.isArrowFunction);
 
 		const groupKind = isModule
 			? DeclarationGroup.Module
+			: isVariable
+			? DeclarationGroup.Variable
 			: isType
 			? DeclarationGroup.Type
 			: isReExport
 			? DeclarationGroup.ReExport
-			: kind === VariableDeclaration
-			? DeclarationGroup.Variable
-			: kind === ClassDeclaration
-			? DeclarationGroup.Class
-			: kind === FunctionDeclaration
+			: isFunction
 			? DeclarationGroup.Function
-			: kind === EnumDeclaration
+			: isClass
+			? DeclarationGroup.Class
+			: isEnum
 			? DeclarationGroup.Enum
 			: DeclarationGroup.unknown;
 
@@ -86,7 +91,53 @@ export class DoxDeclaration extends DoxConfig {
 		}
 
 		return groupKind;
+		function parseGroup(kind: ts.SyntaxKind, isArrowFunction: boolean) {
+			const { SyntaxKind: syntax } = ts;
+
+			const isClass =
+				kind === syntax.ClassDeclaration ||
+				kind === syntax.ClassExpression;
+			const isVariable =
+				(!isArrowFunction && kind === syntax.VariableDeclaration) ||
+				kind === syntax.StringLiteral ||
+				kind === syntax.ArrayLiteralExpression ||
+				kind === syntax.ObjectLiteralExpression ||
+				kind === syntax.CallExpression ||
+				kind === syntax.NewExpression;
+
+			const isFunction =
+				isArrowFunction ||
+				kind === syntax.FunctionExpression ||
+				kind === syntax.ArrowFunction ||
+				kind === syntax.FunctionDeclaration;
+			const isModule =
+				kind === syntax.ModuleDeclaration ||
+				kind === syntax.NamespaceExport ||
+				kind === syntax.NamespaceImport;
+
+			const isType =
+				kind === syntax.TypeAliasDeclaration ||
+				kind === syntax.InterfaceDeclaration;
+
+			const isReExport =
+				kind === syntax.ImportSpecifier ||
+				kind === syntax.ExportDeclaration;
+
+			const isEnum = kind === syntax.EnumDeclaration;
+
+			return {
+				kind,
+				isModule,
+				isType,
+				isReExport,
+				isFunction,
+				isClass,
+				isVariable,
+				isEnum,
+			};
+		}
 	}
+
 	public get checker() {
 		return this.doxSourceFile.checker;
 	}
@@ -113,49 +164,59 @@ export class DoxDeclaration extends DoxConfig {
 	public get tsWrap(): DoxReference['tsWrap'] {
 		return this.parent.tsWrap;
 	}
-	public relate = (get: TscWrapper, isTarget = false) => {
-		if (!this.isSpecifierKind(get.kind)) return;
+	public relate = (wrapped: TsWrapper, isTarget = false) => {
+		if (!this.isSpecifierKind(wrapped.kind)) return;
 
 		type routeKey = keyof typeof DoxDeclaration.relationshipRoutes;
-		const key = ts.SyntaxKind[get.kind] as routeKey;
-		const routeFunction = DoxDeclaration.relationshipRoutes[key];
+		const key = ('relate' + ts.SyntaxKind[wrapped.kind]) as routeKey;
+		const relateFunction = DoxDeclaration.relationshipRoutes[key];
 
-		routeFunction
-			? routeFunction.call(this, get)
+		relateFunction
+			? relateFunction.call(this, wrapped)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.report.call(this, get, isTarget);
+			  notices.report.call(this, wrapped, 'relate', isTarget);
 	};
-	private declare = (get: TscWrapper, isTarget = false) => {
-		this.groupTsKind = get.kind;
+	private declare = (wrapped: TsWrapper, isTarget = false) => {
+		if (!this.isSpecifierKind(wrapped.kind)) {
+			this.valueNode = wrapped.tsNode;
 
-		if (!this.isSpecifierKind(get.kind)) return (this.valueItem = get);
+			this.groupTsKind ??= wrapped.kind;
+			return;
+		}
 
 		type routeKey = keyof typeof DoxDeclaration.declarationRoutes;
-		const key = ts.SyntaxKind[get.kind] as routeKey;
-		const routeFunction = DoxDeclaration.declarationRoutes[key];
+		const key = ('declare' + ts.SyntaxKind[wrapped.kind]) as routeKey;
+		const declareFunction = DoxDeclaration.declarationRoutes[key];
 
-		routeFunction
-			? routeFunction.call(this, get)
+		declareFunction
+			? declareFunction.call(this, wrapped)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.report.call(this, get, isTarget);
+			  notices.report.call(this, wrapped, 'declare', isTarget);
 	};
 	private static relationshipRoutes = {
-		ExportAssignment(this: DoxDeclaration, get: TscWrapper) {
+		relateExportAssignment(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('relate ExportAssignment');
 
-			const target = get.target;
+			const expression = (wrapped.tsNode as ts.ExportAssignment)
+				.expression;
+
+			if (this.isLiteral(expression)) return undefined;
+			const expressionWrap = this.tsWrap(expression);
+			const target =
+				wrapped.target || expressionWrap.target || expressionWrap;
+			//console.log(target);
 			target
 				? this.relate(target, true)
 				: /* istanbul ignore next: soft error for debugging */
-				  this.notFound(get, 'target');
+				  this.notFound(wrapped, 'target');
 		},
-		ExportDeclaration(this: DoxDeclaration, get: TscWrapper) {
+		relateExportDeclaration(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('relate ExportDeclaration');
 
-			const { targetFileName } = get;
+			const { targetFileName } = wrapped;
 			const file = targetFileName && this.doxFilesMap.get(targetFileName);
 			/* istanbul ignore next: soft error for debugging */
-			if (!file) return this.fileNotFound(get, targetFileName);
+			if (!file) return this.fileNotFound(wrapped, targetFileName);
 
 			file.declarationsMap.forEach((child) => {
 				const { wrappedItem, name } = child;
@@ -167,13 +228,13 @@ export class DoxDeclaration extends DoxConfig {
 				this.relate(wrappedItem, true);
 			});
 		},
-		ExportSpecifier(this: DoxDeclaration, get: TscWrapper) {
+		relateExportSpecifier(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('relate ExportSpecifier');
 
 			const { notFound, adopt, findChildDeclaration } = this;
 
-			get.moduleSpecifier
-				? parseModule.call(this, get.moduleSpecifier)
+			wrapped.moduleSpecifier
+				? parseModule.call(this, wrapped.moduleSpecifier)
 				: parseLocal.call(this);
 
 			function parseModule(
@@ -181,7 +242,7 @@ export class DoxDeclaration extends DoxConfig {
 				expression: ts.Expression,
 			) {
 				//const { targetFileName: fileName } = tsWrap(expression);
-				const child = findChildDeclaration(get, expression);
+				const child = findChildDeclaration(wrapped, expression);
 				/* istanbul ignore next: soft error for debugging */
 				if (!child) return;
 
@@ -189,20 +250,20 @@ export class DoxDeclaration extends DoxConfig {
 			}
 
 			function parseLocal(this: DoxDeclaration) {
-				get.target
-					? this.relate(get.target)
+				wrapped.target
+					? this.relate(wrapped.target)
 					: /* istanbul ignore next: soft error for debugging */
-					  notFound(get, 'target');
+					  notFound(wrapped, 'target');
 			}
 		},
-		ImportClause(this: DoxDeclaration, get: TscWrapper) {
+		relateImportClause(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('relate ImportClause');
 
 			const { findChildDeclaration, defaultStrings } = this;
 
 			const child = findChildDeclaration(
-				get,
-				get.moduleSpecifier!,
+				wrapped,
+				wrapped.moduleSpecifier!,
 				defaultStrings,
 			);
 			/* istanbul ignore next: soft error for debugging */
@@ -211,45 +272,50 @@ export class DoxDeclaration extends DoxConfig {
 			this.adopt(child);
 		},
 		/** eg, "export import foo = moduleDeclaration" */
-		ImportEqualsDeclaration(this: DoxDeclaration, get: TscWrapper) {
+		relateImportEqualsDeclaration(
+			this: DoxDeclaration,
+			wrapped: TsWrapper,
+		) {
 			this.debug('relate ImportEqualsDeclaration');
-			get.target
-				? this.relate(get.target)
+			wrapped.target
+				? this.relate(wrapped.target)
 				: /* istanbul ignore next: soft error for debugging */
-				  this.notFound(get, 'target');
+				  this.notFound(wrapped, 'target');
 		},
-		ImportSpecifier(this: DoxDeclaration, get: TscWrapper) {
+		relateImportSpecifier(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('relate ImportSpecifier');
 
 			const { findChildDeclaration } = this;
-			//const { targetFileName: fileName } = get;
-			const child = findChildDeclaration(get, get.moduleSpecifier!);
+			const child = findChildDeclaration(
+				wrapped,
+				wrapped.moduleSpecifier!,
+			);
 			/* istanbul ignore next: soft error for debugging */
 			if (!child) return;
 
 			this.adopt(child);
 		},
-		ModuleDeclaration(this: DoxDeclaration, get: TscWrapper) {
+		relateModuleDeclaration(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('relate ModuleDeclaration');
 
-			get.declaredModuleSymbols!.forEach((symbol) => {
-				const get = this.tsWrap(symbol);
-				this.relate(get);
+			wrapped.declaredModuleSymbols!.forEach((symbol) => {
+				const wrapped = this.tsWrap(symbol);
+				this.relate(wrapped);
 			});
 		},
-		NamespaceExport(
+		relateNamespaceExport(
 			this: DoxDeclaration,
-			get: TscWrapper,
+			wrapped: TsWrapper,
 			skipNotice = false,
 		) {
 			!skipNotice && this.debug('relate NamespaceExport');
 
-			const { targetFileName } = get;
+			const { targetFileName } = wrapped;
 			const file =
 				targetFileName &&
 				this.doxReference.filesMap.get(targetFileName);
 			/* istanbul ignore next: soft error for debugging */
-			if (!file) return this.fileNotFound(get, targetFileName);
+			if (!file) return this.fileNotFound(wrapped, targetFileName);
 			file.declarationsMap.forEach((child) => {
 				const { wrappedItem } = child;
 				const isExportDeclaration = ts.isExportDeclaration(
@@ -259,110 +325,125 @@ export class DoxDeclaration extends DoxConfig {
 				this.relate(wrappedItem, true);
 			});
 		},
-		NamespaceImport(this: DoxDeclaration, get: TscWrapper) {
+		relateNamespaceImport(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('relate NamespaceImport');
 
-			const aliasFnc = DoxDeclaration.relationshipRoutes.NamespaceExport;
-			aliasFnc.call(this, get, true);
+			const aliasFnc =
+				DoxDeclaration.relationshipRoutes.relateNamespaceExport;
+			aliasFnc.call(this, wrapped, true);
 		},
 		/*
-		BindingElement(this: DoxDeclaration, get: TscWrapper) {
-			log.error(
-				log.identifier(this),
-				'Working on Binding Elements, see: https://tinyurl.com/bdyp5rpb',
-			);
-		},
-		ObjectLiteralExpression(this: DoxDeclaration, get: TscWrapper) {},
+		relateBindingElement(this: DoxDeclaration, wrapped: TsWrapper) {},
+		relateObjectLiteralExpression(
+			this: DoxDeclaration,
+			wrapped: TsWrapper,
+		) {},
 		*/
 	};
 	private static declarationRoutes = {
-		ExportAssignment(this: DoxDeclaration, get: TscWrapper) {
+		declareExportAssignment(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('declare ExportAssignment');
 
 			this.flags.default = true;
-			get.target
-				? this.declare(get.target)
-				: /* istanbul ignore next: soft error for debugging */
-				  this.notFound(get, 'target');
+			const expression = (wrapped.tsNode as ts.ExportAssignment)
+				.expression;
+
+			if (this.isLiteral(expression)) {
+				this.valueNode = expression;
+				this.groupTsKind = expression.kind;
+				return;
+			}
+
+			const expressionWrap = this.tsWrap(expression);
+			const target =
+				wrapped.target || expressionWrap.target || expressionWrap;
+
+			this.declare(target);
 		},
-		ExportDeclaration(this: DoxDeclaration, get: TscWrapper) {
+		declareExportDeclaration(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('declare ExportDeclaration');
+
+			this.groupTsKind = this.wrappedItem.kind;
 		},
-		ExportSpecifier(this: DoxDeclaration, get: TscWrapper) {
+		declareExportSpecifier(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('declare ExportSpecifier');
 
-			get.target
-				? this.declare(get.target)
+			wrapped.target
+				? this.declare(wrapped.target)
 				: /* istanbul ignore next: soft error for debugging */
-				  this.notFound(get, 'target');
+				  this.notFound(wrapped, 'target');
 		},
-		ImportClause(this: DoxDeclaration, get: TscWrapper) {
+		declareImportClause(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('declare ImportClause');
 
-			const target = get.immediatelyAliasedSymbol;
+			const target = wrapped.immediatelyAliasedSymbol;
 			target
 				? this.declare(this.tsWrap(target))
 				: /* istanbul ignore next: soft error for debugging */
-				  this.notFound(get, 'immediatelyAliasedSymbol');
+				  this.notFound(wrapped, 'immediatelyAliasedSymbol');
 		},
-		ImportEqualsDeclaration(this: DoxDeclaration, get: TscWrapper) {
+		declareImportEqualsDeclaration(
+			this: DoxDeclaration,
+			wrapped: TsWrapper,
+		) {
 			this.debug('declare ImportEqualsDeclaration');
 
-			get.target
-				? this.declare(get.target)
+			wrapped.target
+				? this.declare(wrapped.target)
 				: /* istanbul ignore next: soft error for debugging */
-				  this.notFound(get, 'target');
+				  this.notFound(wrapped, 'target');
 		},
-		ImportSpecifier(this: DoxDeclaration, get: TscWrapper) {
+		declareImportSpecifier(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('declare ImportSpecifier');
 
-			const target = get.immediatelyAliasedSymbol;
+			const target = wrapped.immediatelyAliasedSymbol;
 			target
 				? this.declare(this.tsWrap(target))
 				: /* istanbul ignore next: soft error for debugging */
-				  this.notFound(get, 'immediatelyAliasedSymbol');
+				  this.notFound(wrapped, 'immediatelyAliasedSymbol');
 		},
-		ModuleDeclaration(this: DoxDeclaration, get: TscWrapper) {
+		declareModuleDeclaration(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('declare ModuleDeclaration');
 
-			const node = get.tsNode as ts.ModuleDeclaration;
+			const node = wrapped.tsNode as ts.ModuleDeclaration;
+			this.valueNode = node;
 			this.nameSpace = node.name.getText();
+			this.groupTsKind = node.kind;
 
-			get.declaredModuleSymbols.forEach((symbol) => {
-				const get = this.tsWrap(symbol);
+			wrapped.declaredModuleSymbols.forEach((symbol) => {
+				const wrapped = this.tsWrap(symbol);
 				const declarable =
-					!this.isSpecifierKind(get.kind) ||
-					ts.isModuleDeclaration(get.tsNode);
+					!this.isSpecifierKind(wrapped.kind) ||
+					ts.isModuleDeclaration(wrapped.tsNode);
 
 				declarable && this.declareLocal(symbol);
 			});
-			this.valueItem = get;
 		},
-		NamespaceExport(
+		declareNamespaceExport(
 			this: DoxDeclaration,
-			get: TscWrapper,
+			wrapped: TsWrapper,
 			skipNotice = false,
 		) {
 			!skipNotice && this.debug('declare NamespaceExport');
 
-			this.nameSpace = get.name;
+			this.nameSpace = wrapped.name;
 			this.groupTsKind = ts.SyntaxKind.ModuleDeclaration;
 		},
-		NamespaceImport(this: DoxDeclaration, get: TscWrapper) {
+		declareNamespaceImport(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('declare NamespaceImport');
 
-			const fnc = DoxDeclaration.declarationRoutes.NamespaceExport;
-			fnc.call(this, get, true);
+			const fnc = DoxDeclaration.declarationRoutes.declareNamespaceExport;
+			fnc.call(this, wrapped, true);
 		},
 		/*
-		BindingElement(this: DoxDeclaration, get: TscWrapper) {
-			const node = get.tsNode as ts.BindingElement;
-
-			const foo = ts.walkUpBindingElementsAndPatterns(node);
-
-			console.info(log.identifier(this), foo.getText());
+		declareBindingElement(this: DoxDeclaration, wrapped: TsWrapper) {},
+		declareObjectLiteralExpression(
+			this: DoxDeclaration,
+			wrapped: TsWrapper,
+		) {
+			this.groupTsKind = ts.SyntaxKind.ModuleDeclaration;
+			this.valueItem = wrapped;
 		},
-		ObjectLiteralExpression(this: DoxDeclaration, get: TscWrapper) {},
 		*/
 	};
 	private adopt = (child: DoxDeclaration) => {
@@ -381,7 +462,7 @@ export class DoxDeclaration extends DoxConfig {
 	 * @returns the related doxDeclaration
 	 */
 	private findChildDeclaration = (
-		source: TscWrapper,
+		source: TsWrapper,
 		expression: ts.Expression,
 		names = [source.alias || source.name],
 	): DoxDeclaration | undefined => {
@@ -429,59 +510,37 @@ export class DoxDeclaration extends DoxConfig {
 		return declaration;
 	};
 	/* istanbul ignore next: soft error for debugging */
-	private fileNotFound = (get: TscWrapper, fileName?: string) => {
-		const message = `An invalid file was referenced: "${get.nodeDeclarationText}" in`;
+	private fileNotFound = (wrapped: TsWrapper, fileName?: string) => {
+		const message = `An invalid file was referenced: "${wrapped.nodeDeclarationText}" in`;
 		fileName
-			? this.notFound(get, get.fileName, message, 'warn')
-			: this.notFound(get, 'file');
+			? this.notFound(wrapped, wrapped.fileName, message, 'warn')
+			: this.notFound(wrapped, 'file');
 	};
-	private parseGroup = () => {
-		const { SyntaxKind } = ts;
-		const { groupTsKind, valueItem } = this;
 
-		const kind = this.isArrowFunction
-			? ts.SyntaxKind.FunctionDeclaration
-			: valueItem?.kind || groupTsKind;
-
-		const isModule =
-			kind === SyntaxKind.ModuleDeclaration ||
-			kind === SyntaxKind.NamespaceExport ||
-			kind === SyntaxKind.NamespaceImport;
-		const isType =
-			kind === SyntaxKind.TypeAliasDeclaration ||
-			kind === SyntaxKind.InterfaceDeclaration;
-
-		const isReExport =
-			kind === SyntaxKind.ImportSpecifier ||
-			kind === SyntaxKind.ExportDeclaration;
-
-		return { kind, isModule, isType, isReExport };
-	};
 	private get notFound() {
 		return notices.notFound.bind(this);
 	}
 
 	private get isArrowFunction() {
-		return (
-			this.valueItem &&
-			ts.isVariableDeclaration(this.valueItem.tsNode) &&
-			this.valueItem.callSignatures.length
-		);
+		const isVariable =
+			this.valueNode && ts.isVariableDeclaration(this.valueNode);
+		const type =
+			isVariable && this.checker.getTypeAtLocation(this.valueNode!);
+		return type ? !!type.getCallSignatures().length : false;
 	}
-	private foo = 0;
 }
 
 const notices = {
 	groupKind: function (
 		tsKind: ts.SyntaxKind,
-		get: TscWrapper,
+		wrapped: TsWrapper,
 		stack: string,
 	) {
 		log.error(
 			log.identifier(__filename),
 			'Did not discover a group kind:',
 			ts.SyntaxKind[tsKind],
-			get.report,
+			wrapped.report,
 			//stack,
 		);
 	},
@@ -498,8 +557,13 @@ const notices = {
 
 	report:
 		/* istanbul ignore next: soft error for debugging */
-		function (this: DoxDeclaration, get: TscWrapper, local: boolean) {
-			const errorMessage = `Did not map a ${
+		function (
+			this: DoxDeclaration,
+			wrapped: TsWrapper,
+			route: string,
+			local: boolean,
+		) {
+			const errorMessage = `Did not ${route} a ${
 				local ? 'localTargetNode' : 'node'
 			} relationship`;
 			deepReport.call(
@@ -507,7 +571,7 @@ const notices = {
 				__filename,
 				'error',
 				errorMessage,
-				get,
+				wrapped,
 				local,
 			);
 		},
@@ -516,17 +580,17 @@ const notices = {
 		/* istanbul ignore next: soft error for debugging */
 		function (
 			this: DoxDeclaration,
-			get: TscWrapper,
+			wrapped: TsWrapper,
 			notFound: string,
 			message = 'Did not find a',
 			level = 'error' as Exclude<keyof typeof logLevels, 'silent'>,
 		) {
 			log[level](
 				identifier(this),
-				`[${get.kindString}]`,
+				`[${wrapped.kindString}]`,
 				message,
 				`${notFound}`,
-				level === 'error' ? get.report : '',
+				level === 'error' ? wrapped.report : '',
 				level === 'error' ? log.stackTracer() : '',
 			);
 			return undefined;
@@ -538,15 +602,20 @@ function deepReport(
 	location: string,
 	logLevel: Exclude<keyof typeof logLevels, 'silent'>,
 	message: string,
-	get: TscWrapper,
+	wrapped: TsWrapper,
 	isLocalTarget: boolean,
 ) {
 	log[logLevel](log.identifier(location), message, {
 		filename: this.wrappedItem.fileName,
 		sourceReport: this.wrappedItem.report,
-		sourceDeclaration: this.wrappedItem.nodeDeclarationText,
+		sourceDeclaration: loggerUtils.shortenString(
+			this.wrappedItem.nodeDeclarationText,
+			80,
+		),
 
-		targetReport: isLocalTarget ? get.report : undefined,
-		targetDeclaration: isLocalTarget ? get.nodeDeclarationText : undefined,
+		targetReport: isLocalTarget ? wrapped.report : undefined,
+		targetDeclaration: isLocalTarget
+			? wrapped.nodeDeclarationText
+			: undefined,
 	});
 }

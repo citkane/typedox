@@ -1,8 +1,8 @@
 {
-	"include": ["."],
-	"exclude": ["coverage", "projectFactory", "dist"],
+	"include": [".", "tests.backend.spec.ts"],
+	//"exclude": ["coverage", "projectFactory", "dist"],
 	"compilerOptions": {
-		"outDir": "../dist",
+		"outDir": "../dist/backend",
 		"target": "ES6",
 		"moduleResolution": "NodeNext",
 		"module": "NodeNext",

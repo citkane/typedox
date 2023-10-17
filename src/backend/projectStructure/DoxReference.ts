@@ -6,7 +6,7 @@ import {
 	DoxConfig,
 	DoxPackage,
 	DoxSourceFile,
-	TscWrapper,
+	TsWrapper,
 	logger as log,
 	serialise,
 	tsItem,
@@ -60,7 +60,7 @@ export class DoxReference extends DoxConfig {
 	public get toObject() {
 		return serialise.serialiseDoxReference(this);
 	}
-	public tsWrap = (item: tsItem): TscWrapper => {
+	public tsWrap = (item: tsItem): TsWrapper => {
 		return tsc.wrap(this.checker, item);
 	};
 	public discoverFiles(fileList = this.entryFileList) {

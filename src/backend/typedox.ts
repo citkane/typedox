@@ -11,11 +11,11 @@ import {
 	DoxReference,
 	DoxSourceFile,
 } from './projectStructure/_namespace';
-import { TscWrapper } from './tscApiWrapper/_namespace';
+import { TsWrapper } from './tsWrapper/_namespace';
 
 import * as serialise from './serialiser/_namespace';
 import * as config from './config/_namespace';
-import * as tsc from './tscApiWrapper/_namespace';
+import * as tsc from './tsWrapper/_namespace';
 import * as loggerUtils from './logger/_namespace';
 import main from '.';
 
@@ -33,7 +33,7 @@ export {
 	DoxSourceFile,
 	DoxDeclaration,
 	DoxReference,
-	TscWrapper,
+	TsWrapper,
 };
 
 /**

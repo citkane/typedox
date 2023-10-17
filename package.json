@@ -13,7 +13,7 @@
 		"backend": "node -r source-map-support/register dist/bin/typedox",
 		"scenario:namespace:recursion": "node -r source-map-support/register ./dist/backend/index.js --tsConfigs test/scenarios/namespaces",
 		"test:backend": "NODE_ENV=test mocha --file test/backend/tests.backend.spec.ts",
-		"test:backend:coverage": "nyc --include=src/backend/**/*.ts --report-dir=test/backend/coverage npm run test:backend"
+		"test:backend:coverage": "nyc --include=src/backend/**/*.ts --report-dir=test/coverage/backend npm run test:backend"
 	},
 	"repository": {
 		"type": "git",

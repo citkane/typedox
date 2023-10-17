@@ -129,7 +129,19 @@ export class DoxConfig {
 
 		return specifiers.includes(kind);
 	};
-
+	protected isLiteral(expression: ts.Expression) {
+		return !![
+			ts.isLiteralExpression,
+			ts.isArrayLiteralExpression,
+			ts.isObjectLiteralExpression,
+			ts.isStringLiteralOrJsxExpression,
+			ts.isCallExpression,
+			ts.isArrowFunction,
+			ts.isFunctionExpression,
+			ts.isNewExpression,
+			ts.isClassExpression,
+		].find((fnc) => fnc(expression));
+	}
 	private _warmTheCache(
 		projectOptions: config.doxOptions,
 		tscCommandlineConfig: ts.ParsedCommandLine,
