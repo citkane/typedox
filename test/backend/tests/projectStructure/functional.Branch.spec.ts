@@ -36,9 +36,7 @@ afterEach(function () {
 	if (this.errorStub) this.errorStub.restore();
 	if (this.warningStub) this.warningStub.restore();
 });
-after(function () {
-	projectFactory.flushCache();
-});
+
 it('creates a class instance', function () {
 	let branch!: Branch;
 	const reference = stubs.doxReference(localFactory);

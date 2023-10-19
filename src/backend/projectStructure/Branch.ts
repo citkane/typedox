@@ -55,7 +55,7 @@ export class Branch {
 	}
 	private bundleDeclaration = (declaration: DoxDeclaration) => {
 		const { group, flags } = declaration;
-		flags.default && (this.default = declaration);
+		flags.isDefault && (this.default = declaration);
 		group === DeclarationGroup.ReExport
 			? this.bundleReExport(declaration)
 			: this.declarations.set(declaration, declaration.name);

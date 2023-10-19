@@ -1,3 +1,4 @@
+export { Dox } from './Dox';
 export { DoxProject } from './DoxProject';
 export { DoxPackage } from './DoxPackage';
 export { DoxReference } from './DoxReference';

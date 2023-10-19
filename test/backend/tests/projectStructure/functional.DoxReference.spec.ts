@@ -33,9 +33,7 @@ afterEach(function () {
 	if (errorStub) errorStub.restore();
 	if (warnStub) warnStub.restore();
 });
-after(function () {
-	projectFactory.flushCache();
-});
+
 it('creates a class instance', function () {
 	const program = compiler().program;
 	let reference!: DoxReference;

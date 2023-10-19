@@ -21,15 +21,10 @@ let doxOptions: config.doxOptions;
 before(function () {
 	log.setLogLevel(globalLogLevel || localLogLevel);
 });
-beforeEach(function () {
-	config._deleteCache();
-});
+
 afterEach(function () {
 	if (infoStub) infoStub.restore();
 	if (warningStub) warningStub.restore();
-});
-after(function () {
-	config._deleteCache();
 });
 
 it('creates a doxProject instance', function () {
@@ -89,7 +84,7 @@ it('reports diagnostics for typescript programs and throws if error', function (
 		'--npmFileConvention',
 		'package.spec.json',
 	]);
-	config._deleteCache();
+
 	assert.throws(
 		() => new DoxProject(doxOptions, ['--noLib', 'true']),
 		/Error in ts.Program/,

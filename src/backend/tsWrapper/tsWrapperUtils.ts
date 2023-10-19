@@ -20,7 +20,7 @@ export const reportKeys: (keyof TsWrapper)[] = [
 	'moduleSpecifier',
 	'hasValueDeclaration',
 ];
-export const badFilePrefix = '_ignored';
+
 export function parseReportKey(this: TsWrapper, key: keyof TsWrapper) {
 	let value = this[key];
 

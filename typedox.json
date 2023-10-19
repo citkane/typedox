@@ -1,8 +1,5 @@
 {
-	//"projectRootDir": "",
-	//"doxOut": "",
 	"typeDependencies": [],
-	"logLevel": "debug",
+	"logLevel": "info",
 	"tsConfigs": []
-	//"npmFileConvention": ""
 }

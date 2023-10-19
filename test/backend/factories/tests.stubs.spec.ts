@@ -16,7 +16,15 @@ import {
 import { assert } from 'chai';
 import { doxOptions } from '../../../src/backend/config/doxConfigApi';
 import { compilerFactory } from './compilerFactory';
-export type factoryFolders = 'configs' | 'groups' | 'specifiers';
+
+const factoryFolders = [
+	'configs',
+	'groups',
+	'specifiers',
+	'common',
+	'scopes',
+] as const;
+type factoryFolders = (typeof factoryFolders)[number];
 
 /** The default project root directory (probably process.cwd()) */
 const rootDir = config.doxArgs.projectRootDir.defaultValue;
@@ -63,13 +71,21 @@ const configs = {
 	expectedConfigLength: 4,
 };
 
-function doxReference(folder: factoryFolders, checker?: ts.TypeChecker) {
+function doxReference(
+	folder: factoryFolders,
+	checker?: ts.TypeChecker,
+	program?: ts.Program,
+) {
 	const { compiler } = compilerFactory(folder);
-	checker ??= compiler().checker;
+	if (!checker || !program) {
+		({ checker, program } = compiler());
+	}
+
 	return {
 		checker,
+		program,
 		tsWrap: (item: tsItem): TsWrapper => {
-			return tsc.wrap(checker!, item);
+			return tsc.wrap(checker!, program!, item);
 		},
 	} as DoxReference;
 }
@@ -84,10 +100,10 @@ function doxPackage() {
 }
 function doxSourceFile(folder: factoryFolders) {
 	const { compiler } = compilerFactory(folder);
-	const { getFile, checker } = compiler();
+	const { getFile, checker, program } = compiler();
 	const sourceFile = getFile().sourceFile;
 	const fileSymbol = getFile().sourceSymbol;
-	const reference = doxReference(folder, checker);
+	const reference = doxReference(folder, checker, program);
 	return new DoxSourceFile(reference, sourceFile!, fileSymbol);
 }
 function doxDeclaration(folder: factoryFolders, declaration: string) {
@@ -115,4 +131,5 @@ export {
 	doxPackage,
 	doxSourceFile,
 	doxDeclaration,
+	factoryFolders,
 };

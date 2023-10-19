@@ -7,9 +7,8 @@ import { logger as log, tsc, tsItem } from '../typedox';
  */
 export class TsWrapper extends TsWrapperCache {
 	private objectClass: string;
-
-	constructor(checker: ts.TypeChecker, tsItem: tsItem) {
-		super(checker);
+	constructor(checker: ts.TypeChecker, program: ts.Program, tsItem: tsItem) {
+		super(checker, program);
 		this.objectClass = tsItem.constructor.name;
 
 		if (!this.isNode && !this.isSymbol)
@@ -121,7 +120,9 @@ export class TsWrapper extends TsWrapperCache {
 	}
 	public get target(): TsWrapper | undefined {
 		const target = this.cacheGet('target');
-		return target ? tsc.wrap(this.checker, target) : undefined;
+		return target
+			? tsc.wrap(this.checker, this.program, target)
+			: undefined;
 	}
 	public get aliasedSymbol(): tsc.cache['aliasedSymbol'] {
 		return this.cacheGet('aliasedSymbol');

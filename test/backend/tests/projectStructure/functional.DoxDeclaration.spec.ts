@@ -12,6 +12,7 @@ import {
 import { stub } from 'sinon';
 import { globalLogLevel } from '../../tests.backend.spec';
 import { projectFactory } from '../../factories/projectFactory';
+import { declarationFactory } from '../../factories/declarationFactory';
 
 const localLogLevel = logLevels.silent;
 const localFactory = 'groups';
@@ -35,9 +36,7 @@ beforeEach(function () {
 afterEach(function () {
 	this.errorStub!.restore();
 });
-after(function () {
-	projectFactory.flushCache();
-});
+
 it('creates a class instance', function () {
 	const doxSourceFile = stubs.doxSourceFile(localFactory);
 	const symbol = stubs.getExportedSymbol.call(
@@ -57,7 +56,7 @@ it('creates a class instance', function () {
 		JSON.stringify(this.errorReports, null, 4),
 	);
 });
-it('parses a nameSpaceExport', function () {
+it('does not error a nameSpaceExport', function () {
 	let symbol = getSymbol('childSpace');
 	assert.exists(symbol);
 	new DoxDeclaration(doxSourceFile(), symbol!);
@@ -72,7 +71,7 @@ it('parses a nameSpaceExport', function () {
 		JSON.stringify(this.errorReports, null, 4),
 	);
 });
-it('parses a module declaration', function () {
+it('does not error a module declaration', function () {
 	let symbol = getSymbol('moduleDeclaration');
 	assert.exists(symbol, 'moduleDeclaration');
 	const declaration = new DoxDeclaration(doxSourceFile(), symbol!);
@@ -96,7 +95,7 @@ it('parses a module declaration', function () {
 		JSON.stringify(this.errorReports, null, 4),
 	);
 });
-it('maps an export specifier', function () {
+it('does not error an export specifier', function () {
 	let symbol = getSymbol('localDeclaration');
 	assert.exists(symbol);
 	new DoxDeclaration(doxSourceFile(), symbol!);
@@ -111,7 +110,7 @@ it('maps an export specifier', function () {
 		JSON.stringify(this.errorReports, null, 4),
 	);
 });
-it('maps an import specifier', function () {
+it('does not error an import specifier', function () {
 	const symbol = getSymbol('child');
 	assert.exists(symbol);
 	new DoxDeclaration(doxSourceFile(), symbol!);
@@ -122,7 +121,7 @@ it('maps an import specifier', function () {
 		JSON.stringify(this.errorReports, null, 4),
 	);
 });
-it('parses a reExport', function () {
+it('does not error a reExport', function () {
 	const symbol = getSymbol('__export');
 	assert.exists(symbol);
 	new DoxDeclaration(doxSourceFile(), symbol!);
@@ -133,7 +132,17 @@ it('parses a reExport', function () {
 		//JSON.stringify(this.errorReports, null, 4),
 	);
 });
-it('covers all the test project cases', function () {
+it(`does not error any of the export symbols in the "${localFactory}" factory:`, function () {
+	doxSourceFile().fileSymbol.exports!.forEach((symbol) => {
+		const declaration = new DoxDeclaration(doxSourceFile(), symbol);
+		assert.lengthOf(
+			this.errorReports,
+			0,
+			JSON.stringify(this.errorReports, null, 4),
+		);
+	});
+});
+it(`assigns groups to each export symbol in the "${localFactory}" factory:`, function () {
 	doxSourceFile().fileSymbol.exports!.forEach((symbol) => {
 		const declaration = new DoxDeclaration(doxSourceFile(), symbol);
 		assert.exists(declaration.group);
@@ -142,14 +151,7 @@ it('covers all the test project cases', function () {
 			`did not find ${declaration.group}`,
 		);
 	});
-
-	assert.lengthOf(
-		this.errorReports,
-		0,
-		JSON.stringify(this.errorReports, null, 4),
-	);
 });
-
 it('creates an error if an unknown group is encountered', function () {
 	const symbol = getSymbol('localDeclaration');
 	assert.exists(symbol);
@@ -164,6 +166,28 @@ it('creates an error if an unknown group is encountered', function () {
 		this.errorReports[0].toString(),
 		'AmpersandAmpersandEqualsToken',
 	);
+});
+
+it('flags non exported declarations', function () {
+	const notExported = declarationFactory('common', 'localVar');
+	const exported = declarationFactory('specifiers', 'localVar');
+
+	assert.exists(notExported.flags, 'notExported');
+	assert.exists(exported.flags, 'exported');
+
+	assert.exists(notExported.flags.notExported);
+	assert.notExists(exported.flags.notExported);
+});
+it('resolves scope keywords', function () {
+	const varScope = declarationFactory('scopes', 'varScope');
+	const letScope = declarationFactory('scopes', 'letScope');
+	const constScope = declarationFactory('scopes', 'constScope');
+	const expected = ['var', 'let', 'const'];
+	[varScope, letScope, constScope].forEach((declaration, i) => {
+		const { flags } = declaration;
+		assert.exists(flags.scopeKeyword);
+		assert.equal(flags.scopeKeyword, expected[i]);
+	});
 });
 
 let _doxSourceFile: DoxSourceFile;

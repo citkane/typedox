@@ -12,6 +12,7 @@ import {
 	tsItem,
 	tsc,
 } from '../typedox';
+import { Dox } from './Dox';
 
 /**
  * A container for a typescript compiler reference. This could be the only one in a npm package, or one of many if
@@ -32,7 +33,7 @@ import {
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...DoxDeclaration...
  *
  */
-export class DoxReference extends DoxConfig {
+export class DoxReference extends Dox {
 	public name: string;
 	public parent: DoxPackage;
 	public filesMap = new Map<string, DoxSourceFile>();
@@ -61,30 +62,23 @@ export class DoxReference extends DoxConfig {
 		return serialise.serialiseDoxReference(this);
 	}
 	public tsWrap = (item: tsItem): TsWrapper => {
-		return tsc.wrap(this.checker, item);
+		return tsc.wrap(this.checker, this.program, item);
 	};
 	public discoverFiles(fileList = this.entryFileList) {
 		fileList.forEach((fileName) => {
 			if (
 				this.filesMap.has(fileName) ||
 				this.ignoredFiles.includes(fileName)
-			) {
+			)
 				return;
-			}
 
-			if (fileName.startsWith(tsc.badFilePrefix)) {
-				this.ignoredFiles.push(fileName);
-				return notices.discoverFiles.fileSourceError(
-					fileName.replace(tsc.badFilePrefix, ''),
-				);
-			}
 			const fileSource = this.program.getSourceFile(fileName);
-
-			if (!fileSource)
+			if (!fileSource) {
+				this.ignoredFiles.push(fileName);
 				return notices.discoverFiles.fileSourceError(fileName);
+			}
 
 			const fileSymbol = this.checker.getSymbolAtLocation(fileSource);
-
 			if (!fileSymbol) {
 				this.ignoredFiles.push(fileName);
 				return notices.discoverFiles.fileSymbolWarning(

@@ -1,7 +1,6 @@
 import * as ts from 'typescript';
 import * as path from 'path';
 import * as fs from 'fs';
-import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
 import {
 	logger as log,
 	config,
@@ -11,6 +10,7 @@ import {
 	serialise,
 	loggerUtils,
 } from '../typedox';
+import { Dox } from './Dox';
 
 /**
  * A container for the whole project structure
@@ -29,20 +29,25 @@ import {
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...DoxDeclaration...
  */
-export class DoxProject extends DoxConfig {
+export class DoxProject extends Dox {
 	public doxPackages!: DoxPackage[];
+	public doxConfig: DoxConfig;
 
 	private doxPackageDefinitions!: doxPackageDefinitions;
 	private programs!: ts.Program[];
 
 	constructor(doxOptions: config.doxOptions, tscClOptions?: string[]) {
-		super(doxOptions, tscClOptions);
+		super();
 
-		this.programs = this._programs(this.tscParsedConfigs);
+		this.doxConfig = new DoxConfig(doxOptions, tscClOptions);
+
+		this.programs = this._programs(this.doxConfig.tscParsedConfigs);
 		this.doxPackageDefinitions = this._doxPackageDefinitions(this.programs);
 		this.doxPackages = this._doxPackages(this.doxPackageDefinitions);
 	}
-
+	public get options() {
+		return this.doxConfig.options;
+	}
 	public get toObject() {
 		return serialise.serialiseProject(this);
 	}

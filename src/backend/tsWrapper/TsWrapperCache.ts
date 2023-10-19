@@ -3,10 +3,12 @@ import { TsWrapper, logger as log, tsItem, tsc as wrapUtils } from '../typedox';
 
 export class TsWrapperCache {
 	private instanceCache = {} as cache;
+	protected program: ts.Program;
 	protected checker: ts.TypeChecker;
 
-	constructor(checker: ts.TypeChecker) {
+	constructor(checker: ts.TypeChecker, program: ts.Program) {
 		this.checker = checker;
+		this.program = program;
 	}
 
 	protected cacheSet = (
@@ -22,6 +24,7 @@ export class TsWrapperCache {
 		return (this.instanceCache[key] ??= cacheCallbacks[key].bind({
 			wrapper,
 			checker: this.checker,
+			program: this.program,
 		})() as any);
 	};
 	public cacheFlush = () =>
@@ -31,7 +34,11 @@ export class TsWrapperCache {
 export type cache = {
 	[K in keyof typeof cacheCallbacks]: ReturnType<(typeof cacheCallbacks)[K]>;
 };
-type wrapContainer = { wrapper: TsWrapper; checker: ts.TypeChecker };
+type wrapContainer = {
+	wrapper: TsWrapper;
+	checker: ts.TypeChecker;
+	program: ts.Program;
+};
 let wrappers = new Map<ts.Node | ts.Symbol | ts.Type, TsWrapper>();
 
 const cacheCallbacks = {
@@ -73,24 +80,32 @@ const cacheCallbacks = {
 		return wrapUtils.getModuleSpecifier(wrapper.tsNode);
 	},
 	targetFileName: function (this: wrapContainer) {
-		const { wrapper, checker } = this;
+		const { wrapper, checker, program } = this;
 		const { tsNode, localDeclaration } = wrapper;
 		const target = localDeclaration || tsNode;
 
 		if (ts.isSourceFile(target)) return target.fileName;
 
-		const wrapped = wrap(checker, target);
+		const wrapped = wrap(checker, program, target);
 		const { moduleSpecifier } = wrapped;
 
 		if (!moduleSpecifier) return undefined;
 
 		const symbol = checker.getSymbolAtLocation(moduleSpecifier);
-		const badFileName = `${
-			wrapUtils.badFilePrefix
-		}${moduleSpecifier.getText()}`;
-		return (
-			symbol?.valueDeclaration?.getSourceFile().fileName || badFileName
-		);
+		let fileName = symbol?.valueDeclaration?.getSourceFile().fileName;
+		if (fileName) return fileName;
+		const { text } = moduleSpecifier as any;
+		fileName =
+			ts.resolveModuleName(
+				text as string,
+				moduleSpecifier.getSourceFile().fileName,
+				program.getCompilerOptions(),
+				ts.sys,
+			).resolvedModule?.resolvedFileName || (text as string);
+
+		//const badFileName = `${wrapUtils.badFilePrefix}${fileName}`;
+		//log.info(badFileName);
+		return fileName;
 	},
 	fileName: function (this: wrapContainer) {
 		const { wrapper } = this;
@@ -198,12 +213,16 @@ const cacheCallbacks = {
 	},
 };
 
-export function wrap(checker: ts.TypeChecker, item: tsItem): TsWrapper {
+export function wrap(
+	checker: ts.TypeChecker,
+	program: ts.Program,
+	item: tsItem,
+): TsWrapper {
 	const node = getNode(item);
 	if (!node) notices.wrapError(item);
 	if (wrappers.has(node)) return wrappers.get(node)!;
 
-	const wrapped = new TsWrapper(checker, item);
+	const wrapped = new TsWrapper(checker, program, item);
 	wrappers.set(node, wrapped);
 
 	return wrapped;

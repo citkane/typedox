@@ -7,10 +7,31 @@ import {
 	DoxReference,
 	DoxSourceFile,
 	config,
+	logger as log,
 } from '../../../src/backend/typedox';
 import { factoryFolders } from './tests.stubs.spec';
 import { compilerFactory } from './compilerFactory';
+import { deepClone } from '../../../src/backend/config/_namespace';
 
+function makeSpecCaches() {
+	return factoryFolders.reduce(
+		(accumulator, folder) => {
+			accumulator[folder] = makeSpecCache();
+			return accumulator;
+		},
+		{} as Record<factoryFolders, ReturnType<typeof makeSpecCache>>,
+	);
+}
+function makeSpecCache() {
+	return {
+		project: undefined as DoxProject | undefined,
+		options: {} as DoxProject['options'],
+		package: {} as Record<string, DoxPackage>,
+		reference: {} as Record<string, DoxReference>,
+		sourceFile: {} as Record<string, DoxSourceFile>,
+	};
+}
+let specCache = makeSpecCaches();
 function warnAboutDefaults(name: string) {
 	console.warn(
 		colourise(
@@ -19,28 +40,13 @@ function warnAboutDefaults(name: string) {
 		),
 	);
 }
-
-let specCache = {
-	project: {} as Record<string, DoxProject>,
-	branch: {} as Record<string, Branch>,
-	package: {} as Record<string, DoxPackage>,
-	reference: {} as Record<string, DoxReference>,
-	sourceFile: {} as Record<string, DoxSourceFile>,
-};
-function flushCache() {
-	Object.keys(specCache).forEach((key) => {
-		const k = key as keyof typeof specCache;
-		specCache[k] = {};
-	});
-}
-const specDoxProject = (folder: factoryFolders, mute = false) => {
+const specDoxProject = (folder: factoryFolders, mute = false): DoxProject => {
 	const { projectDir, tsConfigPath } = compilerFactory(folder);
 
 	!mute && warnAboutDefaults('defaultProject');
 
-	if (specCache.project[projectDir]) return specCache.project[projectDir];
+	if (specCache[folder].project) return specCache[folder].project!;
 
-	config._deleteCache();
 	const doxOptions = config.getDoxOptions([
 		'--projectRootDir',
 		projectDir,
@@ -50,7 +56,10 @@ const specDoxProject = (folder: factoryFolders, mute = false) => {
 		tsConfigPath,
 	]);
 
-	return (specCache.project[projectDir] ??= new DoxProject(doxOptions));
+	const project = new DoxProject(doxOptions);
+	specCache[folder].options = deepClone(project.options);
+
+	return (specCache[folder].project = project);
 };
 
 const specDoxPackage = (
@@ -60,9 +69,8 @@ const specDoxPackage = (
 	mute = false,
 ) => {
 	!mute && warnAboutDefaults('specDoxPackage');
-
 	const id = folder + index;
-	if (specCache.package[id]) return specCache.package[id];
+	if (specCache[folder].package[id]) return specCache[folder].package[id];
 
 	const len = doxProject.doxPackages.length;
 	if (index >= len) throw Error(`doxProject only has ${len} doxPackages`);
@@ -81,15 +89,14 @@ const specDoxPackage = (
 	doxProject.doxPackages.forEach((doxPackage) => {
 		doxPackage.doxReferences.forEach((reference) => {
 			const rootDeclarations = reference.getRootDeclarations();
-			const treeBranch = (specCache.branch[folder] ??= new Branch(
-				reference,
-				rootDeclarations,
-			));
-			!reference.treeBranches.has(reference.name) &&
+
+			if (!reference.treeBranches.has(reference.name)) {
+				const treeBranch = new Branch(reference, rootDeclarations);
 				reference.treeBranches.set(reference.name, treeBranch);
+			}
 		});
 	});
-	return (specCache.package[id] ??= doxProject.doxPackages[index]);
+	return (specCache[folder].package[id] ??= doxProject.doxPackages[index]);
 };
 const specDoxReference = (
 	folder: factoryFolders,
@@ -99,11 +106,7 @@ const specDoxReference = (
 ) => {
 	!mute && warnAboutDefaults('specReference');
 
-	const id = folder + index + doxPackage.doxReferences[index].name;
-
-	return specCache.reference[id]
-		? specCache.reference[id]
-		: (specCache.reference[id] ??= doxPackage.doxReferences[index]);
+	return doxPackage.doxReferences[index];
 };
 
 const specDoxSourceFile = (
@@ -114,11 +117,12 @@ const specDoxSourceFile = (
 ) => {
 	!mute && warnAboutDefaults('specDoxSourceFile');
 
-	const projectDir = reference.options.projectRootDir;
+	const projectDir = specCache[folder].options.projectRootDir;
 	const filePath = path.join(projectDir, fileName);
 	const id = folder + filePath;
 
-	if (specCache.sourceFile[id]) return specCache.sourceFile[id];
+	if (specCache[folder].sourceFile[id])
+		return specCache[folder].sourceFile[id];
 
 	if (!reference.filesMap.has(filePath)) {
 		throw Error(
@@ -126,7 +130,8 @@ const specDoxSourceFile = (
 		);
 	}
 
-	return (specCache.sourceFile[id] ??= reference.filesMap.get(filePath)!);
+	return (specCache[folder].sourceFile[id] ??=
+		reference.filesMap.get(filePath)!);
 };
 
 export const projectFactory = {
@@ -134,5 +139,4 @@ export const projectFactory = {
 	specDoxPackage,
 	specDoxReference,
 	specDoxSourceFile,
-	flushCache,
 };

@@ -1,3 +1,4 @@
+import * as ts from 'typescript';
 import {
 	Branch,
 	DoxProject,
@@ -6,11 +7,15 @@ import {
 	DoxReference,
 	logger as log,
 } from '../typedox';
+import { SerialiseVariable } from './groups/SerialiseVariable';
 
 export function serialiseProject(project: DoxProject) {
 	const packageMap = new Map<string, DoxPackage>();
 	project.doxPackages.forEach((pack) => packageMap.set(pack.name, pack));
-	const packages = mapToObject<doxPackage>(packageMap, serialiseDoxPackage);
+	const packages = mapToSerialisedObjects<doxPackage>(
+		packageMap,
+		serialiseDoxPackage,
+	);
 
 	return {
 		packages,
@@ -20,7 +25,7 @@ export function serialiseDoxPackage(doxPackage: DoxPackage) {
 	const { version, name, doxReferences: doxReferences } = doxPackage;
 	const referenceMap = new Map<string, DoxReference>();
 	doxReferences.forEach((ref) => referenceMap.set(ref.name, ref));
-	const references = mapToObject<doxReference>(
+	const references = mapToSerialisedObjects<doxReference>(
 		referenceMap,
 		serialiseDoxReference,
 	);
@@ -33,13 +38,16 @@ export function serialiseDoxPackage(doxPackage: DoxPackage) {
 }
 
 export function serialiseDoxReference(reference: DoxReference) {
-	const branches = mapToObject<branch>(reference.treeBranches, branch);
+	const branches = mapToSerialisedObjects<branch>(
+		reference.treeBranches,
+		serialiseBranch,
+	);
 	const branchName = reference.name;
 
 	return { ...branches[branchName] };
 }
 
-function branch(treeBranch: Branch) {
+function serialiseBranch(treeBranch: Branch) {
 	const {
 		nameSpaces,
 		functions,
@@ -51,62 +59,71 @@ function branch(treeBranch: Branch) {
 
 	return {
 		default: def?.name,
-		namespaces: mapToObject<nameSpaces>(nameSpaces, nameSpacesGroup),
-		classes: mapToObject<classes>(classes, classesGroup),
-		functions: mapToObject<functions>(functions, functionsGroup),
-		enums: mapToObject<enums>(enums, enumsGroup),
-		variables: mapToObject<variables>(variables, variablesGroup),
+		namespaces: mapToSerialisedObjects<nameSpaces>(
+			nameSpaces,
+			serialiseNamespace,
+		),
+		classes: mapToSerialisedObjects<classes>(classes, serialiseClass),
+		functions: mapToSerialisedObjects<functions>(
+			functions,
+			serialiseFunction,
+		),
+		enums: mapToSerialisedObjects<enums>(enums, serialiseEnum),
+		variables: mapToSerialisedObjects<variables>(
+			variables,
+			serialiseVariable,
+		),
 	};
 }
 
-function nameSpacesGroup(nameSpace: Branch) {
-	return { ...branch(nameSpace) };
+function serialiseNamespace(nameSpace: Branch) {
+	return { ...serialiseBranch(nameSpace) };
 }
 
-function classesGroup() {
+function serialiseVariable(declaration: DoxDeclaration) {
+	return new SerialiseVariable(declaration).serialised;
+}
+
+function serialiseClass() {
 	return {};
 }
 
-function variablesGroup() {
+function serialiseFunction() {
 	return {};
 }
 
-function functionsGroup() {
+function serialiseEnum() {
 	return {};
 }
 
-function enumsGroup() {
-	return {};
-}
-
-function mapToObject<T extends targetFunction>(
-	sourceMap: sourceMapTypes,
-	targetFunction: targetFunctionTypes,
+function mapToSerialisedObjects<Fnc extends (...args: any) => any>(
+	sourceMap: sourceMap,
+	serialiserFunction: serialiserFunction,
 ) {
-	type R = ReturnType<T>;
+	type serialised = ReturnType<Fnc>;
+
 	const newObject = Object.fromEntries(sourceMap);
 	Object.keys(newObject).forEach((key) => {
-		const newKeyValue = targetFunction(newObject[key]);
+		const newKeyValue = serialiserFunction(newObject[key]);
 		newObject[key] = newKeyValue;
 	});
 	return newObject as {
-		[k: string]: R;
+		[key: string]: serialised;
 	};
 }
 
-type sourceMapTypes =
+type sourceMap =
 	| Map<string, DoxPackage>
 	| Map<string, DoxReference>
 	| Map<string, Branch>
 	| Map<string, DoxDeclaration>;
 
-type targetFunctionTypes = doxPackage | doxReference | branch;
-type targetFunction = (...args: any) => any;
+type serialiserFunction = doxPackage | doxReference | branch | variables;
 type doxPackage = typeof serialiseDoxPackage;
 type doxReference = typeof serialiseDoxReference;
-type branch = typeof branch;
-type nameSpaces = typeof nameSpacesGroup;
-type classes = typeof classesGroup;
-type variables = typeof variablesGroup;
-type functions = typeof functionsGroup;
-type enums = typeof enumsGroup;
+type branch = typeof serialiseBranch;
+type nameSpaces = typeof serialiseNamespace;
+type classes = typeof serialiseClass;
+type variables = typeof serialiseVariable;
+type functions = typeof serialiseFunction;
+type enums = typeof serialiseEnum;

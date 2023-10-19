@@ -16,7 +16,6 @@ const localLogLevel = logLevels.silent;
 describe('class DoxConfig', function () {
 	const { tsConfigPath } = compilerFactory('configs');
 	const getDoxConfig = () => {
-		config._deleteCache();
 		return new DoxConfig(config.getDoxOptions(), []);
 	};
 
@@ -24,26 +23,8 @@ describe('class DoxConfig', function () {
 		log.setLogLevel(globalLogLevel || localLogLevel);
 	});
 
-	after(function () {
-		config._deleteCache();
-	});
-
-	it('requires initial options', function () {
-		config._deleteCache();
-		assert.throws(
-			() => new DoxConfig(),
-			/The initial DoxConfig must include projectOptions/,
-		);
-	});
 	it('creates a class', function () {
 		assert.doesNotThrow(() => new DoxConfig(config.getDoxOptions(), []));
-	});
-	it('can delete the config cache', function () {
-		config._deleteCache();
-		assert.throws(
-			() => new DoxConfig(),
-			/The initial DoxConfig must include projectOptions/,
-		);
 	});
 
 	it('errors if entry conf does not exist', function () {
@@ -57,7 +38,6 @@ describe('class DoxConfig', function () {
 	});
 
 	it('errors if entry conf is not under the root directory', function () {
-		config._deleteCache();
 		const { projectDir } = compilerFactory('groups');
 		const options = config.getDoxOptions([
 			'--projectRootDir',
@@ -71,14 +51,12 @@ describe('class DoxConfig', function () {
 	});
 
 	it('can create a custom project', function () {
-		config._deleteCache();
 		let doxConfig;
 		const options = config.getDoxOptions(['--tsConfigs', tsConfigPath]);
 		assert.doesNotThrow(() => (doxConfig = new DoxConfig(options)));
 		assert.equal((doxConfig as any).tsConfigs[0], tsConfigPath);
 	});
 	it('can create a commandline project', function () {
-		config._deleteCache();
 		let doxConfig;
 		assert.doesNotThrow(
 			() =>
@@ -87,7 +65,7 @@ describe('class DoxConfig', function () {
 					tsConfigPath,
 				])),
 		);
-		assert.equal((doxConfig as any)._clProject()[0], tsConfigPath);
+		assert.equal((doxConfig as any).getClProject()[0], tsConfigPath);
 	});
 
 	it('has correctly formed options', function () {
@@ -115,13 +93,5 @@ describe('class DoxConfig', function () {
 	it('has parsed tsc configs', function () {
 		const parsedConfigs = (getDoxConfig() as any).tscParsedConfigs;
 		assert.isTrue(!!parsedConfigs && parsedConfigs.length > 0);
-	});
-
-	it('identifies specifierKinds', function () {
-		const doxConfig = getDoxConfig();
-		const values = Object.values(ts.SyntaxKind)
-			.map((kind) => doxConfig.isSpecifierKind(kind as any))
-			.filter((value) => !!value);
-		assert.equal(values.length, 9);
 	});
 });

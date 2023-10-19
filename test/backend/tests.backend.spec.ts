@@ -1,3 +1,7 @@
+import * as chai from 'chai';
+import chaiExclude from 'chai-exclude';
+chai.use(chaiExclude);
+
 import { logLevels, loggerUtils } from '../../src/backend/typedox';
 export const globalLogLevel: logLevels | undefined = undefined; //logLevels.error;
 
@@ -28,6 +32,9 @@ describe(title('tsWrapper'), function () {
 	});
 });
 describe(title('Project structure'), function () {
+	describe(unitTest('Dox'), function () {
+		require('./tests/projectStructure/unit.Dox.spec.ts');
+	});
 	describe(functionalTest('DoxProject'), function () {
 		require('./tests/projectStructure/functional.DoxProject.spec');
 	});
@@ -54,8 +61,14 @@ describe(title('Project structure'), function () {
 	});
 });
 describe(title('serialiser'), function () {
-	describe(unitTest('serialiser'), function () {
-		require('./tests/serialiser/unit.serialiser.spec');
+	describe(functionalTest('serialiser'), function () {
+		require('./tests/serialiser/functional.serialiser.spec');
+	});
+	describe(functionalTest('serialiser variables'), function () {
+		require('./tests/serialiser/functional.serialiser.variables.spec.ts');
+	});
+	describe(functionalTest('serialiser project structure'), function () {
+		require('./tests/serialiser/functional.serialiser.projectStructure.spec');
 	});
 });
 describe(title('Backend'), function () {

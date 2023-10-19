@@ -1,9 +1,8 @@
 {
 	"include": ["."],
-    "references": [{"path": "common"}],
-    "compilerOptions": {
-        "outDir": "dist",
-        "esModuleInterop": true,
-        "module": "CommonJS"
-    }
+	"compilerOptions": {
+		"outDir": "dist",
+		"esModuleInterop": true,
+		"module": "CommonJS"
+	}
 }

@@ -12,6 +12,7 @@ import {
 	loggerUtils,
 } from '../typedox';
 import { identifier } from '../logger/loggerUtils';
+import { Dox } from './Dox';
 
 /**
  * A container for typescript declarations:
@@ -32,25 +33,31 @@ import { identifier } from '../logger/loggerUtils';
  *
  *
  */
-export class DoxDeclaration extends DoxConfig {
+export class DoxDeclaration extends Dox {
 	public nameSpace?: string;
 	public parent: DoxSourceFile | DoxDeclaration;
 	public parents: Map<DoxDeclaration, boolean> = new Map();
 	public children: declarationsMap = new Map();
 	public wrappedItem: TsWrapper;
-	public valueNode?: ts.Node;
+
 	public localDeclarationMap: declarationsMap = new Map();
 	public flags: DeclarationFlags = {};
 	private groupTsKind!: ts.SyntaxKind;
 	private defaultStrings = ['default', 'export='];
 	private debug = notices.parse.debug.bind(this);
+	private _valueNode!: ts.Node;
 
-	constructor(parent: DoxSourceFile | DoxDeclaration, item: ts.Symbol) {
+	constructor(
+		parent: DoxSourceFile | DoxDeclaration,
+		item: ts.Symbol,
+		notExported: boolean = false,
+	) {
 		super();
 
 		this.parent = parent;
-
 		this.wrappedItem = this.tsWrap(item);
+		this.valueNode = this.wrappedItem.tsNode;
+		notExported && (this.flags.notExported = true);
 
 		this.declare(this.wrappedItem);
 	}
@@ -141,6 +148,9 @@ export class DoxDeclaration extends DoxConfig {
 	public get checker() {
 		return this.doxSourceFile.checker;
 	}
+	public get doxPackage() {
+		return this.doxReference.parent;
+	}
 	public get doxReference() {
 		return this.doxSourceFile.parent;
 	}
@@ -160,7 +170,26 @@ export class DoxDeclaration extends DoxConfig {
 	public get declarationsMap() {
 		return this.doxSourceFile.declarationsMap;
 	}
+	public get valueNode() {
+		return this._valueNode;
+	}
+	private set valueNode(node: ts.Node) {
+		this._valueNode = node;
 
+		if (ts.isVariableDeclaration(node)) {
+			const firstChild = node.parent.getChildAt(0)!;
+			const { LetKeyword, ConstKeyword, VarKeyword } = ts.SyntaxKind;
+			const { kind } = firstChild;
+			this.flags.scopeKeyword =
+				kind === LetKeyword
+					? 'let'
+					: kind === ConstKeyword
+					? 'const'
+					: kind === VarKeyword
+					? 'var'
+					: (undefined as never);
+		}
+	}
 	public get tsWrap(): DoxReference['tsWrap'] {
 		return this.parent.tsWrap;
 	}
@@ -179,7 +208,6 @@ export class DoxDeclaration extends DoxConfig {
 	private declare = (wrapped: TsWrapper, isTarget = false) => {
 		if (!this.isSpecifierKind(wrapped.kind)) {
 			this.valueNode = wrapped.tsNode;
-
 			this.groupTsKind ??= wrapped.kind;
 			return;
 		}
@@ -204,7 +232,6 @@ export class DoxDeclaration extends DoxConfig {
 			const expressionWrap = this.tsWrap(expression);
 			const target =
 				wrapped.target || expressionWrap.target || expressionWrap;
-			//console.log(target);
 			target
 				? this.relate(target, true)
 				: /* istanbul ignore next: soft error for debugging */
@@ -218,14 +245,19 @@ export class DoxDeclaration extends DoxConfig {
 			/* istanbul ignore next: soft error for debugging */
 			if (!file) return this.fileNotFound(wrapped, targetFileName);
 
+			const reExports: TsWrapper[] = [];
 			file.declarationsMap.forEach((child) => {
 				const { wrappedItem, name } = child;
 				const { tsNode } = wrappedItem;
 				const isExportDeclaration = ts.isExportDeclaration(tsNode);
 
 				if (this.defaultStrings.includes(name)) return;
-				if (!isExportDeclaration) return this.adopt(child);
-				this.relate(wrappedItem, true);
+				isExportDeclaration
+					? reExports.push(wrappedItem)
+					: this.adopt(child);
+			});
+			reExports.forEach((reExport) => {
+				this.relate(reExport, true);
 			});
 		},
 		relateExportSpecifier(this: DoxDeclaration, wrapped: TsWrapper) {
@@ -311,17 +343,20 @@ export class DoxDeclaration extends DoxConfig {
 			!skipNotice && this.debug('relate NamespaceExport');
 
 			const { targetFileName } = wrapped;
+
 			const file =
 				targetFileName &&
 				this.doxReference.filesMap.get(targetFileName);
 			/* istanbul ignore next: soft error for debugging */
 			if (!file) return this.fileNotFound(wrapped, targetFileName);
+
 			file.declarationsMap.forEach((child) => {
 				const { wrappedItem } = child;
 				const isExportDeclaration = ts.isExportDeclaration(
 					wrappedItem.tsNode,
 				);
 				if (!isExportDeclaration) return this.adopt(child);
+
 				this.relate(wrappedItem, true);
 			});
 		},
@@ -334,6 +369,7 @@ export class DoxDeclaration extends DoxConfig {
 		},
 		/*
 		relateBindingElement(this: DoxDeclaration, wrapped: TsWrapper) {},
+		
 		relateObjectLiteralExpression(
 			this: DoxDeclaration,
 			wrapped: TsWrapper,
@@ -344,12 +380,12 @@ export class DoxDeclaration extends DoxConfig {
 		declareExportAssignment(this: DoxDeclaration, wrapped: TsWrapper) {
 			this.debug('declare ExportAssignment');
 
-			this.flags.default = true;
+			this.flags.isDefault = true;
 			const expression = (wrapped.tsNode as ts.ExportAssignment)
 				.expression;
 
 			if (this.isLiteral(expression)) {
-				this.valueNode = expression;
+				this.valueNode = expression.parent;
 				this.groupTsKind = expression.kind;
 				return;
 			}
@@ -436,7 +472,16 @@ export class DoxDeclaration extends DoxConfig {
 			fnc.call(this, wrapped, true);
 		},
 		/*
-		declareBindingElement(this: DoxDeclaration, wrapped: TsWrapper) {},
+		declareBindingElement(this: DoxDeclaration, wrapped: TsWrapper) {
+			const topNode = ts.walkUpBindingElementsAndPatterns(
+				wrapped.tsNode as ts.BindingElement,
+			);
+			this.valueNode = topNode;
+			log.info(ts.SyntaxKind[topNode.kind]);
+			const { initializer } = topNode;
+			log.info(ts.SyntaxKind[topNode.initializer!.kind]);
+		},
+		
 		declareObjectLiteralExpression(
 			this: DoxDeclaration,
 			wrapped: TsWrapper,
@@ -447,6 +492,7 @@ export class DoxDeclaration extends DoxConfig {
 		*/
 	};
 	private adopt = (child: DoxDeclaration) => {
+		if (this.children.has(child.name)) return;
 		child.parents.set(this, true);
 		this.children.set(child.name, child);
 	};
@@ -504,7 +550,7 @@ export class DoxDeclaration extends DoxConfig {
 		}
 	};
 	private declareLocal = (symbol: ts.Symbol, name?: string) => {
-		const declaration = new DoxDeclaration(this, symbol);
+		const declaration = new DoxDeclaration(this, symbol, true);
 		this.localDeclarationMap.set(name || declaration.name, declaration);
 
 		return declaration;
@@ -516,11 +562,9 @@ export class DoxDeclaration extends DoxConfig {
 			? this.notFound(wrapped, wrapped.fileName, message, 'warn')
 			: this.notFound(wrapped, 'file');
 	};
-
 	private get notFound() {
 		return notices.notFound.bind(this);
 	}
-
 	private get isArrowFunction() {
 		const isVariable =
 			this.valueNode && ts.isVariableDeclaration(this.valueNode);

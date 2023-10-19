@@ -7,6 +7,7 @@ import {
 	declarationsMap,
 	logger as log,
 } from '../typedox';
+import { Dox } from './Dox';
 
 /**
  * A container for typescript compiler source files:
@@ -25,7 +26,7 @@ import {
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;|\
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...DoxDeclaration...
  */
-export class DoxSourceFile extends DoxConfig {
+export class DoxSourceFile extends Dox {
 	public parent: DoxReference;
 	public childFiles: string[];
 	public fileName: string;
@@ -55,14 +56,23 @@ export class DoxSourceFile extends DoxConfig {
 	}
 
 	public discoverDeclarations = () => {
-		this.fileSymbol.exports?.forEach(this.makeDeclaration);
+		const { locals } = this.sourceFile as any;
+		this.fileSymbol.exports?.forEach((symbol) =>
+			this.makeDeclaration(symbol, false),
+		);
+		(locals as Map<string, ts.Symbol>)?.forEach((symbol) =>
+			this.makeDeclaration(symbol, true),
+		);
 	};
-	public makeDeclaration = (item: ts.Symbol) => {
+	public makeDeclaration = (item: ts.Symbol, notExported: boolean) => {
 		if (this.declarationsMap.has(item.name)) return;
+		if (item.declarations && ts.isBindingElement(item.declarations[0]))
+			return;
 
 		const declaration = new DoxDeclaration(
 			this,
 			this.tsWrap(item).tsSymbol,
+			notExported,
 		);
 
 		this.declarationsMap.set(declaration.name, declaration);

@@ -4,7 +4,10 @@ import { grandchild, childSpace } from './grandchild/grandchild';
 import * as grandchildSpace from './grandchild/grandchild';
 
 type localType = typeof localVar;
-const localVar = 'localVar';
+type foo = 'localVarValue' | 'foo';
+
+/** A local string variable */
+const localVar: foo = 'localVarValue';
 
 declare namespace local {
 	const foo = 'foo';

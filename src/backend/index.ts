@@ -6,6 +6,7 @@ import {
 	Branch,
 	logger as log,
 	logLevels,
+	loggerUtils,
 } from './typedox';
 
 export default function main(customOptions?: config.doxOptions) {
@@ -19,7 +20,7 @@ export default function main(customOptions?: config.doxOptions) {
 
 	const serialised = doxProject.toObject;
 
-	//log.info(JSON.stringify(serialised, null, 4));
+	log.info(JSON.stringify(serialised, null, 4));
 
 	return serialised;
 }

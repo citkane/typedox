@@ -25,14 +25,12 @@ before(function () {
 afterEach(function () {
 	if (this.errorStub) this.errorStub.restore();
 });
-after(function () {
-	projectFactory.flushCache();
-});
+
 it('creates a class instance', function () {
-	const { getFile, checker } = compiler();
+	const { getFile, checker, program } = compiler();
 	const sourceFile = getFile().sourceFile;
 	const fileSymbol = getFile().sourceSymbol;
-	const reference = stubs.doxReference(localFactory, checker);
+	const reference = stubs.doxReference(localFactory, checker, program);
 
 	assert.exists(sourceFile, 'sourceFile');
 	assert.exists(fileSymbol, 'fileSymbol');

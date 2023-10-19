@@ -50,8 +50,35 @@ export enum DeclarationGroup {
 	Type,
 }
 
+type comment = { comment: string };
+type tag = { tag: any };
+export type jsDocCollection = (comment | tag)[];
+
 export interface DeclarationFlags {
-	default?: boolean;
+	isDefault?: boolean;
+	scopeKeyword?: 'const' | 'let' | 'var';
+	notExported?: true;
+}
+export interface DeclarationLocation {
+	query: string;
+	hash: string;
+}
+export interface DeclarationType {
+	kind: string;
+	name: string;
+	id?: number;
+	valueString?: string;
+}
+
+export interface DeclarationSerialised {
+	id: number;
+	name: string;
+	group: DeclarationGroup;
+	flags: DeclarationFlags;
+	location: DeclarationLocation;
+	type: DeclarationType;
+	jsDoc: jsDocCollection | undefined;
+	valueString?: string;
 }
 
 export type logLevelKeys = keyof typeof logLevels;
@@ -98,7 +125,3 @@ export type namedRegistry<reg> = Record<string, reg>;
 
 export type doxPackagePrograms = [program: ts.Program, rootDir: string][];
 export type doxPackageDefinitions = namedRegistry<doxPackagePrograms>;
-
-export namespace foo {
-	const bar = 'foo';
-}

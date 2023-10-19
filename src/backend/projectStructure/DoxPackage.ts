@@ -10,6 +10,7 @@ import {
 	serialise,
 	DoxSourceFile,
 } from '../typedox';
+import { Dox } from './Dox';
 
 /**
  * A container for all npm `package` declarations. Can be one, or many in a monorepo:
@@ -30,7 +31,7 @@ import {
  *
  *
  */
-export class DoxPackage extends DoxConfig {
+export class DoxPackage extends Dox {
 	public parent: DoxProject;
 	public doxReferences: DoxReference[];
 	public filesMap = new Map<string, DoxSourceFile>();
