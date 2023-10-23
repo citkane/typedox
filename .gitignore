@@ -2,8 +2,11 @@
 /temp
 /test/**/coverage
 /test/scratch
+/test/runners
 
+*.tsbuildinfo
+scratch
 dist
 node_modules
 .nyc_output
-tsconfig.tsbuildinfo 
+buildInfo

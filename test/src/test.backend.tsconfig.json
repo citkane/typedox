@@ -1,0 +1,13 @@
+{
+	"include": ["./backend", "./factories", "tests.backend.spec.mts"],
+	"compilerOptions": {
+		"outDir": "../runners",
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
+		"esModuleInterop": true,
+		"target": "ES6",
+		"strict": true,
+		"inlineSourceMap": true,
+		"composite": true
+	}
+}

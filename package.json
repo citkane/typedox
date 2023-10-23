@@ -2,19 +2,18 @@
 	"name": "typedox",
 	"version": "0.0.0",
 	"description": "Document Generator for Typedoc",
-	"main": "backend/index.js",
 	"bin": {
 		"typedox": "bin/typedox.js"
 	},
 	"scripts": {
-		"scratch": "npx ts-node test/scratch",
-		"build:test": "npx tsc --project test/backend/tsconfig.json -w",
-		"build:watch": "node .build.js -b -w",
-		"backend": "node -r source-map-support/register dist/bin/typedox",
-		"scenario:namespace:recursion": "node -r source-map-support/register ./dist/backend/index.js --tsConfigs test/scenarios/namespaces",
-		"test:backend": "NODE_ENV=test mocha --file test/backend/tests.backend.spec.ts",
-		"test:backend:coverage": "nyc --include=src/backend/**/*.ts --report-dir=test/coverage/backend npm run test:backend"
+		"build": "make build",
+		"build:watch": "make buildWatch",
+		"test": "make testAll",
+		"test:backend": "make testBackend",
+		"test:backend:coverage": "make testBackendCoverage",
+		"postinstall": "npm run build"
 	},
+	"type": "module",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/citkane/typedox.git"
@@ -33,22 +32,20 @@
 	},
 	"homepage": "https://github.com/citkane/typedox#readme",
 	"workspaces": [
-		"./.tsconfig"
+		"packages/backend"
 	],
 	"devDependencies": {
-		"@typedox/tsconfig": "*",
+		"@typedox/backend": "file:packages/backend",
 		"@types/chai": "^4.3.6",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^20.6.0",
 		"@types/sinon": "^10.0.16",
+		"c8": "^8.0.1",
 		"chai": "^4.3.8",
 		"chai-exclude": "^2.1.0",
 		"mocha": "^10.2.0",
-		"nyc": "^15.1.0",
 		"prettier": "^3.0.1",
 		"sinon": "^16.0.0",
 		"source-map-support": "^0.5.21",
-		"ts-node": "^10.9.1",
 		"typedox": "file:dist"
 	},
 	"dependencies": {
@@ -57,25 +54,5 @@
 	"engines": {
 		"npm": ">=7.0.2 <=9.8.1",
 		"node": ">=15.0.1 <=20.6.1"
-	},
-	"mocha": {
-		"extension": [
-			"ts"
-		],
-		"require": [
-			"ts-node/register/transpile-only",
-			"source-map-support/register"
-		]
-	},
-	"nyc": {
-		"extension": [
-			".ts"
-		],
-		"reporter": [
-			"clover",
-			"text",
-			"html"
-		],
-		"temp-dir": "test/.nyc_output"
 	}
 }

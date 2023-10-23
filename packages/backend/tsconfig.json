@@ -1,0 +1,11 @@
+{
+	"include": ["src"],
+	"compilerOptions": {
+		"target": "ES6",
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
+		"sourceMap": true,
+		"composite": true,
+		"outDir": "../../dist/backend"
+	}
+}

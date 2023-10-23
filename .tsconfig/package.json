@@ -1,8 +1,0 @@
-{
-	"name": "@typedox/tsconfig",
-	"files": [
-		"./base.json",
-		"./commonjs.json",
-		"./es2019.json"
-	]
-}

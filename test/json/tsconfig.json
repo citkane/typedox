@@ -1,9 +1,0 @@
-{
-    "files": ["commented.json"],
-    
-    "compilerOptions": {
-        "resolveJsonModule": true,
-        "removeComments": true,
-        "outDir": "built"
-    }
-}

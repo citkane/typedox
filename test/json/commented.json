@@ -1,7 +1,0 @@
-{
-    /* comment */
-    "foo": "foo",
-    //comment
-    "bar": {"one": 1, "two": 2},
-    "none": []
-}
