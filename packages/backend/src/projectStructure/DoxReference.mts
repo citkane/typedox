@@ -1,18 +1,16 @@
 import ts from 'typescript';
-import * as fs from 'fs';
-import * as path from 'path';
 import {
-	Branch,
-	DoxConfig,
+	DoxBranch,
+	DoxDeclaration,
 	DoxPackage,
 	DoxSourceFile,
 	TsWrapper,
-	log as log,
 	serialiser,
 	tsItem,
 	tsc,
 } from '../typedox.mjs';
 import { Dox } from './Dox.mjs';
+import { log } from 'typedox/logger';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -37,14 +35,15 @@ const __filename = log.getFilename(import.meta.url);
  */
 export class DoxReference extends Dox {
 	public name: string;
-	public parent: DoxPackage;
 	public filesMap = new Map<string, DoxSourceFile>();
-	public treeBranches: Map<string, Branch> = new Map();
+	public treeBranches: Map<string, DoxBranch> = new Map();
 	public entryFileList: string[];
 	public checker: ts.TypeChecker;
 	public program: ts.Program;
 	private ignoredFiles = [] as string[];
+	private rootDeclarations?: DoxDeclaration[];
 
+	private parent: DoxPackage;
 	constructor(
 		parent: DoxPackage,
 		name: string,
@@ -63,8 +62,17 @@ export class DoxReference extends Dox {
 	public get toObject() {
 		return serialiser.serialiseDoxReference(this);
 	}
-	public tsWrap = (item: tsItem): TsWrapper => {
-		return tsc.wrap(this.checker, this.program, item);
+	public get doxPackage() {
+		return this.parent;
+	}
+	public get doxProject() {
+		return this.parent.doxProject;
+	}
+
+	public tsWrap = (item: tsItem): TsWrapper | undefined => {
+		const wrapped = tsc.wrap(this.checker, this.program, item);
+		if (!wrapped) notices.noWrap(item);
+		return wrapped;
 	};
 	public discoverFiles(fileList = this.entryFileList) {
 		fileList.forEach((fileName) => {
@@ -108,12 +116,10 @@ export class DoxReference extends Dox {
 	};
 
 	public getRootDeclarations = () => {
-		return Array.from(this.filesMap.values())
-			.map((fileSource) =>
-				Array.from(fileSource.declarationsMap.values()),
-			)
-			.flat()
-			.filter((declaration) => !declaration.parents.size);
+		if (this.rootDeclarations) return this.rootDeclarations;
+		this.rootDeclarations = [];
+		this.emit('declarations.findRootDeclarations', this.rootDeclarations);
+		return this.rootDeclarations;
 	};
 }
 const notices = {
@@ -131,6 +137,14 @@ const notices = {
 				'File was not included as part of the documentation set:',
 				fileName,
 			),
+	},
+	noWrap: (item: tsItem) => {
+		const message = Dox.isSymbol(item) ? item.name : item.getText();
+		log.error(
+			log.identifier(__filename),
+			'Could not wrap a item:',
+			message,
+		);
 	},
 };
 const seenFileError: string[] = [];

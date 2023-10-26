@@ -22,8 +22,5 @@
 	"bugs": {
 		"url": "https://github.com/citkane/typedox/issues"
 	},
-	"homepage": "https://github.com/citkane/typedox#readme",
-	"devDependencies": {
-		"@types/node": "^20.8.7"
-	}
+	"homepage": "https://github.com/citkane/typedox#readme"
 }

@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import * as fs from 'fs';
-import { log as log, config } from '../../typedox.mjs';
+import { config } from '../../typedox.mjs';
+import { log } from 'typedox/logger';
 
 const __filename = log.getFilename(import.meta.url);
 

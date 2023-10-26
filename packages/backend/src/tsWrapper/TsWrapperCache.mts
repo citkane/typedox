@@ -1,13 +1,13 @@
 import ts from 'typescript';
-import {
-	TsWrapper,
-	log as log,
-	tsItem,
-	tsc as wrapUtils,
-} from '../typedox.mjs';
+import { Dox, TsWrapper, tsc as wrapUtils } from '../typedox.mjs';
+import notices from './notices.mjs';
+import { wrap } from './TsWrapper.mjs';
+import { log } from 'typedox/logger';
+
+const __filename = log.getFilename(import.meta.url);
 
 export class TsWrapperCache {
-	private instanceCache = {} as cache;
+	private instanceCache = {} as wrappedCache;
 	protected program: ts.Program;
 	protected checker: ts.TypeChecker;
 
@@ -17,26 +17,24 @@ export class TsWrapperCache {
 	}
 
 	protected cacheSet = (
-		key: keyof cache,
-		value: ts.Node | ts.Symbol | ts.Type,
+		key: keyof wrappedCache,
+		value: ts.Node[] | ts.Symbol,
 	) => {
 		this.instanceCache[key] === undefined
 			? (this.instanceCache[key] = value as any)
 			: notices.cacheSet.call(this, key);
 	};
 
-	protected cacheGetter = (wrapper: TsWrapper, key: keyof cache) => {
+	protected cacheGetter = (wrapper: TsWrapper, key: keyof wrappedCache) => {
 		return (this.instanceCache[key] ??= cacheCallbacks[key].bind({
 			wrapper,
 			checker: this.checker,
 			program: this.program,
 		})() as any);
 	};
-	public cacheFlush = () =>
-		(wrappers = new Map<ts.Node | ts.Symbol | ts.Type, TsWrapper>());
 }
 
-export type cache = {
+export type wrappedCache = {
 	[K in keyof typeof cacheCallbacks]: ReturnType<(typeof cacheCallbacks)[K]>;
 };
 type wrapContainer = {
@@ -44,36 +42,49 @@ type wrapContainer = {
 	checker: ts.TypeChecker;
 	program: ts.Program;
 };
-let wrappers = new Map<ts.Node | ts.Symbol | ts.Type, TsWrapper>();
 
 const cacheCallbacks = {
-	tsNode: function (this: wrapContainer): ts.Node {
+	tsNodes: function (this: wrapContainer): ts.Node[] {
 		const { wrapper, checker } = this;
-		const node = wrapUtils.getNodeAndTypeFromSymbol(
+		const { nodes, type } = wrapUtils.getNodesAndTypeFromSymbol(
 			checker,
 			wrapper.tsSymbol,
-		).node;
-		wrappers.set(node, wrapper);
+		);
+
+		if (!nodes?.length && !type) {
+			notices.throw.wrapError.call(
+				wrapper,
+				wrapper.tsSymbol,
+				'No declarations found on symbol',
+			);
+		}
+
+		return nodes || [Dox.declared(wrapper.tsSymbol).typeAlias!];
+	},
+	tsNode: function (this: wrapContainer): ts.Node {
+		const { wrapper } = this;
+		const node = wrapper.tsSymbol.valueDeclaration || wrapper.tsNodes[0];
 
 		return node;
 	},
 	tsSymbol: function (this: wrapContainer): ts.Symbol {
 		const { wrapper, checker } = this;
-		const symbol = wrapUtils.getTsSymbolFromNode(checker, wrapper.tsNode);
-		wrappers.set(symbol, wrapper);
+		const symbol = wrapUtils.getTsSymbolFromNodes(checker, wrapper.tsNodes);
+		//wrappers.set(symbol, wrapper);
 
 		return symbol;
 	},
 	tsType: function (this: wrapContainer): ts.Type {
 		const { wrapper, checker } = this;
-		const type = wrapUtils.getNodeAndTypeFromSymbol(
+		const type = wrapUtils.getNodesAndTypeFromSymbol(
 			checker,
 			wrapper.tsSymbol,
 		).type;
-		wrappers.set(type, wrapper);
+		//wrappers.set(type, wrapper);
 
 		return type;
 	},
+
 	alias: function (this: wrapContainer) {
 		const { wrapper } = this;
 		return ts.isImportOrExportSpecifier(wrapper.tsNode)
@@ -86,13 +97,16 @@ const cacheCallbacks = {
 	},
 	targetFileName: function (this: wrapContainer) {
 		const { wrapper, checker, program } = this;
-		const { tsNode, localDeclaration } = wrapper;
-		const target = localDeclaration || tsNode;
+		const { tsNode, localDeclaration, target } = wrapper;
+		if (target) return target.fileName;
 
-		if (ts.isSourceFile(target)) return target.fileName;
+		const targetNode: ts.Node =
+			localDeclaration?.valueDeclaration || tsNode;
 
-		const wrapped = wrap(checker, program, target);
-		const { moduleSpecifier } = wrapped;
+		if (ts.isSourceFile(targetNode)) return targetNode.fileName;
+
+		const wrapped = wrap(checker, program, targetNode);
+		const moduleSpecifier = wrapped?.moduleSpecifier;
 
 		if (!moduleSpecifier) return undefined;
 
@@ -108,21 +122,18 @@ const cacheCallbacks = {
 				ts.sys,
 			).resolvedModule?.resolvedFileName || (text as string);
 
-		//const badFileName = `${wrapUtils.badFilePrefix}${fileName}`;
-		//log.info(badFileName);
 		return fileName;
 	},
 	fileName: function (this: wrapContainer) {
 		const { wrapper } = this;
 		return wrapper.tsNode.getSourceFile().fileName as string;
 	},
-
 	callSignatures: function (this: wrapContainer) {
 		const { wrapper } = this;
 		return wrapper.tsType.getCallSignatures();
 	},
 	nodeDeclarationText: function (this: wrapContainer) {
-		const { wrapper, checker } = this;
+		const { wrapper } = this;
 
 		return rootNode(wrapper.tsNode).getText();
 
@@ -141,20 +152,20 @@ const cacheCallbacks = {
 	},
 	immediateAliasedSymbol: function (this: wrapContainer) {
 		const { wrapper, checker } = this;
+
 		try {
-			return checker.getImmediateAliasedSymbol(wrapper.tsSymbol);
+			const symbol = checker.getImmediateAliasedSymbol(wrapper.tsSymbol);
+			return symbol;
 		} catch (err) {
 			return undefined;
 		}
 	},
-	localDeclaration: function (
-		this: wrapContainer,
-	): ts.Declaration | undefined {
-		const { wrapper, checker } = this;
+	localDeclaration: function (this: wrapContainer): ts.Symbol | undefined {
+		const { wrapper, checker, program } = this;
 		const { tsNode } = wrapper;
 		const { name, moduleReference } = tsNode as ts.ImportEqualsDeclaration;
 
-		return ts.isExportSpecifier(tsNode)
+		const symbol = ts.isExportSpecifier(tsNode)
 			? declaration(tsNode)
 			: ts.isImportEqualsDeclaration(tsNode)
 			? declaration(moduleReference as ts.Identifier)
@@ -162,6 +173,9 @@ const cacheCallbacks = {
 			  ts.isPropertyAssignment(tsNode)
 			? local(tsNode)
 			: undefined;
+
+		const wrapped = symbol && wrap(checker, program, symbol);
+		return wrapped?.tsSymbol;
 
 		function local(
 			assignment: ts.ShorthandPropertyAssignment | ts.PropertyAssignment,
@@ -171,18 +185,17 @@ const cacheCallbacks = {
 			const { locals } = file as any;
 			const symbol = (locals as Map<string, ts.Symbol>)?.get(name);
 
-			return symbol && (symbol.declarations || [])[0];
+			return symbol;
 		}
 		function declaration(identifier: ts.Identifier | ts.ExportSpecifier) {
-			const symbol =
-				checker.getExportSpecifierLocalTargetSymbol(identifier);
-
-			const declaration = symbol && (symbol.declarations || [])[0];
-			const isSameFile =
-				declaration &&
-				wrapper.fileName === declaration.getSourceFile().fileName;
-
-			return declaration && isSameFile ? declaration : undefined;
+			let symbol: ts.Symbol | undefined;
+			try {
+				symbol =
+					checker.getExportSpecifierLocalTargetSymbol(identifier);
+			} catch (error) {
+				return undefined;
+			}
+			return symbol;
 		}
 	},
 	target: function (this: wrapContainer) {
@@ -197,61 +210,27 @@ const cacheCallbacks = {
 
 	declaredModuleSymbols: function (this: wrapContainer) {
 		const { wrapper, checker } = this;
-		if (!ts.isModuleDeclaration(wrapper.tsNode)) return [];
+		if (!ts.isModuleDeclaration(wrapper.tsNodes[0])) return undefined;
 
 		const exportSymbols = Array.from(
 			wrapper.tsSymbol.exports?.values() || [],
 		);
-		const expressionSymbols = Array.from(
-			(wrapper.tsNode as any).body?.statements || [],
-		)
-			.map((_node) => {
-				const node = _node as ts.ExpressionStatement;
-				return node.expression
-					? checker.getSymbolAtLocation(node.expression)
-					: undefined;
-			})
-			.filter((symbol) => !!symbol) as ts.Symbol[];
+		const expressionSymbols = wrapper.tsNodes.reduce(
+			(accumulator, node) => {
+				const statements: ts.ExpressionStatement[] =
+					(node as any).body?.statements || [];
+				statements.forEach((statement) => {
+					const { expression } = statement;
+					const symbol =
+						expression && checker.getSymbolAtLocation(expression);
+					symbol && accumulator.push(symbol);
+				});
+				return accumulator;
+			},
+			[] as ts.Symbol[],
+		);
 		const symbols = [...exportSymbols, ...expressionSymbols];
 
 		return symbols;
-	},
-};
-
-export function wrap(
-	checker: ts.TypeChecker,
-	program: ts.Program,
-	item: tsItem,
-): TsWrapper {
-	const node = getNode(item);
-	if (!node) notices.wrapError(item);
-	if (wrappers.has(node)) return wrappers.get(node)!;
-
-	const wrapped = new TsWrapper(checker, program, item);
-	wrappers.set(node, wrapped);
-
-	return wrapped;
-
-	function getNode(item: tsItem) {
-		return item.constructor.name === 'SymbolObject'
-			? (item as ts.Symbol).declarations![0]
-			: (item as ts.Node);
-	}
-}
-
-const notices = {
-	cacheSet: function (this: TsWrapperCache, key: string) {
-		log.error(
-			log.identifier(this),
-			'Tried to set existing cache key:',
-			key,
-		);
-	},
-	wrapError: function (item: tsItem) {
-		log.error(
-			log.identifier(TsWrapperCache),
-			'Did not get a ts.Node to identify the wrapper',
-			item.constructor.name,
-		);
 	},
 };

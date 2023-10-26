@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json.schemastore.org/mocharc",
-	"file": ["./test/runners/tests.backend.spec.mjs"],
+	"file": ["./test/all.spec.mjs"],
 	"require": ["source-map-support/register"],
-	"timeout": 4000
+	"timeout": 9000
 }

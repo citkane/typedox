@@ -1,8 +1,9 @@
-/docs
-/temp
-/test/**/coverage
-/test/scratch
-/test/runners
+docs
+temp
+runners
+coverage
+scratch
+
 
 *.tsbuildinfo
 scratch

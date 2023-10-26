@@ -1,0 +1,14 @@
+{
+	"include": ["./src", "./package.json"],
+	"compilerOptions": {
+		"outDir": "./dist",
+		"resolveJsonModule": true,
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
+		"esModuleInterop": true,
+		"target": "ES6",
+		"strict": true,
+		"inlineSourceMap": true,
+		"composite": true
+	}
+}

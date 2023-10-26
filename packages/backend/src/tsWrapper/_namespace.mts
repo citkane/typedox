@@ -1,8 +1,4 @@
 export * from './tsWrapperUtils.mjs';
 
-export {
-	wrap,
-	/* istanbul ignore next */
-	cache,
-} from './TsWrapperCache.mjs';
-export { TsWrapper } from './TsWrapper.mjs';
+export { wrappedCache } from './TsWrapperCache.mjs';
+export { TsWrapper, wrap } from './TsWrapper.mjs';

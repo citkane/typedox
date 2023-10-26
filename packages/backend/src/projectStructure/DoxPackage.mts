@@ -1,14 +1,12 @@
 import * as path from 'path';
 import {
-	log as log,
 	DoxProject,
 	DoxReference,
 	namedRegistry,
-	doxPackagePrograms,
-	DoxConfig,
 	config,
 	serialiser,
 	DoxSourceFile,
+	programsInPackage,
 } from '../typedox.mjs';
 import { Dox } from './Dox.mjs';
 
@@ -32,32 +30,34 @@ import { Dox } from './Dox.mjs';
  *
  */
 export class DoxPackage extends Dox {
-	public parent: DoxProject;
 	public doxReferences: DoxReference[];
 	public filesMap = new Map<string, DoxSourceFile>();
-
 	public version: string;
 	public name: string;
 
+	private parent: DoxProject;
 	constructor(
 		parent: DoxProject,
 		npmFilePath: string,
-		doxPackages: doxPackagePrograms,
+		doxPackages: programsInPackage,
 	) {
 		super();
 		const packageConfig = config.jsonFileToObject(npmFilePath);
 		const { name, version } = packageConfig;
 
 		this.parent = parent;
-		this.doxReferences = this._doxReferences(doxPackages);
+		this.doxReferences = this.makeDoxReferences(doxPackages);
 		this.name = name;
 		this.version = version;
 	}
 	public get toObject() {
 		return serialiser.serialiseDoxPackage(this);
 	}
+	public get doxProject() {
+		return this.parent;
+	}
 
-	private _doxReferences = (programs: doxPackagePrograms) => {
+	private makeDoxReferences = (programs: programsInPackage) => {
 		const nameMap = DoxPackage.getNameMap(programs);
 		const doxReferences = programs.map((tuple) => {
 			const [program, rootDir] = tuple;
@@ -72,7 +72,7 @@ export class DoxPackage extends Dox {
 		return doxReferences;
 	};
 
-	public static getNameMap(programs: doxPackagePrograms) {
+	public static getNameMap(programs: programsInPackage) {
 		const rootDirs = programs.map((tuple) => tuple[1]);
 
 		const referenceNameMap = rootDirs

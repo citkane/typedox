@@ -2,7 +2,8 @@ import ts from 'typescript';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { log as log, config, tscRawConfig } from '../../typedox.mjs';
+import { config, tscRawConfig } from '../../typedox.mjs';
+import { log } from 'typedox/logger';
 
 const __filename = log.getFilename(import.meta.url);
 

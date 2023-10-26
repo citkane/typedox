@@ -1,5 +1,7 @@
 import ts from 'typescript';
-import { TsWrapper, log, loggerUtils } from '../typedox.mjs';
+import { Dox, TsWrapper } from '../typedox.mjs';
+import notices from './notices.mjs';
+import { log, loggerUtils } from 'typedox/logger';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -31,7 +33,13 @@ export function parseReportKey(this: TsWrapper, key: keyof TsWrapper) {
 		(value = loggerUtils.shortenString((value as ts.Node).getText(), 200));
 	key === 'localDeclaration' &&
 		value &&
-		(value = loggerUtils.shortenString((value as ts.Node).getText(), 200));
+		(value = loggerUtils.shortenString(
+			(
+				(value as ts.Symbol).valueDeclaration ||
+				(value as ts.Symbol).declarations![0]
+			).getText(),
+			200,
+		));
 	(key == 'nodeText' || key == 'nodeDeclarationText') &&
 		value &&
 		(value = loggerUtils.shortenString(value as string, 80));
@@ -39,51 +47,41 @@ export function parseReportKey(this: TsWrapper, key: keyof TsWrapper) {
 	return value;
 }
 
-export function getNodeAndTypeFromSymbol(
+export function getNodesAndTypeFromSymbol(
 	checker: ts.TypeChecker,
 	symbol: ts.Symbol,
 ) {
-	let type: ts.Type;
-	let node = symbol.declarations?.find(
-		(declaration) => !ts.isTypeAliasDeclaration(declaration),
-	);
-	symbol.declarations?.forEach((declaration) => {
-		if (ts.isTypeAliasDeclaration(declaration)) {
-			type = checker.getTypeAtLocation(declaration);
-			node ??= declaration;
-		}
-	});
-	node ??= symbol.valueDeclaration!;
-	type ??= checker.getTypeOfSymbol(symbol);
+	let { nodes, typeAlias } = Dox.declared(symbol);
+	if (!nodes && symbol.valueDeclaration) nodes = [symbol.valueDeclaration];
+	const type = typeAlias
+		? checker.getTypeAtLocation(typeAlias)
+		: checker.getTypeOfSymbol(symbol);
 
-	return { node, type };
+	return { nodes, type };
 }
 
-export function getTsSymbolFromNode(
+export function getTsSymbolFromNodes(
 	checker: ts.TypeChecker,
-	node: ts.Node,
+	nodes: ts.Node[],
 ): ts.Symbol {
 	const seen = new Map<ts.Node, ts.Symbol>();
-	let symbol = checker.getSymbolAtLocation(node);
+	const node = nodes[0];
+	let symbol =
+		'symbol' in node && !!node.symbol
+			? (node.symbol as ts.Symbol)
+			: checker.getSymbolAtLocation(node);
 
-	symbol = symbol
-		? symbol
-		: 'name' in node
-		? checker.getSymbolAtLocation(node.name as ts.Identifier)
-		: 'expression' in node
-		? checker.getSymbolAtLocation(node.expression as ts.Expression)
-		: 'symbol' in node && !!node.symbol
-		? (node.symbol as ts.Symbol)
-		: notFound(node);
+	symbol ??=
+		'name' in node
+			? checker.getSymbolAtLocation(node.name as ts.Identifier)
+			: 'expression' in node
+			? checker.getSymbolAtLocation(node.expression as ts.Expression)
+			: stillNoSymbol(node);
 
+	if (!symbol) notices.throw;
 	return symbol!;
 
-	function mapNodes(symbol: ts.Symbol) {
-		symbol.declarations!.forEach((declaration) => {
-			!seen.has(declaration) && seen.set(declaration, symbol);
-		});
-	}
-	function notFound(node: ts.Node) {
+	function stillNoSymbol(node: ts.Node) {
 		const symbol = checker.getSymbolAtLocation(node.parent);
 		/* istanbul ignore if */
 		if (!symbol) return undefined;
@@ -97,6 +95,11 @@ export function getTsSymbolFromNode(
 			? parseClause(node.exportClause)
 			: undefined;
 	}
+	function mapNodes(symbol: ts.Symbol) {
+		symbol.declarations!.forEach((declaration) => {
+			!seen.has(declaration) && seen.set(declaration, symbol);
+		});
+	}
 	function parseClause(clause: ts.NamedExportBindings | undefined) {
 		/* istanbul ignore if */
 		if (!clause) return undefined;
@@ -109,54 +112,12 @@ export function getTsSymbolFromNode(
 		return has ? seen.get(has) : undefined;
 	}
 }
-
-/*
-
-export function isExportEquals(symbol: ts.Symbol) {
-	return symbol.valueDeclaration?.kind === ts.SyntaxKind.ExportAssignment;
-}
-
-export function parseReExport(symbol: ts.Symbol) {
-	const reExports = symbol.declarations
-		?.map((declaration) => {
-			return ts.isExportDeclaration(declaration)
-				? declaration.moduleSpecifier
-				: undefined;
-		})
-		.filter((expression) => !!expression);
-	return (reExports || []) as ts.Expression[];
-}
-*/
-export function isReExport(symbol: ts.Symbol) {
+export function isExportStar(symbol: ts.Symbol) {
 	return symbol.flags === ts.SymbolFlags.ExportStar;
 }
 
-export function getModuleSpecifier(
-	node: ts.Node,
-	//seen = new Map<object, true>(),
-): ts.Expression | undefined {
-	//if (seen.has(node)) return undefined;
-	//seen.set(node, true);
+export function getModuleSpecifier(node: ts.Node): ts.Expression | undefined {
 	if ('moduleSpecifier' in node) return node.moduleSpecifier as ts.Expression;
 	if (!!node.parent) return getModuleSpecifier(node.parent); //,seen);
 	return undefined;
 }
-
-const notices = {
-	getTsSymbolFromNode: {
-		throw: (node: ts.Node): undefined => {
-			log.debug({
-				text: node.getText(),
-				kind: ts.SyntaxKind[node.kind],
-				parentKind: ts.SyntaxKind[node.parent.kind],
-				file: node.getSourceFile().fileName,
-				node,
-			});
-			log.throwError(
-				log.identifier(__filename),
-				'Invalid node for conversion to symbol',
-				log.stackTracer(),
-			);
-		},
-	},
-};

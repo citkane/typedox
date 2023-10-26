@@ -1,16 +1,15 @@
 import path from 'path';
 import {
-	loggerUtils,
 	Branch,
 	DoxProject,
 	DoxPackage,
 	DoxReference,
 	DoxSourceFile,
 	config,
-	log,
 } from 'typedox';
-import { factoryFolders } from './tests.stubs.mjs';
+import { factoryFolders } from '../test.stubs.mjs';
 import { compilerFactory } from './compilerFactory.mjs';
+import { loggerUtils } from 'typedox/logger';
 
 const { colourise } = loggerUtils;
 

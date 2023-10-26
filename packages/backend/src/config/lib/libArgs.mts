@@ -1,4 +1,4 @@
-import { log as log, config } from '../../typedox.mjs';
+import { config } from '../../typedox.mjs';
 
 export function getClArgs(clArgs = process.argv, doxArgs = config.doxArgs) {
 	const doxClArgs: string[] = [];

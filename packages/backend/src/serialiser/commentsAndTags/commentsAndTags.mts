@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { jsDocCollection, log as log } from '../../typedox.mjs';
+import { jsDocCollection } from '../../typedox.mjs';
 
 export function serialiseCommentsAndTags(
 	node: ts.Node,

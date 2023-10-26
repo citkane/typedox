@@ -1,9 +1,12 @@
 {
 	"include": ["src"],
+	"exclude": ["test"],
 	"compilerOptions": {
+		"strict": true,
 		"target": "ES6",
 		"moduleResolution": "NodeNext",
 		"module": "NodeNext",
+		"esModuleInterop": true,
 		"sourceMap": true,
 		"composite": true,
 		"outDir": "../../dist/backend"

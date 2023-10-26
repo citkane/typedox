@@ -1,11 +1,10 @@
 import ts from 'typescript';
 import {
-	Branch,
+	DoxBranch,
 	DoxProject,
 	DoxPackage,
 	DoxDeclaration,
 	DoxReference,
-	log as log,
 } from '../typedox.mjs';
 import { SerialiseVariable } from './groups/SerialiseVariable.mjs';
 
@@ -47,7 +46,7 @@ export function serialiseDoxReference(reference: DoxReference) {
 	return { ...branches[branchName] };
 }
 
-function serialiseBranch(treeBranch: Branch) {
+function serialiseBranch(treeBranch: DoxBranch) {
 	const {
 		nameSpaces,
 		functions,
@@ -76,7 +75,7 @@ function serialiseBranch(treeBranch: Branch) {
 	};
 }
 
-function serialiseNamespace(nameSpace: Branch) {
+function serialiseNamespace(nameSpace: DoxBranch) {
 	return { ...serialiseBranch(nameSpace) };
 }
 
@@ -115,7 +114,7 @@ function mapToSerialisedObjects<Fnc extends (...args: any) => any>(
 type sourceMap =
 	| Map<string, DoxPackage>
 	| Map<string, DoxReference>
-	| Map<string, Branch>
+	| Map<string, DoxBranch>
 	| Map<string, DoxDeclaration>;
 
 type serialiserFunction = doxPackage | doxReference | branch | variables;

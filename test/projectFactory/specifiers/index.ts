@@ -1,4 +1,5 @@
 import TypeScript from 'typescript';
+import { EventEmitter } from 'events';
 import clause from './child/child';
 import { grandchild, childSpace } from './grandchild/grandchild';
 import * as grandchildSpace from './grandchild/grandchild';
@@ -17,7 +18,11 @@ declare namespace local {
 	const bar = 'bar';
 }
 
-export { clause as fileImportClause, TypeScript as moduleImportClause };
+export {
+	clause as fileImportClause,
+	TypeScript as moduleImportClause,
+	EventEmitter as remoteImportSpecifer,
+};
 export namespace moduleDeclaration {
 	local;
 	childSpace;

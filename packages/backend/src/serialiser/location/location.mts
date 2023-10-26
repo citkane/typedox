@@ -2,7 +2,6 @@ import {
 	DeclarationGroup,
 	DeclarationLocation,
 	DoxDeclaration,
-	log as log,
 } from '../../typedox.mjs';
 
 export function makeDeclarationLocation(

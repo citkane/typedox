@@ -13,19 +13,25 @@ define copyDir
 	cp -r $(call path, $1) $(call path, $2)
 endef
 
-prunePackage.js := $(call path, './scripts/prunePackage.js')
+groomNpmPackage.js := $(call path, './scripts/groomNpmPackage.js')
 
 build: buildRoot
 
-buildRoot: prunePackages
-	@npx tsc -b
+buildRoot: groomNpmPackage
+	npx tsc -b
+	@make postBuild
 
-buildWatch: prunePackages
-	@npx tsc -b -w
+buildWatch: groomNpmPackage buildRoot
+	@make postBuild
+	npx tsc -b -w
+	
+postBuild:
+	@chmod +x $(call path, './dist/bin/typedox.mjs')
+	npm --silent i -D $(call path, './dist')
 
-prunePackages: copyDistPackages
-	@node ${prunePackage.js} $(call path, './dist/package.json') true
-	@node ${prunePackage.js} $(call path, './dist/backend/package.json')
+groomNpmPackage: copyDistPackages
+	@node ${groomNpmPackage.js} $(call path, './dist/package.json') true
+	@node ${groomNpmPackage.js} $(call path, './dist/backend/package.json')
 
 copyDistPackages:
 	@mkdir -p $(call path, './dist/backend')
@@ -35,8 +41,8 @@ copyDistPackages:
 testAll: buildRoot
 	npm exec -c "NODE_ENV=test c8 mocha"
 
-testBackend: buildRoot
+testBackend:
 	npm exec -c "NODE_ENV=test mocha --spec ./test/runners/tests.backend.spec.mjs"
 
-testBackendCoverage: buildRoot
+testBackendCoverage:
 	npm exec -c "NODE_ENV=test c8 mocha --spec ./test/runners/tests.backend.spec.mjs"

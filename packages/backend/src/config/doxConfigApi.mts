@@ -1,4 +1,5 @@
-import { config, log, logLevelKeys } from '../typedox.mjs';
+import { log, logLevelKeys } from 'typedox/logger';
+import { config } from '../typedox.mjs';
 import { deepFreeze } from './lib/libConfig.mjs';
 
 export interface doxArg<defaultValue, required = false> {

@@ -1,13 +1,8 @@
 import * as path from 'path';
 import ts from 'typescript';
 
-import {
-	log as log,
-	tscRawConfig,
-	config,
-	logLevels,
-	logLevelKeys,
-} from '../typedox.mjs';
+import { tscRawConfig, config } from '../typedox.mjs';
+import { log, logLevels } from 'typedox/logger';
 
 export class DoxConfig {
 	public projectOptions: config.doxOptions;
@@ -131,7 +126,7 @@ export class DoxConfig {
 		const isRootLevel = !!this.entryProject || !!this.clProject;
 		const existingOptions = isRootLevel ? this.tscCommandLineOptions : {};
 		//existingOptions.module = ts.ModuleKind.NodeNext;
-		existingOptions.types = this.options.typeDependencies;
+		//existingOptions.types = this.options.typeDependencies;
 
 		const parsedConfigs = config.makeParsedConfigs(
 			this.tscRawConfigs,

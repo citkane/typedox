@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { DoxDeclaration, log as log } from '../../typedox.mjs';
+import { DoxDeclaration } from '../../typedox.mjs';
 import { Serialised } from '../Serialised.mjs';
 
 export class SerialiseVariable extends Serialised {

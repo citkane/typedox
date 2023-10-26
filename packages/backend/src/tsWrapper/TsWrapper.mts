@@ -1,61 +1,45 @@
 import ts from 'typescript';
 import { TsWrapperCache } from './TsWrapperCache.mjs';
-import { log as log, tsc, tsItem } from '../typedox.mjs';
+import { Dox, tsc, tsItem } from '../typedox.mjs';
+import notices from './notices.mjs';
+import { log } from 'typedox/logger';
+
+const __filename = log.getFilename(import.meta.url);
+let cachedWrappers = new Map<ts.Symbol | ts.Node, TsWrapper>();
 
 /**
  * Provides a convenience dox API wrapper around the typescript compiler API.
  */
 export class TsWrapper extends TsWrapperCache {
-	private objectClass: string;
 	constructor(checker: ts.TypeChecker, program: ts.Program, tsItem: tsItem) {
 		super(checker, program);
-		this.objectClass = tsItem.constructor.name;
+		const { wrongType, unsuccessful } = notices.throw;
 
-		if (!this.isNode && !this.isSymbol)
-			notices.constructor.throw.wrongType(this, log.stackTracer());
+		if (!Dox.isNodeOrSymbol(tsItem)) wrongType(this, log.stackTracer());
 
-		this.isNode && this.cacheSet('tsNode', tsItem as ts.Node);
-		this.isSymbol && this.cacheSet('tsSymbol', tsItem as ts.Symbol);
+		Dox.isNode(tsItem) && this.cacheSet('tsNodes', [tsItem]);
+		Dox.isSymbol(tsItem) && this.cacheSet('tsSymbol', tsItem);
 
-		if (!this.tsNode || !this.tsSymbol || !this.tsType) {
-			log.info(tsItem, ts.SyntaxKind[(tsItem as ts.Node).kind]);
-			log.info({
-				symbol: !!this.tsSymbol,
-				node: !!this.tsNode,
-				//type: !!this.tsType,
-			});
-			notices.constructor.throw.unsuccessful(
-				this,
-				log.stackTracer(),
-				tsItem,
-			);
+		if (!this.tsNodes || !this.tsSymbol || !this.tsType) {
+			unsuccessful(this, log.stackTracer(), tsItem);
 		}
 	}
+	public cacheFlush = () => {
+		cachedWrappers = new Map<ts.Symbol | ts.Node, TsWrapper>();
+	};
 	public get cacheGet() {
 		return this.cacheGetter.bind(null, this);
 	}
-	public get isNode() {
-		return (
-			this.objectClass === 'NodeObject' ||
-			this.objectClass === 'IdentifierObject'
-		);
+	public get tsNodes(): tsc.wrappedCache['tsNodes'] {
+		return this.cacheGet('tsNodes');
 	}
-	public get isSymbol() {
-		return this.objectClass === 'SymbolObject';
-	}
-
-	/*
-	public get isType() {
-		return this.objectClass === 'TypeObject';
-	}
-	*/
-	public get tsNode(): tsc.cache['tsNode'] {
+	public get tsNode(): tsc.wrappedCache['tsNode'] {
 		return this.cacheGet('tsNode');
 	}
-	public get tsSymbol(): tsc.cache['tsSymbol'] {
-		return this.cacheGet('tsSymbol') as tsc.cache['tsSymbol'];
+	public get tsSymbol(): tsc.wrappedCache['tsSymbol'] {
+		return this.cacheGet('tsSymbol') as tsc.wrappedCache['tsSymbol'];
 	}
-	public get tsType(): tsc.cache['tsType'] {
+	public get tsType(): tsc.wrappedCache['tsType'] {
 		return this.cacheGet('tsType');
 	}
 	public get nodeExpression() {
@@ -73,7 +57,7 @@ export class TsWrapper extends TsWrapperCache {
 		return this.tsSymbol.name;
 	}
 	/** The name alias, if any, of a `ts.Node` */
-	public get alias(): tsc.cache['alias'] {
+	public get alias(): tsc.wrappedCache['alias'] {
 		return this.cacheGet('alias');
 	}
 
@@ -102,20 +86,20 @@ export class TsWrapper extends TsWrapperCache {
 	public get typeFlagString() {
 		return ts.TypeFlags[this.typeFlag] as tsc.typeFlagString;
 	}
-	public get moduleSpecifier(): tsc.cache['moduleSpecifier'] {
+	public get moduleSpecifier(): tsc.wrappedCache['moduleSpecifier'] {
 		return this.cacheGet('moduleSpecifier');
 	}
-	public get targetFileName(): tsc.cache['targetFileName'] {
+	public get targetFileName(): tsc.wrappedCache['targetFileName'] {
 		return this.cacheGet('targetFileName');
 	}
 	/** The file path of the declaration in scope */
-	public get fileName(): tsc.cache['fileName'] {
+	public get fileName(): tsc.wrappedCache['fileName'] {
 		return this.cacheGet('fileName');
 	}
-	public get localDeclaration(): tsc.cache['localDeclaration'] {
+	public get localDeclaration(): tsc.wrappedCache['localDeclaration'] {
 		return this.cacheGet('localDeclaration');
 	}
-	public get immediatelyAliasedSymbol(): tsc.cache['immediateAliasedSymbol'] {
+	public get immediatelyAliasedSymbol(): tsc.wrappedCache['immediateAliasedSymbol'] {
 		return this.cacheGet('immediateAliasedSymbol');
 	}
 	public get target(): TsWrapper | undefined {
@@ -124,13 +108,13 @@ export class TsWrapper extends TsWrapperCache {
 			? tsc.wrap(this.checker, this.program, target)
 			: undefined;
 	}
-	public get aliasedSymbol(): tsc.cache['aliasedSymbol'] {
+	public get aliasedSymbol(): tsc.wrappedCache['aliasedSymbol'] {
 		return this.cacheGet('aliasedSymbol');
 	}
-	public get declaredModuleSymbols(): tsc.cache['declaredModuleSymbols'] {
+	public get declaredModuleSymbols(): tsc.wrappedCache['declaredModuleSymbols'] {
 		return this.cacheGet('declaredModuleSymbols');
 	}
-	public get callSignatures(): tsc.cache['callSignatures'] {
+	public get callSignatures(): tsc.wrappedCache['callSignatures'] {
 		return this.cacheGet('callSignatures');
 	}
 
@@ -143,26 +127,17 @@ export class TsWrapper extends TsWrapperCache {
 
 	/** The string representation of the part of a declaration that is scope */
 	public get nodeText() {
-		return this.tsNode.getText();
+		return this.tsNodes.length === 1
+			? this.tsNode.getText()
+			: this.tsNodes.reduce((accumulator, node) => {
+					accumulator += `${node.getText()}\n`;
+					return accumulator;
+			  }, '');
 	}
 	/** The full string representation of a declaration ancestor where it is a direct child of the sourceFile. */
-	public get nodeDeclarationText(): tsc.cache['nodeDeclarationText'] {
+	public get nodeDeclarationText(): tsc.wrappedCache['nodeDeclarationText'] {
 		return this.cacheGet('nodeDeclarationText');
 	}
-	/*
-	public get isReExport() {
-		const { ValueModule, ExportStar } = ts.SymbolFlags;
-		const symbolFlags = [ValueModule, ExportStar];
-		const { StringLiteral, ExportDeclaration } = ts.SyntaxKind;
-		const kinds = [StringLiteral, ExportDeclaration];
-
-		const hasFlags =
-			symbolFlags.includes(this.symbolFlag) ||
-			!ts.SymbolFlags[this.symbolFlag];
-
-		return !!this.moduleSpecifier && hasFlags && kinds.includes(this.kind);
-	}
-*/
 	public get isExportSpecifier() {
 		return ts.isExportSpecifier(this.tsNode);
 	}
@@ -170,7 +145,7 @@ export class TsWrapper extends TsWrapperCache {
 		return ts.isIdentifier(this.tsNode);
 	}
 
-	/** A pre-formatted simple report on the scope. */
+	/** A pre-formatted simple report on the wrapped item. */
 	public get report() {
 		const report: tsc.tsWrapperReport = {};
 
@@ -182,35 +157,37 @@ export class TsWrapper extends TsWrapperCache {
 		return report;
 	}
 }
+export function wrap(
+	checker: ts.TypeChecker,
+	program: ts.Program,
+	tsItem: tsItem,
+): TsWrapper | undefined {
+	const keyRef = getRef(checker, tsItem);
+	if (cachedWrappers.has(keyRef)) return cachedWrappers.get(keyRef)!;
+	let wrapped: TsWrapper | undefined;
+	try {
+		wrapped = new TsWrapper(checker, program, keyRef);
+		cachedWrappers.set(keyRef, wrapped);
+	} catch (error: any) {
+		error.message && log.error(error);
+		abort(checker, tsItem);
+		wrapped = undefined;
+	}
 
-const notices = {
-	constructor: {
-		throw: {
-			wrongType: (wrapper: TsWrapper, trace: string) =>
-				log.throwError(
-					log.identifier(wrapper),
-					`Expected a Node or Symbol, got a: ${
-						(wrapper as any).objectClass
-					}`,
-					trace,
-				),
-			unsuccessful: (
-				wrapper: TsWrapper,
-				trace: string,
-				tsItem: tsItem,
-			) => {
-				const objectClass = (wrapper as any).objectClass;
-				const descriptor =
-					objectClass === 'SymbolObject'
-						? (tsItem as ts.Symbol).name
-						: (tsItem as ts.Node).getText();
-				log.throwError(
-					log.identifier(wrapper),
-					`Did not wrap a ${objectClass}:`,
-					descriptor,
-					trace,
-				);
-			},
-		},
-	},
-};
+	return wrapped;
+}
+function getRef(checker: ts.TypeChecker, item: tsItem) {
+	if (Dox.isNode(item)) {
+		const symbol =
+			'symbol' in item
+				? (item.symbol as ts.Symbol)
+				: checker.getSymbolAtLocation(item);
+		return symbol || item;
+	} else {
+		return item;
+	}
+}
+function abort(checker: ts.TypeChecker, item: tsItem) {
+	const symbol = getRef(checker, item);
+	symbol && cachedWrappers.delete(symbol);
+}

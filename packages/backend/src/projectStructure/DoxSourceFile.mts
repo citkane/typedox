@@ -1,13 +1,8 @@
 import ts from 'typescript';
 
-import {
-	DoxConfig,
-	DoxDeclaration,
-	DoxReference,
-	declarationsMap,
-	log as log,
-} from '../typedox.mjs';
+import { DoxDeclaration, DoxReference, declarationsMap } from '../typedox.mjs';
 import { Dox } from './Dox.mjs';
+import { log } from 'typedox/logger';
 
 /**
  * A container for typescript compiler source files:
@@ -27,7 +22,6 @@ import { Dox } from './Dox.mjs';
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...DoxDeclaration...
  */
 export class DoxSourceFile extends Dox {
-	public parent: DoxReference;
 	public childFiles: string[];
 	public fileName: string;
 	public fileSymbol: ts.Symbol;
@@ -35,8 +29,8 @@ export class DoxSourceFile extends Dox {
 	public declarationsMap: declarationsMap = new Map();
 	public sourceFile: ts.SourceFile;
 	public checker: ts.TypeChecker;
-	public tsWrap: DoxReference['tsWrap'];
 
+	private parent: DoxReference;
 	constructor(
 		parent: DoxReference,
 		sourceFile: ts.SourceFile,
@@ -45,7 +39,6 @@ export class DoxSourceFile extends Dox {
 		super();
 		this.parent = parent;
 		this.checker = parent.checker;
-		this.tsWrap = parent.tsWrap;
 		this.sourceFile = sourceFile;
 		this.fileName = sourceFile.fileName;
 		this.fileSymbol = fileSymbol;
@@ -54,7 +47,18 @@ export class DoxSourceFile extends Dox {
 
 		log.debug(log.identifier(this), this.fileName);
 	}
-
+	public get doxReference() {
+		return this.parent;
+	}
+	public get doxPackage() {
+		return this.parent.doxPackage;
+	}
+	public get doxProject() {
+		return this.parent.doxProject;
+	}
+	public get tsWrap() {
+		return this.doxReference.tsWrap;
+	}
 	public discoverDeclarations = () => {
 		const { locals } = this.sourceFile as any;
 		this.fileSymbol.exports?.forEach((symbol) =>
@@ -69,11 +73,7 @@ export class DoxSourceFile extends Dox {
 		if (item.declarations && ts.isBindingElement(item.declarations[0]))
 			return;
 
-		const declaration = new DoxDeclaration(
-			this,
-			this.tsWrap(item).tsSymbol,
-			notExported,
-		);
+		const declaration = new DoxDeclaration(this, item, notExported);
 
 		this.declarationsMap.set(declaration.name, declaration);
 
@@ -82,8 +82,8 @@ export class DoxSourceFile extends Dox {
 
 	public buildRelationships = () => {
 		this.declarationsMap.forEach((declaration) => {
-			const { relate: mapRelationships, wrappedItem } = declaration;
-			mapRelationships(wrappedItem);
+			const { relate, wrappedItem } = declaration;
+			relate(wrappedItem);
 		});
 	};
 
@@ -110,6 +110,8 @@ export class DoxSourceFile extends Dox {
 		return fileSymbols
 			.reduce((accumulator, symbol) => {
 				const wrap = this.tsWrap(symbol);
+				if (!wrap) return accumulator;
+
 				const { targetFileName, fileName } = wrap;
 				const file = targetFileName || fileName;
 				file && file !== this.fileName && accumulator.push(file);

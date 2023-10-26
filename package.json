@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"description": "Document Generator for Typedoc",
 	"bin": {
-		"typedox": "bin/typedox.js"
+		"typedox": "bin/typedox.mjs"
 	},
 	"scripts": {
 		"build": "make build",
@@ -32,12 +32,15 @@
 	},
 	"homepage": "https://github.com/citkane/typedox#readme",
 	"workspaces": [
-		"packages/backend"
+		"packages/backend",
+		"packages/logger"
 	],
 	"devDependencies": {
 		"@typedox/backend": "file:packages/backend",
+		"@typedox/logger": "file:packages/logger",
 		"@types/chai": "^4.3.6",
 		"@types/mocha": "^10.0.1",
+		"@types/node": "^20.8.9",
 		"@types/sinon": "^10.0.16",
 		"c8": "^8.0.1",
 		"chai": "^4.3.8",
@@ -46,7 +49,8 @@
 		"prettier": "^3.0.1",
 		"sinon": "^16.0.0",
 		"source-map-support": "^0.5.21",
-		"typedox": "file:dist"
+		"typedox": "file:dist",
+		"typedox-test": "file:test/dist"
 	},
 	"dependencies": {
 		"typescript": "^5.2.2"

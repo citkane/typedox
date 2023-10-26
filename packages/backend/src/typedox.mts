@@ -1,8 +1,7 @@
 import ts from 'typescript';
-import { Logger, logLevels, log } from './logger/_namespace.mjs';
 import { DoxConfig } from './config/_namespace.mjs';
 import {
-	Branch,
+	DoxBranch,
 	DoxProject,
 	DoxPackage,
 	DoxDeclaration,
@@ -14,25 +13,24 @@ import { TsWrapper } from './tsWrapper/_namespace.mjs';
 import * as serialiser from './serialiser/_namespace.mjs';
 import * as config from './config/_namespace.mjs';
 import * as tsc from './tsWrapper/_namespace.mjs';
-import * as loggerUtils from './logger/_namespace.mjs';
-import main from './index.mjs';
+import * as events from './events/_namespace.mjs';
+import main, { isRequestForHelp, logApplicationHelp } from './index.mjs';
 
 export default main;
 export {
-	log,
-	Logger,
-	logLevels,
-	loggerUtils,
-	serialiser,
+	isRequestForHelp,
+	logApplicationHelp,
 	config,
-	tsc,
+	DoxBranch as Branch,
 	DoxConfig,
-	Branch,
-	DoxProject,
-	DoxPackage,
-	DoxSourceFile,
 	DoxDeclaration,
+	DoxPackage,
+	DoxProject,
 	DoxReference,
+	DoxSourceFile,
+	events,
+	serialiser,
+	tsc,
 	TsWrapper,
 };
 
@@ -81,7 +79,6 @@ export interface DeclarationSerialised {
 	valueString?: string;
 }
 
-export type logLevelKeys = keyof typeof logLevels;
 export type tsConfigFile = string;
 export type referenceName = string;
 
@@ -122,6 +119,4 @@ export interface tscRawConfig {
 
 export type namedDef<def> = [string | undefined, def];
 export type namedRegistry<reg> = Record<string, reg>;
-
-export type doxPackagePrograms = [program: ts.Program, rootDir: string][];
-export type doxPackageDefinitions = namedRegistry<doxPackagePrograms>;
+export type programsInPackage = [program: ts.Program, rootDir: string][];

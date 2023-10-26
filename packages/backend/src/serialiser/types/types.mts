@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { DeclarationType, DoxDeclaration, log as log } from '../../typedox.mjs';
+import { DeclarationType, DoxDeclaration } from '../../typedox.mjs';
 
 export function serialiseType(declaration: DoxDeclaration): DeclarationType {
 	const { wrappedItem } = declaration;

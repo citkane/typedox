@@ -1,0 +1,13 @@
+{
+	"include": ["src"],
+	"exclude": ["test"],
+	"compilerOptions": {
+		"strict": true,
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
+		"target": "ES6",
+		"sourceMap": true,
+		"composite": true,
+		"outDir": "../../dist/logger"
+	}
+}

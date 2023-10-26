@@ -1,12 +1,10 @@
+import { log, logLevels } from 'typedox/logger';
 import {
 	config,
 	DoxReference,
 	DoxProject,
 	DoxPackage,
-	Branch,
-	log as log,
-	logLevels,
-	loggerUtils,
+	DoxBranch,
 } from './typedox.mjs';
 
 export default function main(customOptions?: config.doxOptions) {
@@ -58,7 +56,23 @@ function buildRelationShips(doxReferences: DoxReference[]) {
 function growDocumentBranches(doxReferences: DoxReference[]) {
 	doxReferences.forEach((doxReference) => {
 		const rootDeclarations = doxReference.getRootDeclarations();
-		const treeBranch = new Branch(doxReference, rootDeclarations);
+		const treeBranch = new DoxBranch(doxReference, rootDeclarations);
 		doxReference.treeBranches.set(doxReference.name, treeBranch);
 	});
 }
+
+export function logApplicationHelp() {
+	Object.keys(config.doxArgs).map((k) => {
+		const key = k as keyof config.doxArgs;
+		const helpItem = config.doxArgs[key];
+
+		log.group(config.argHyphen + log.colourise('Underscore', key));
+		log.log(helpItem.description);
+		log.log('Default value:', helpItem.defaultValue);
+		log.log();
+		log.groupEnd();
+	});
+	return true;
+}
+export const isRequestForHelp = (argv = process.argv) =>
+	argv.includes(`${config.argHyphen}help`);

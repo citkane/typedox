@@ -1,6 +1,6 @@
 import ts from 'typescript';
-import { factoryFolders } from './tests.stubs.mjs';
-import * as stubs from './tests.stubs.mjs';
+import { factoryFolders } from '../test.stubs.mjs';
+import * as stubs from '../test.stubs.mjs';
 import { assert } from 'chai';
 import path from 'path';
 
@@ -9,8 +9,9 @@ export function compilerFactory(
 	folder: factoryFolders = 'groups',
 	tsconfig = 'tsconfig.json',
 ) {
-	const { projectFactoryDir } = stubs;
-	const projectDir = path.join(projectFactoryDir, folder);
+	//const { projectFactoryDir } = stubs;
+	//const projectDir = path.join(projectFactoryDir, folder);
+	const projectDir = stubs.projectDir(folder);
 	/** The absolute path to the root tsconfig */
 	const tsConfigPath = path.join(projectDir, tsconfig);
 
@@ -20,7 +21,7 @@ export function compilerFactory(
 		const parsedConfig = ts.parseJsonConfigFileContent(
 			tscConfig,
 			ts.sys,
-			projectFactoryDir,
+			projectDir,
 		);
 		/** The tsc ts.Program instance */
 		const program = ts.createProgram(
