@@ -23,3 +23,4 @@ prebuild:
 
 clean:
 	rm -rf $(call path, './dist')
+

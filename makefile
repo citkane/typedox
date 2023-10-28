@@ -14,7 +14,7 @@ define copyDir
 	cp -r $(call path, $1) $(call path, $2)
 endef
 
-groomNpmPackage.mjs := $(call path, './scripts/groomNpmPackage.mjs')
+groomNpmPackage := $(call path, './scripts/groomNpmPackage.mjs')
 
 initBuild:
 	@if [ -f doxisbuilding ]; then \
@@ -69,8 +69,24 @@ postinstall:
 	@echo postinstall
 
 prepack:
-	@echo prepack
+	@cp $(call path, package.json) $(call path, _package.json)
+	@cp $(call path, packages/core/package.json) $(call path, packages/core/_package.json)
+	@cp $(call path, packages/logger/package.json) $(call path, packages/logger/_package.json)
+	@cp $(call path, packages/serialiser/package.json) $(call path, packages/serialiser/_package.json)
+	@cp $(call path, packages/wrapper/package.json) $(call path, packages/wrapper/_package.json)
+	@node ${groomNpmPackage} $(call path, package.json)
+	@node ${groomNpmPackage} $(call path, packages/core/package.json)
+	@node ${groomNpmPackage} $(call path, packages/logger/package.json)
+	@node ${groomNpmPackage} $(call path, packages/serialiser/package.json)
+	@node ${groomNpmPackage} $(call path, packages/wrapper/package.json)
 
 postpack:
-	@echo postpack
-	rm -f doxisbuilding
+	@rm -f doxisbuilding
+	@mv $(call path, _package.json) $(call path, package.json)
+	@mv $(call path, packages/core/_package.json) $(call path, packages/core/package.json)
+	@mv $(call path, packages/logger/_package.json) $(call path, packages/logger/package.json)
+	@mv $(call path, packages/serialiser/_package.json) $(call path, packages/serialiser/package.json)
+	@mv $(call path, packages/wrapper/_package.json) $(call path, packages/wrapper/package.json)
+
+getGroomPackage:
+	@echo ${groomNpmPackage}

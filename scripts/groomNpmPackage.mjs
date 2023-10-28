@@ -9,7 +9,12 @@ const packageObject = JSON.parse(packageBuffer.toString());
 
 delete packageObject.scripts;
 delete packageObject.devDependencies;
-delete packageObject.workspaces;
+
+if (packageObject.workspaces)
+	packageObject.workspaces = packageObject.workspaces.filter(
+		(pack) => pack !== 'test/',
+	);
 
 const prunedPackage = JSON.stringify(packageObject, null, '\t');
+
 fs.writeFileSync(file, prunedPackage);
