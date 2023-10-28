@@ -1,1 +1,7 @@
+*
+
+!dist/**/*
+!packages/**/package.json
+!packages/**/dist/**
+
 *.tsbuildinfo

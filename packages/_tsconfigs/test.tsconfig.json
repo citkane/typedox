@@ -1,0 +1,10 @@
+{
+	"compilerOptions": {
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
+		"target": "ES6",
+		"strict": true,
+		"inlineSourceMap": true,
+		"composite": true
+	}
+}

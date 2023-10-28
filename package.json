@@ -3,17 +3,22 @@
 	"version": "0.0.0",
 	"description": "Document Generator for Typedoc",
 	"bin": {
-		"typedox": "bin/typedox.mjs"
+		"typedox": "./dist/bin/typedox.mjs"
+	},
+	"exports": {
+		".": "./dist/index.mjs"
 	},
 	"scripts": {
 		"build": "make build",
 		"build:watch": "make buildWatch",
+		"build:tests": "make buildAllTests",
+		"build:watch:tests": "make buildTestsWatch",
 		"test": "make testAll",
-		"test:backend": "make testBackend",
-		"test:backend:coverage": "make testBackendCoverage",
-		"postinstall": "npm run build"
+		"prepare": "make initBuild",
+		"prepack": "make prepack",
+		"postpack": "make postpack",
+		"postinstall": "make postinstall"
 	},
-	"type": "module",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/citkane/typedox.git"
@@ -32,12 +37,15 @@
 	},
 	"homepage": "https://github.com/citkane/typedox#readme",
 	"workspaces": [
-		"packages/backend",
-		"packages/logger"
+		"packages/_tsconfigs",
+		"packages/logger",
+		"packages/wrapper",
+		"packages/core",
+		"packages/serialiser",
+		".",
+		"test/"
 	],
 	"devDependencies": {
-		"@typedox/backend": "file:packages/backend",
-		"@typedox/logger": "file:packages/logger",
 		"@types/chai": "^4.3.6",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^20.8.9",
@@ -48,9 +56,7 @@
 		"mocha": "^10.2.0",
 		"prettier": "^3.0.1",
 		"sinon": "^16.0.0",
-		"source-map-support": "^0.5.21",
-		"typedox": "file:dist",
-		"typedox-test": "file:test/dist"
+		"source-map-support": "^0.5.21"
 	},
 	"dependencies": {
 		"typescript": "^5.2.2"

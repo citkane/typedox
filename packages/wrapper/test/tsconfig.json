@@ -1,0 +1,7 @@
+{
+	"extends": "@typedox/tsconfigs/test.tsconfig.json",
+	"include": ["."],
+	"compilerOptions": {
+		"outDir": "../../../test/runners/wrapper"
+	}
+}

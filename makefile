@@ -1,7 +1,8 @@
 cwd := $(CURDIR)
+built := false
 
 define path-join
-	$(shell node -e "console.log(path.join($1,$2))")
+	$(shell node -e "console.log(path.join('$(shell echo $1 | xargs)','$(shell echo $2 | xargs)'))")
 endef
 define path
 	$(call path-join, '${cwd}', $1)
@@ -13,36 +14,63 @@ define copyDir
 	cp -r $(call path, $1) $(call path, $2)
 endef
 
-groomNpmPackage.js := $(call path, './scripts/groomNpmPackage.js')
+groomNpmPackage.mjs := $(call path, './scripts/groomNpmPackage.mjs')
 
-build: buildRoot
+initBuild:
+	@if [ -f doxisbuilding ]; then \
+		rm doxisbuilding; \
+	else \
+		touch doxisbuilding; \
+		make build; \
+		make buildTestFactory; \
+		make buildTests; \
+	fi
 
-buildRoot: groomNpmPackage
-	npx tsc -b
-	@make postBuild
+build:
+	npx tsc -b -v
+	make postBuild
 
-buildWatch: groomNpmPackage buildRoot
-	@make postBuild
+buildWatch:
 	npx tsc -b -w
+	make postBuild
+
+buildAllTests: build buildTestFactory buildTests
+
+buildTestFactory:
+	npx tsc -b -v $(call path, './test/src/tsconfig.json')
+
+buildTests:
+	npx tsc -b -v $(call path, './test/tsconfig.json')
 	
+buildTestsWatch:
+	npx tsc -b -w $(call path, './test/tsconfig.json')
+
 postBuild:
 	@chmod +x $(call path, './dist/bin/typedox.mjs')
-	npm --silent i -D $(call path, './dist')
 
-groomNpmPackage: copyDistPackages
-	@node ${groomNpmPackage.js} $(call path, './dist/package.json') true
-	@node ${groomNpmPackage.js} $(call path, './dist/backend/package.json')
-
-copyDistPackages:
-	@mkdir -p $(call path, './dist/backend')
-	@$(call copy, './package.json', './dist')
-	@$(call copy, './packages/backend/package.json', './dist/backend')
-
-testAll: buildRoot
+testAll: buildAllTests
 	npm exec -c "NODE_ENV=test c8 mocha"
 
-testBackend:
-	npm exec -c "NODE_ENV=test mocha --spec ./test/runners/tests.backend.spec.mjs"
+clean:
+	rm -rf $(call path, 'dist')
+	rm -rf $(call path, 'test/dist')
+	rm -rf $(call path, 'test/runners')
+	rm -rf $(call path, 'test/coverage')
+	cd $(call path, 'packages/core') && make clean
+	cd $(call path, 'packages/logger') && make clean
+	cd $(call path, 'packages/wrapper') && make clean
+	cd $(call path, 'packages/serialiser') && make clean
 
-testBackendCoverage:
-	npm exec -c "NODE_ENV=test c8 mocha --spec ./test/runners/tests.backend.spec.mjs"
+cleanInstall: clean
+	rm -rf $(call path, 'node_modules')
+	rm -rf $(call path, 'package-lock.json')
+
+postinstall:
+	@echo postinstall
+
+prepack:
+	@echo prepack
+
+postpack:
+	@echo postpack
+	rm -f doxisbuilding

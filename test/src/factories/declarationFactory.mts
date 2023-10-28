@@ -1,9 +1,9 @@
 import path from 'path';
 import fs from 'fs';
-import { DoxDeclaration } from 'typedox';
 import { projectFactory } from './projectFactory.mjs';
 import { factoryFolders, projectFactoryDir } from '../test.stubs.mjs';
-import { log } from 'typedox/logger';
+import { log } from '@typedox/logger';
+import { DoxDeclaration } from '@typedox/core';
 
 const __filename = log.getFilename(import.meta.url);
 

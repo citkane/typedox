@@ -7,11 +7,9 @@ import {
 	DoxDeclaration,
 	DoxReference,
 	DoxSourceFile,
-	TsWrapper,
 	config,
 	tsItem,
-	tsc,
-} from 'typedox';
+} from '@typedox/core';
 
 const globalLogLevel: logLevels | undefined = undefined; //logLevels.error;
 
@@ -65,7 +63,8 @@ export {
 
 import { assert } from 'chai';
 import { compilerFactory } from './factories/compilerFactory.mjs';
-import { logLevels } from 'typedox/logger';
+import { logLevels } from '@typedox/logger';
+import wrapper, { TsWrapper } from '@typedox/wrapper';
 
 function itExists(key: string, item: any, map: Map<string, any>) {
 	assert.exists(
@@ -104,7 +103,7 @@ function doxReference(
 		checker,
 		program,
 		tsWrap: (item: tsItem): TsWrapper => {
-			return tsc.wrap(checker!, program!, item)!;
+			return wrapper.wrap(checker!, program!, item)!;
 		},
 	} as DoxReference;
 }
@@ -136,4 +135,36 @@ function doxDeclaration(folder: factoryFolders, declaration: string) {
 			)}`,
 		);
 	return new DoxDeclaration(sourceFile, symbol!);
+}
+const circularReplacer = '[circular]';
+export function deepClone(item: any, seen = new Map<object, true>()) {
+	if (typeof item !== 'object') return item;
+	seen.set(item, true);
+	const isArray = Array.isArray(item);
+
+	return isArray
+		? item.reduce(array, [] as string[])
+		: Object.entries(item).reduce(
+				objectReducer,
+				{} as { [key: string]: any },
+		  );
+
+	function array(accumulator: any[], value: any) {
+		seen.has(value)
+			? accumulator.push(circularReplacer)
+			: accumulator.push(deepClone(value, seen));
+
+		return accumulator;
+	}
+	function objectReducer(
+		accumulator: { [key: string]: any },
+		tuple: [string, any],
+	) {
+		const [key, value] = tuple;
+		accumulator[key] = seen.has(value)
+			? circularReplacer
+			: deepClone(value, seen);
+
+		return accumulator;
+	}
 }

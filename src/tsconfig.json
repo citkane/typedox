@@ -1,0 +1,10 @@
+{
+	"include": ["."],
+	"compilerOptions": {
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
+		"target": "ES6",
+		"outDir": "../dist",
+		"composite": true
+	}
+}

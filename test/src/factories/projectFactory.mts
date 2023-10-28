@@ -6,10 +6,11 @@ import {
 	DoxReference,
 	DoxSourceFile,
 	config,
-} from 'typedox';
+} from '@typedox/core';
 import { factoryFolders } from '../test.stubs.mjs';
 import { compilerFactory } from './compilerFactory.mjs';
-import { loggerUtils } from 'typedox/logger';
+import { loggerUtils } from '@typedox/logger';
+import { doxStub } from '../index.mjs';
 
 const { colourise } = loggerUtils;
 
@@ -57,7 +58,7 @@ const specDoxProject = (folder: factoryFolders, mute = false): DoxProject => {
 	]);
 
 	const project = new DoxProject(doxOptions);
-	specCache[folder].options = config.deepClone(project.options);
+	specCache[folder].options = doxStub.deepClone(project.options);
 
 	return (specCache[folder].project = project);
 };

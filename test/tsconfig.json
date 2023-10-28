@@ -1,13 +1,14 @@
 {
+	"extends": "@typedox/tsconfigs/test.tsconfig.json",
 	"references": [
-		{ "path": "./tsconfig.src.json" },
+		{ "path": "./src/" },
 		{ "path": "../packages/logger/test" },
-		{ "path": "../packages/backend/test" }
+		{ "path": "../packages/wrapper/test" },
+		{ "path": "../packages/core/test" },
+		{ "path": "../packages/serialiser/test" }
 	],
-	"exclude": ["."],
+	"include": ["allTests.spec.mts", "e2e.spec.mts"],
 	"compilerOptions": {
-		"esModuleInterop": true,
-		"composite": true,
-		"outDir": "./dist"
+		"outDir": "./runners"
 	}
 }

@@ -1,4 +1,4 @@
-import { loggerUtils } from 'typedox/logger';
+import { loggerUtils } from '@typedox/logger';
 
 const { colourise } = loggerUtils;
 const _unitTest = colourise('Bright', 'Unit tests');
