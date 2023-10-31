@@ -1,13 +1,11 @@
 import ts from 'typescript';
 import * as path from 'path';
 import * as fs from 'fs';
-import { config, DoxPackage, DoxConfig, programsInPackage } from '../index.mjs';
+import { config, DoxPackage, DoxConfig } from '../index.mjs';
 import { Dox } from './Dox.mjs';
 import { log, loggerUtils } from '@typedox/logger';
 
 const __filename = log.getFilename(import.meta.url);
-
-type doxPackageDefinitions = Record<string, programsInPackage>;
 
 /**
  * A container for the whole project structure
@@ -27,155 +25,130 @@ type doxPackageDefinitions = Record<string, programsInPackage>;
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...DoxDeclaration...
  */
 export class DoxProject extends Dox {
-	public doxPackages: DoxPackage[];
+	public doxPackages = new Map<string, DoxPackage>();
 	public doxConfig: DoxConfig;
 
 	constructor(doxOptions: config.doxOptions, tscClOptions?: string[]) {
 		super();
 
-		this.doxConfig = new DoxConfig(doxOptions, tscClOptions);
+		log.info(log.identifier(this), 'Making a Typedox project.', '\n');
 
-		const programs = makePrograms(this.doxConfig.tscParsedConfigs);
-		const packages = makePackageDefinitions(programs, doxOptions);
-		this.doxPackages = this.makeDoxPackages(packages);
+		this.doxConfig = new DoxConfig(doxOptions, tscClOptions);
+		const packages = findPackages(
+			doxOptions.projectRootDir,
+			doxOptions.npmFileConvention,
+		);
+		packages.forEach((packageDir) => {
+			const doxPackage = this.makePackage(
+				packageDir,
+				this.doxConfig.tscParsedConfigs,
+				this.doxConfig.options.projectRootDir,
+			);
+			this.doxPackages.set(doxPackage.name, doxPackage);
+		});
+
+		log.info(log.identifier(this), 'done.', '\n');
 	}
 	public get options() {
 		return this.doxConfig.options;
 	}
-
-	private makeDoxPackages = (
-		doxPackageDefinitions: doxPackageDefinitions,
+	private makePackage = (
+		packageFile: string,
+		parsedConfigs: ts.ParsedCommandLine[],
+		projectRootDir: string,
 	) => {
-		const definitions = doxPackageDefinitions;
-		const configFiles = Object.keys(definitions);
-		const doxPackages = configFiles.map(
-			(filePath) => new DoxPackage(this, filePath, definitions[filePath]),
+		const packageDir = path.dirname(packageFile);
+		const packageParsedConfigs = [] as ts.ParsedCommandLine[];
+		const packageProgramsRootDir = [] as string[];
+		const included = [] as number[];
+		parsedConfigs.forEach((parsedConfig, i) => {
+			const programRootDir = getProgramRootDir(
+				parsedConfig,
+				projectRootDir,
+			);
+			if (!programRootDir) return notices.rootDir.warn();
+			const include = programRootDir.startsWith(packageDir);
+			if (include) {
+				packageParsedConfigs.push(parsedConfig);
+				packageProgramsRootDir.push(programRootDir);
+				included.push(i);
+			}
+		});
+		included.sort().forEach((index, i) => {
+			parsedConfigs.splice(index - i, 1);
+		});
+		return new DoxPackage(
+			this,
+			packageFile,
+			packageParsedConfigs,
+			packageProgramsRootDir,
 		);
-
-		return doxPackages;
 	};
 }
-function makePrograms(tscParsedConfigs: ts.ParsedCommandLine[]) {
-	return tscParsedConfigs.reduce((accumulator, parsedConfig, i) => {
-		const program = makeProgramFromConfig(parsedConfig);
-		if (!program) return accumulator;
 
-		logMemoryUsage(String(parsedConfig.options.configFilePath), i);
-		accumulator.push(program);
-		return accumulator;
-	}, [] as ts.Program[]);
-
-	function makeProgramFromConfig(parsedConfig: ts.ParsedCommandLine) {
-		const { fileNames, options } = parsedConfig;
-		const { configFilePath, outDir, out, outFile, noEmit } = options;
-		const program = ts.createProgram(fileNames, options);
-		return runDiagnostics(program, String(configFilePath))
-			? program
-			: undefined;
-	}
-	function logMemoryUsage(filePath: string, i: number) {
-		const memoryUsed = loggerUtils.formatBytes(process.memoryUsage().rss);
-		log.info(
-			`Creating tsc program ${Number(i) + 1} of ${
-				tscParsedConfigs.length
-			}:`,
-			filePath,
-			loggerUtils.colourise('FgGray', memoryUsed),
-		);
-	}
-	function runDiagnostics(program: ts.Program, fileName: string) {
-		const diagnostics = program.getGlobalDiagnostics();
-		diagnostics.forEach((diagnostic) => {
-			notices.diagnostics.warn(diagnostic.messageText.toString());
-		});
-		if (diagnostics.length) notices.diagnostics.error(fileName);
-		return diagnostics.length ? false : true;
-	}
-}
-function makePackageDefinitions(
-	programs: ts.Program[],
-	options: config.doxOptions,
+function findPackages(
+	rootDir: string,
+	pacackeDef: string,
+	accumulator = [] as string[],
 ) {
-	const doxPackageDefinitions = programs.reduce((accumulator, program) => {
-		const rootDirs = getProgramRoots(program.getRootFileNames());
-		rootDirs.forEach((rootDir) =>
-			parseProgramRootDir(options, accumulator, program, rootDir),
-		);
-		return accumulator;
-	}, {} as doxPackageDefinitions);
+	const packFile = path.join(rootDir, pacackeDef);
+	if (fs.existsSync(packFile)) accumulator.push(packFile);
+	fs.readdirSync(rootDir, { withFileTypes: true }).forEach((dirEnt) => {
+		if (!dirEnt.isDirectory()) return;
+		if (dirEnt.name === 'node_modules') return;
 
-	if (!Object.keys(doxPackageDefinitions).length)
-		notices.packageDefinitions.throw();
+		const newDir = path.join(rootDir, dirEnt.name);
+		findPackages(newDir, pacackeDef, accumulator);
+	});
+	return accumulator.sort((a, b) => {
+		const aLen = a.split(path.sep).length;
+		const bLen = b.split(path.sep).length;
+		return bLen - aLen;
+	});
+}
 
-	return doxPackageDefinitions;
+function getProgramRootDir(
+	parsedConfig: ts.ParsedCommandLine,
+	projectRootDir: string,
+) {
+	const { composite, configFilePath } = parsedConfig.options;
+	const fileDirs = parsedConfig.fileNames.reduce(
+		(accumulator, fileName) => {
+			const dir = path.dirname(fileName);
+			const len = dir.split(path.sep).length;
+			accumulator.dirs.push(dir);
+			accumulator.min === 0 && (accumulator.min = len);
+			accumulator.min = len < accumulator.min ? len : accumulator.min;
 
-	function parseProgramRootDir(
-		options: config.doxOptions,
-		accumulator: doxPackageDefinitions,
-		program: ts.Program,
-		rootDir: string,
-	) {
-		const doxPackage = findDoxPackage(
-			options.projectRootDir,
-			rootDir,
-			options.npmFileConvention,
-		);
-		if (!doxPackage) {
-			notices.parseProgramRootDir.warn(
-				options.npmFileConvention,
-				rootDir,
-			);
 			return accumulator;
-		}
-		(accumulator[doxPackage] ??= []).push([program, rootDir]);
+		},
+		{ min: 0, dirs: [] as string[] },
+	);
+
+	let programRootDir = fileDirs.dirs.find((dir) => {
+		const len = dir.split(path.sep).length;
+		return len === fileDirs.min;
+	});
+	programRootDir ??= projectRootDir;
+
+	if (!composite) return programRootDir;
+	if (
+		configFilePath &&
+		(typeof configFilePath === 'string' || configFilePath instanceof String)
+	) {
+		return path.dirname(configFilePath.toString());
 	}
-	function findDoxPackage(
-		projectRootDir: string,
-		absDir: string,
-		npmFileConvention: string,
-	): string | undefined {
-		const npmFilePath = path.join(absDir, npmFileConvention);
-		const parentDir = path.join(absDir, '../');
-		const atFsRoot = parentDir === absDir;
-		const atProjectRoot = absDir === projectRootDir;
-		return fs.existsSync(npmFilePath)
-			? npmFilePath
-			: atFsRoot || atProjectRoot
-			? undefined
-			: findDoxPackage(projectRootDir, parentDir, npmFileConvention);
-	}
-	function getProgramRoots(fileNames: readonly string[]) {
-		return fileNames
-			.map((file) => path.dirname(file))
-			.map((dir, i, array) => array.find((d) => dir.startsWith(d))!)
-			.filter((dir, i, array) => array.indexOf(dir) === i);
-	}
+
+	const configFile = ts.findConfigFile(programRootDir, ts.sys.fileExists);
+	return configFile && path.dirname(configFile);
 }
 
 const notices = {
-	diagnostics: {
-		warn: (message: string) =>
-			log.warn(log.identifier(__filename), message),
-		error: (fileName: string) =>
-			log.error(
-				log.identifier(__filename),
-				'Error in ts.Program:',
-				String(fileName),
-			),
-	},
-	packageDefinitions: {
-		throw: () =>
-			log.throwError(
-				log.identifier(__filename),
-				'no npm package files were found for the project.',
-			),
-	},
-	parseProgramRootDir: {
-		warn: (npmFileConvention: string, rootDir: string) =>
+	rootDir: {
+		warn: () =>
 			log.warn(
 				log.identifier(__filename),
-				`No npm "${npmFileConvention}" found for a compiler root directory:`,
-				rootDir,
+				'Did not find a root directory for a ts.Program',
 			),
 	},
 };

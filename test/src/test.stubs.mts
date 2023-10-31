@@ -98,23 +98,19 @@ function doxReference(
 	if (!checker || !program) {
 		({ checker, program } = compiler());
 	}
-
-	return {
-		checker,
-		program,
-		tsWrap: (item: tsItem): TsWrapper => {
-			return wrapper.wrap(checker!, program!, item)!;
-		},
-	} as DoxReference;
+	return new DoxReference(doxPackage(), 'testStubReference', program, []);
 }
-function doxProject(options: config.doxOptions) {
+function doxProject(options = config.getDefaultDoxOptions()) {
 	return {
 		options: new DoxConfig(options).options,
 	} as DoxProject;
 }
 
 function doxPackage() {
-	return {} as DoxPackage;
+	return {
+		name: 'testStubPackage',
+		doxProject: doxProject(),
+	} as DoxPackage;
 }
 function doxSourceFile(folder: factoryFolders) {
 	const { compiler } = compilerFactory(folder);

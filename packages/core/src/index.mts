@@ -8,9 +8,10 @@ import {
 	DoxReference,
 	DoxSourceFile,
 } from './projectStructure/_namespace.mjs';
+import { DoxEvents } from './events/DoxEvents.mjs';
+import { coreEventsApi } from './events/coreEventsApi.mjs';
 
 import * as config from './config/_namespace.mjs';
-import * as events from './events/_namespace.mjs';
 
 export interface DeclarationFlags {
 	isDefault?: boolean;
@@ -36,7 +37,8 @@ export {
 	DoxProject,
 	DoxReference,
 	DoxSourceFile,
-	events,
+	DoxEvents,
+	coreEventsApi,
 };
 
 export type tsConfigFile = string;
@@ -79,4 +81,3 @@ export interface tscRawConfig {
 
 export type namedDef<def> = [string | undefined, def];
 export type namedRegistry<reg> = Record<string, reg>;
-export type programsInPackage = [program: ts.Program, rootDir: string][];

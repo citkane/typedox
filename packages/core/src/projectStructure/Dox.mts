@@ -1,7 +1,4 @@
-import ts from 'typescript';
-import { DoxEvents } from '../events/DoxEvents.mjs';
 import { log } from '@typedox/logger';
-
 import {
 	DoxBranch,
 	DoxDeclaration,
@@ -9,38 +6,24 @@ import {
 	DoxProject,
 	DoxReference,
 	DoxSourceFile,
-	events,
 } from '../index.mjs';
+import { coreEventsApi } from '../events/coreEventsApi.mjs';
+import { DoxEvents } from '../events/DoxEvents.mjs';
 
 const __filename = log.getFilename(import.meta.url);
 
 /** get a handle for future jsconfig etc fun */
 export const tsFileSpecifier = 'tsconfig';
-const EventEmitter = new DoxEvents();
 
 let uid = 0;
 
 export class Dox {
+	public events: DoxEvents<coreEventsApi>;
 	public defaultStrings = ['default', 'export='];
 	public get id() {
 		const id = uid;
 		uid++;
 		return id;
-	}
-	public get eventCb() {
-		return events.eventsApi;
-	}
-	public get once() {
-		return EventEmitter.once;
-	}
-	public get on() {
-		return EventEmitter.on;
-	}
-	public get off() {
-		return EventEmitter.off;
-	}
-	public get emit() {
-		return EventEmitter.emit;
 	}
 
 	protected isDoxProject = Dox.isDoxProject;
@@ -49,6 +32,10 @@ export class Dox {
 	protected isDoxDeclaration = Dox.isDoxDeclaration;
 	protected isDoxSourceFile = Dox.isDoxSourceFile;
 	protected isDoxBranch = Dox.isDoxBranch;
+
+	constructor() {
+		this.events = new DoxEvents<coreEventsApi>(coreEventsApi);
+	}
 
 	public static isDoxProject(item: Dox): item is DoxProject {
 		return item.constructor && item.constructor.name === 'DoxProject';

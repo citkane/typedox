@@ -5,9 +5,12 @@ import {
 	namedRegistry,
 	config,
 	DoxSourceFile,
-	programsInPackage,
 } from '../index.mjs';
 import { Dox } from './Dox.mjs';
+import { log, loggerUtils } from '@typedox/logger';
+import ts from 'typescript';
+
+const __filename = log.getFilename(import.meta.url);
 
 /**
  * A container for all npm `package` declarations. Can be one, or many in a monorepo:
@@ -38,40 +41,59 @@ export class DoxPackage extends Dox {
 	constructor(
 		parent: DoxProject,
 		npmFilePath: string,
-		doxPackages: programsInPackage,
+		parsedConfigs: ts.ParsedCommandLine[],
+		programsRootDir: string[],
 	) {
 		super();
 		const packageConfig = config.jsonFileToObject(npmFilePath);
 		const { name, version } = packageConfig;
-		this.emit('package.begin', this, packageConfig);
 		this.parent = parent;
-		this.doxReferences = this.makeDoxReferences(doxPackages);
 		this.name = name;
 		this.version = version;
-		this.emit('package.end', this, packageConfig);
+
+		this.events.emit('core.package.begin', this, packageConfig);
+		log.info(log.identifier(this), `Making package ${name}: ${version}`);
+
+		this.doxReferences = this.makeDoxReferences(
+			parsedConfigs,
+			programsRootDir,
+		);
+
+		log.info(log.identifier(this), 'done', '\n');
+		this.events.emit('core.package.end', this, packageConfig);
 	}
 	public get doxProject() {
 		return this.parent;
 	}
 
-	private makeDoxReferences = (programs: programsInPackage) => {
-		const nameMap = DoxPackage.getNameMap(programs);
-		const doxReferences = programs.map((tuple) => {
-			const [program, rootDir] = tuple;
-			const name = nameMap[rootDir];
-			const files = program
-				.getRootFileNames()
-				.filter((fileName) => fileName.startsWith(rootDir));
+	private makeDoxReferences = (
+		parsedConfigs: ts.ParsedCommandLine[],
+		rootDirs: string[],
+	) => {
+		const nameSpaceMap = DoxPackage.getNameMap(rootDirs);
+		const doxReferences = parsedConfigs.reduce(
+			(accumulator, parsedConfig, i) => {
+				const rootDir = rootDirs[i];
+				const name = nameSpaceMap[rootDir];
 
-			return new DoxReference(this, name, program, files);
-		});
+				const reference = new DoxReference(
+					this,
+					name,
+					parsedConfig,
+					parsedConfigs.length,
+					i,
+				);
+				if (reference.program) accumulator.push(reference);
+
+				return accumulator;
+			},
+			[] as DoxReference[],
+		);
 
 		return doxReferences;
 	};
 
-	public static getNameMap(programs: programsInPackage) {
-		const rootDirs = programs.map((tuple) => tuple[1]);
-
+	public static getNameMap(rootDirs: string[]) {
 		const referenceNameMap = rootDirs
 			.sort()
 			.reverse()

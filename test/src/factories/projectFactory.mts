@@ -89,12 +89,7 @@ const specDoxPackage = (
 	});
 	doxProject.doxPackages.forEach((doxPackage) => {
 		doxPackage.doxReferences.forEach((reference) => {
-			const rootDeclarations = reference.getRootDeclarations();
-
-			if (!reference.treeBranches.has(reference.name)) {
-				const treeBranch = new Branch(reference, rootDeclarations);
-				reference.treeBranches.set(reference.name, treeBranch);
-			}
+			reference.buildDocumentBranches();
 		});
 	});
 	return (specCache[folder].package[id] ??= doxProject.doxPackages[index]);

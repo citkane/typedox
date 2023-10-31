@@ -6,6 +6,8 @@ import {
 	DoxReference,
 } from '../index.mjs';
 
+const __filename = log.getFilename(import.meta.url);
+
 /**
  * The highest level container of the project structure, after which the tree is recursive:
  *
@@ -35,43 +37,36 @@ export class DoxBranch extends Dox {
 	public enums: Map<string, DoxDeclaration> = new Map();
 	public types: Map<string, DoxDeclaration> = new Map();
 	public default?: DoxDeclaration;
+	public doxReference: DoxReference;
 
 	private branchDeclarations: Map<DoxDeclaration, string> = new Map();
-	private _doxReference: DoxReference;
 
 	constructor(
 		parent: DoxReference | DoxBranch,
 		declarations: DoxDeclaration[],
 	) {
 		super();
-
 		this.parent = parent;
-		this._doxReference = this.getDoxReference();
+		this.doxReference = this.getDoxReference(parent);
 		declarations.forEach(this.bundleDeclaration);
 		this.reExports.forEach(this.mergeReExportIntoDeclarations);
+
 		Array.from(this.branchDeclarations.keys()).forEach(
 			this.registerDeclaration,
 		);
 	}
-	public get doxReference() {
-		return this._doxReference;
-	}
+
 	public get doxPackage() {
-		return this._doxReference.doxPackage;
+		return this.doxReference.doxPackage;
 	}
 	public get doxProject() {
-		return this._doxReference.doxProject;
+		return this.doxReference.doxProject;
 	}
 
-	private getDoxReference() {
-		const { parent } = this;
-		return getReference();
-
-		function getReference(item = parent): DoxReference {
-			return item.constructor.name === 'Branch'
-				? getReference((item as DoxBranch).parent)
-				: (item as DoxReference);
-		}
+	private getDoxReference(item: DoxReference | DoxBranch): DoxReference {
+		return Dox.isDoxReference(item)
+			? item
+			: this.getDoxReference(item.parent);
 	}
 	private bundleDeclaration = (declaration: DoxDeclaration) => {
 		const { group, flags } = declaration;
@@ -86,25 +81,34 @@ export class DoxBranch extends Dox {
 	};
 	private registerDeclaration = (declaration: DoxDeclaration) => {
 		const { group, name } = declaration;
-
-		group === DeclarationGroup.Module
-			? this.registerNameSpace(declaration)
-			: group === DeclarationGroup.Class
-			? this.classes.set(name, declaration)
-			: group === DeclarationGroup.Function
-			? this.functions.set(name, declaration)
-			: group === DeclarationGroup.Variable
-			? this.variables.set(name, declaration)
-			: group === DeclarationGroup.Enum
-			? this.enums.set(name, declaration)
-			: group === DeclarationGroup.Type
-			? this.types.set(name, declaration)
-			: log.error(
+		switch (group) {
+			case DeclarationGroup.Module:
+				this.registerNameSpace(declaration);
+				break;
+			case DeclarationGroup.Class:
+				this.classes.set(name, declaration);
+				break;
+			case DeclarationGroup.Function:
+				this.functions.set(name, declaration);
+				break;
+			case DeclarationGroup.Variable:
+				this.variables.set(name, declaration);
+				break;
+			case DeclarationGroup.Enum:
+				this.enums.set(name, declaration);
+				break;
+			case DeclarationGroup.Type:
+				this.types.set(name, declaration);
+				break;
+			default:
+				log.error(
 					log.identifier(this),
 					'Did not find a group for a declaration: ',
 					`${DeclarationGroup[group]}\n`,
 					declaration.wrappedItem.report,
-			  );
+				);
+				break;
+		}
 	};
 	private bundleReExport = (declaration: DoxDeclaration) => {
 		const { name, group, children } = declaration;
@@ -124,6 +128,14 @@ export class DoxBranch extends Dox {
 		const values = [...children.values()].filter(
 			(declaration) => !this.branchDeclarations.has(declaration),
 		);
+		/*
+		log.info(
+			'_'.repeat(100),
+			this.doxPackage.name,
+			this.doxReference.name,
+			declaration.name,
+		);
+		*/
 		const newBranch = new DoxBranch(this, values);
 		nameSpaces.set(declaration.name, newBranch);
 	};

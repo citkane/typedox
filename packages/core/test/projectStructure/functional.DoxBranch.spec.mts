@@ -35,6 +35,7 @@ export default function () {
 		let branch!: Branch;
 		const reference = doxStub.doxReference(localFactory);
 		const declarations = [doxStub.doxDeclaration(localFactory, 'localVar')];
+		new Branch(reference, declarations);
 		assert.doesNotThrow(
 			() => (branch = new Branch(reference, declarations)),
 		);

@@ -6,14 +6,16 @@
 		"typedox": "./dist/bin/typedox.mjs"
 	},
 	"exports": {
-		".": "./dist/index.mjs"
+		".": "./dist/index.mjs",
+		"./events": "./dist/events/mainEventsApi.mjs"
 	},
 	"scripts": {
 		"build": "make build",
 		"build:watch": "make buildWatch",
 		"build:tests": "make buildAllTests",
 		"build:watch:tests": "make buildTestsWatch",
-		"test": "make testAll",
+		"test": "NODE_ENV=test mocha",
+		"test:coverage": "make testAll",
 		"prepare": "make initBuild",
 		"prepack": "make prepack",
 		"postpack": "make postpack",
@@ -42,13 +44,14 @@
 		"packages/wrapper",
 		"packages/core",
 		"packages/serialiser",
+		"packages/fileManager",
+		"packages/frontend",
 		".",
 		"test/"
 	],
 	"devDependencies": {
 		"@types/chai": "^4.3.6",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^20.8.9",
 		"@types/sinon": "^10.0.16",
 		"c8": "^8.0.1",
 		"chai": "^4.3.8",

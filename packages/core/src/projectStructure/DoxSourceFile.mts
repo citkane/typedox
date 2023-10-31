@@ -4,6 +4,8 @@ import { DoxDeclaration, DoxReference, declarationsMap } from '../index.mjs';
 import { Dox } from './Dox.mjs';
 import { log } from '@typedox/logger';
 
+const __filename = log.getFilename(import.meta.url);
+
 /**
  * A container for typescript compiler source files:
  *
@@ -22,28 +24,25 @@ import { log } from '@typedox/logger';
  * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;...DoxDeclaration...
  */
 export class DoxSourceFile extends Dox {
-	public childFiles: string[];
+	//public childFiles: string[];
 	public fileName: string;
-	public fileSymbol: ts.Symbol;
-	public fileType: ts.Type;
+	public fileSymbol?: ts.Symbol;
+	public fileType?: ts.Type;
 	public declarationsMap: declarationsMap = new Map();
 	public sourceFile: ts.SourceFile;
 	public checker: ts.TypeChecker;
 
 	private parent: DoxReference;
-	constructor(
-		parent: DoxReference,
-		sourceFile: ts.SourceFile,
-		fileSymbol: ts.Symbol,
-	) {
+	constructor(parent: DoxReference, sourceFile: ts.SourceFile) {
 		super();
 		this.parent = parent;
 		this.checker = parent.checker;
 		this.sourceFile = sourceFile;
 		this.fileName = sourceFile.fileName;
-		this.fileSymbol = fileSymbol;
-		this.fileType = this.checker.getTypeOfSymbol(this.fileSymbol);
-		this.childFiles = this.discoverChildFiles();
+		this.fileSymbol = this.checker.getSymbolAtLocation(sourceFile);
+		this.fileType =
+			this.fileSymbol && this.checker.getTypeOfSymbol(this.fileSymbol);
+		//this.childFiles = this.discoverChildFiles();
 
 		log.debug(log.identifier(this), this.fileName);
 	}
@@ -60,33 +59,28 @@ export class DoxSourceFile extends Dox {
 		return this.doxReference.tsWrap;
 	}
 	public discoverDeclarations = () => {
-		const { locals } = this.sourceFile as any;
-		this.fileSymbol.exports?.forEach((symbol) =>
-			this.makeDeclaration(symbol, false),
+		this.fileSymbol?.exports?.forEach((symbol) =>
+			makeDeclaration.call(this, symbol),
 		);
-		(locals as Map<string, ts.Symbol>)?.forEach((symbol) =>
-			this.makeDeclaration(symbol, true),
-		);
+
+		function makeDeclaration(this: DoxSourceFile, item: ts.Symbol) {
+			if (this.declarationsMap.has(item.name)) return;
+
+			if (item.declarations && ts.isBindingElement(item.declarations[0]))
+				return;
+
+			const declaration = new DoxDeclaration(this, item);
+			declaration.name &&
+				this.declarationsMap.set(declaration.name, declaration);
+		}
 	};
-	public makeDeclaration = (item: ts.Symbol, notExported: boolean) => {
-		if (this.declarationsMap.has(item.name)) return;
-		if (item.declarations && ts.isBindingElement(item.declarations[0]))
-			return;
-
-		const declaration = new DoxDeclaration(this, item, notExported);
-
-		this.declarationsMap.set(declaration.name, declaration);
-
-		return declaration;
-	};
-
 	public buildRelationships = () => {
 		this.declarationsMap.forEach((declaration) => {
 			const { relate, wrappedItem } = declaration;
 			relate(wrappedItem);
 		});
 	};
-
+	/*
 	private juiceSymbol(symbol: ts.Symbol) {
 		const { valueDeclaration } = symbol;
 		let imports: any[] = (valueDeclaration as any)?.imports || [];
@@ -119,6 +113,7 @@ export class DoxSourceFile extends Dox {
 			}, accumulator)
 			.filter((value, i, array) => array.indexOf(value) === i);
 	};
+	*/
 }
 const seenInvalids: string[] = [];
 const notices = {

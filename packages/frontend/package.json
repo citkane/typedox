@@ -1,0 +1,29 @@
+{
+	"name": "@typedox/frontend",
+	"version": "0.0.0",
+	"description": "Frontend for typedox",
+	"type": "module",
+	"scripts": {
+		"build:watch:css": "sass src/css/index.scss:assets/css/index.css --style compressed --watch",
+		"build:css": "sass src/css/index.scss:assets/css/index.css --style compressed",
+		"build": "make build",
+		"build:watch": "make buildWatch",
+		"test": "cd ../../ && mocha -g '/frontend/i'"
+	},
+	"exports": {
+		".": "./assets/js/index.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/citkane/typedox.git"
+	},
+	"author": "Michael Jonker",
+	"license": "GPL-3.0-or-later",
+	"bugs": {
+		"url": "https://github.com/citkane/typedox/issues"
+	},
+	"homepage": "https://github.com/citkane/typedox#readme",
+	"devDependencies": {
+		"sass": "^1.69.5"
+	}
+}

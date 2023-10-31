@@ -1,38 +1,43 @@
 import { EventEmitter } from 'events';
-import { eventsApi } from './eventApi.mjs';
+//import { eventsApi } from './eventApi.mjs';
 
-type eventsParams = {
-	[k in keyof typeof eventsApi]: Parameters<(typeof eventsApi)[k]>;
+type eventsApi = Record<string, (...args: any) => void>;
+
+//type eventsApi = typeof eventsApi;
+type eventsParams<T extends eventsApi> = {
+	[k in keyof T]: Parameters<T[k]>;
 };
+type eventKeys<T extends eventsApi> = keyof eventsParams<T>;
+
 class DoxEmitter extends EventEmitter {}
 const doxEmitter = new DoxEmitter();
 doxEmitter.setMaxListeners(0);
 
-type eventKeys = keyof typeof eventsApi | keyof eventsParams;
-
-export class DoxEvents {
-	once = <e extends eventKeys, cb extends (typeof eventsApi)[e]>(
+export class DoxEvents<T extends eventsApi> {
+	public api: T;
+	constructor(...args: eventsApi[]) {
+		this.api = args.reduce((accummulator, api) => {
+			accummulator = { ...accummulator, ...api };
+			return accummulator;
+		}, {} as eventsApi) as T;
+	}
+	once = <e extends eventKeys<T>, cb extends T[e]>(
 		event: e,
 		callback: cb,
 	) => {
-		doxEmitter.once(event, callback);
+		doxEmitter.once(event as string, callback);
 	};
-	on = <e extends eventKeys, cb extends (typeof eventsApi)[e]>(
-		event: e,
-		callback: cb,
-	) => {
-		doxEmitter.addListener(event, callback);
+	on = <e extends eventKeys<T>, cb extends T[e]>(event: e, callback: cb) => {
+		doxEmitter.addListener(event as string, callback);
 	};
-	off = <e extends eventKeys, cb extends (typeof eventsApi)[e]>(
-		event: e,
-		callback: cb,
-	) => {
-		doxEmitter.removeListener(event, callback);
+	off = <e extends eventKeys<T>, cb extends T[e]>(event: e, callback: cb) => {
+		doxEmitter.removeListener(event as string, callback);
 	};
-	emit = <e extends eventKeys, a extends eventsParams[e]>(
+	emit = <e extends eventKeys<T>, a extends eventsParams<T>[e]>(
 		event: e,
-		...args: a
+		...argsArray: a
 	) => {
-		doxEmitter.emit(event, ...args);
+		const args = [...argsArray];
+		doxEmitter.emit(event as string, ...args);
 	};
 }

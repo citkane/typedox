@@ -1,0 +1,331 @@
+{
+	"packages": {
+		"typedoxTestingGroups": {
+			"name": "typedoxTestingGroups",
+			"version": "0.0.0",
+			"references": {
+				"groups": {
+					"default": "default",
+					"namespaces": {
+						"grandchildSpace": {
+							"namespaces": {},
+							"classes": {},
+							"functions": {},
+							"enums": {},
+							"variables": {
+								"grandchild": {
+									"id": 0,
+									"name": "grandchild",
+									"group": 3,
+									"flags": {
+										"scopeKeyword": "const"
+									},
+									"location": {
+										"query": "typedoxTestingGroups.groups.Variable.grandchild",
+										"hash": ""
+									},
+									"type": {
+										"kind": "StringLiteral",
+										"name": "string",
+										"valueString": "grandchild"
+									},
+									"valueString": "'grandchild'"
+								}
+							}
+						},
+						"childSpace": {
+							"default": "default",
+							"namespaces": {},
+							"classes": {},
+							"functions": {},
+							"enums": {},
+							"variables": {
+								"child": {
+									"id": 1,
+									"name": "child",
+									"group": 3,
+									"flags": {
+										"scopeKeyword": "const"
+									},
+									"location": {
+										"query": "typedoxTestingGroups.groups.Variable.child",
+										"hash": ""
+									},
+									"type": {
+										"kind": "StringLiteral",
+										"name": "string",
+										"valueString": "child"
+									},
+									"valueString": "'child'"
+								},
+								"default": {
+									"id": 2,
+									"name": "default",
+									"group": 3,
+									"flags": {
+										"isDefault": true,
+										"scopeKeyword": "const"
+									},
+									"location": {
+										"query": "typedoxTestingGroups.groups.Variable.default",
+										"hash": ""
+									},
+									"type": {
+										"kind": "StringLiteral",
+										"name": "string",
+										"valueString": "defaultExportValue"
+									},
+									"valueString": "'defaultExportValue'"
+								},
+								"defaultExport": {
+									"id": 3,
+									"name": "defaultExport",
+									"group": 3,
+									"flags": {
+										"scopeKeyword": "const",
+										"notExported": true
+									},
+									"location": {
+										"query": "typedoxTestingGroups.groups.Variable.defaultExport",
+										"hash": ""
+									},
+									"type": {
+										"kind": "StringLiteral",
+										"name": "string",
+										"valueString": "defaultExportValue"
+									},
+									"valueString": "'defaultExportValue'"
+								}
+							}
+						},
+						"moduleDeclaration": {
+							"namespaces": {},
+							"classes": {},
+							"functions": {},
+							"enums": {},
+							"variables": {}
+						},
+						"emptyDeclaration": {
+							"namespaces": {},
+							"classes": {},
+							"functions": {},
+							"enums": {},
+							"variables": {}
+						},
+						"rabbitHole": {
+							"namespaces": {},
+							"classes": {},
+							"functions": {},
+							"enums": {},
+							"variables": {}
+						},
+						"default": {
+							"namespaces": {},
+							"classes": {},
+							"functions": {},
+							"enums": {},
+							"variables": {}
+						}
+					},
+					"classes": {
+						"Class": {},
+						"LocalClass": {}
+					},
+					"functions": {
+						"localFunc": {},
+						"func": {},
+						"arrowFunc": {}
+					},
+					"enums": {
+						"enumerator": {}
+					},
+					"variables": {
+						"child": {
+							"id": 4,
+							"name": "child",
+							"group": 3,
+							"flags": {
+								"scopeKeyword": "const"
+							},
+							"location": {
+								"query": "typedoxTestingGroups.groups.Variable.child",
+								"hash": ""
+							},
+							"type": {
+								"kind": "StringLiteral",
+								"name": "string",
+								"valueString": "shouldNotOverwriteParentChild"
+							},
+							"valueString": "'shouldNotOverwriteParentChild'"
+						},
+						"defaultExport": {
+							"id": 5,
+							"name": "defaultExport",
+							"group": 3,
+							"flags": {
+								"isDefault": true,
+								"scopeKeyword": "const"
+							},
+							"location": {
+								"query": "typedoxTestingGroups.groups.Variable.default",
+								"hash": ""
+							},
+							"type": {
+								"kind": "StringLiteral",
+								"name": "string",
+								"valueString": "defaultExportValue"
+							},
+							"valueString": "'defaultExportValue'"
+						},
+						"grandchild": {
+							"id": 6,
+							"name": "grandchild",
+							"group": 3,
+							"flags": {
+								"scopeKeyword": "const"
+							},
+							"location": {
+								"query": "typedoxTestingGroups.groups.Variable.grandchild",
+								"hash": ""
+							},
+							"type": {
+								"kind": "StringLiteral",
+								"name": "string",
+								"valueString": "grandchild"
+							},
+							"valueString": "'grandchild'"
+						},
+						"localExport": {
+							"id": 7,
+							"name": "localExport",
+							"group": 3,
+							"flags": {
+								"scopeKeyword": "const"
+							},
+							"location": {
+								"query": "typedoxTestingGroups.groups.Variable.localExport",
+								"hash": ""
+							},
+							"type": {
+								"kind": "StringLiteral",
+								"name": "string",
+								"valueString": "localExport"
+							},
+							"valueString": "'localExport'"
+						},
+						"localDeclaration": {
+							"id": 8,
+							"name": "localDeclaration",
+							"group": 3,
+							"flags": {
+								"scopeKeyword": "const"
+							},
+							"location": {
+								"query": "typedoxTestingGroups.groups.Variable.localDeclaration",
+								"hash": ""
+							},
+							"type": {
+								"kind": "StringLiteral",
+								"name": "string",
+								"valueString": "localDeclaration"
+							},
+							"valueString": "'localDeclaration'"
+						},
+						"localAlias": {
+							"id": 9,
+							"name": "localAlias",
+							"group": 3,
+							"flags": {
+								"scopeKeyword": "const"
+							},
+							"location": {
+								"query": "typedoxTestingGroups.groups.Variable.localAlias",
+								"hash": ""
+							},
+							"type": {
+								"kind": "StringLiteral",
+								"name": "string",
+								"valueString": "localDeclaration"
+							},
+							"valueString": "'localDeclaration'"
+						},
+						"greatGrandchild": {
+							"id": 10,
+							"name": "greatGrandchild",
+							"group": 3,
+							"flags": {
+								"scopeKeyword": "const",
+								"notExported": true
+							},
+							"location": {
+								"query": "typedoxTestingGroups.groups.Variable.greatGrandchild",
+								"hash": ""
+							},
+							"type": {
+								"kind": "StringLiteral",
+								"name": "string",
+								"valueString": "greatGrandchild"
+							},
+							"valueString": "'greatGrandchild'"
+						},
+						"nsExport": {
+							"id": 11,
+							"name": "nsExport",
+							"group": 3,
+							"flags": {
+								"scopeKeyword": "const",
+								"notExported": true
+							},
+							"location": {
+								"query": "typedoxTestingGroups.groups.Variable.nsExport",
+								"hash": ""
+							},
+							"type": {
+								"kind": "StringLiteral",
+								"name": "string",
+								"valueString": "nsExport"
+							},
+							"valueString": "'nsExport'"
+						},
+						"stars": {
+							"id": 12,
+							"name": "stars",
+							"group": 3,
+							"flags": {
+								"scopeKeyword": "const"
+							},
+							"location": {
+								"query": "typedoxTestingGroups.groups.Variable.stars",
+								"hash": ""
+							},
+							"type": {
+								"kind": "StringLiteral",
+								"name": "string",
+								"valueString": "*"
+							},
+							"valueString": "'*'"
+						},
+						"variable": {
+							"id": 13,
+							"name": "variable",
+							"group": 3,
+							"flags": {
+								"scopeKeyword": "const"
+							},
+							"location": {
+								"query": "typedoxTestingGroups.groups.Variable.variable",
+								"hash": ""
+							},
+							"type": {
+								"kind": "StringLiteral",
+								"name": "string",
+								"valueString": "variable"
+							},
+							"valueString": "'variable'"
+						}
+					}
+				}
+			}
+		}
+	}
+}

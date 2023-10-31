@@ -1,5 +1,6 @@
 import ts from 'typescript';
-import * as wrapper from '@typedox/wrapper';
+import { TsWrapper, isSymbol, wrap } from '@typedox/wrapper';
+import { log, loggerUtils } from '@typedox/logger';
 import {
 	DoxBranch,
 	DoxDeclaration,
@@ -8,7 +9,6 @@ import {
 	tsItem,
 } from '../index.mjs';
 import { Dox } from './Dox.mjs';
-import { log } from '@typedox/logger';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -34,29 +34,47 @@ const __filename = log.getFilename(import.meta.url);
 export class DoxReference extends Dox {
 	public name: string;
 	public filesMap = new Map<string, DoxSourceFile>();
-	public treeBranches: Map<string, DoxBranch> = new Map();
-	public entryFileList: string[];
+	public doxBranch: DoxBranch;
 	public checker: ts.TypeChecker;
 	public program: ts.Program;
 
-	private ignoredFiles = [] as string[];
 	private rootDeclarations?: DoxDeclaration[];
 	private parent: DoxPackage;
-	private end = false;
 
 	constructor(
 		parent: DoxPackage,
 		name: string,
-		program: ts.Program,
-		files: string[],
+		parsedConfig: ts.ParsedCommandLine,
+		programsLen: number,
+		index: number,
 	) {
 		super();
-		this.checker = program.getTypeChecker();
+
 		this.name = name;
 		this.parent = parent;
-		this.entryFileList = files;
-		this.program = program;
-		this.emit('reference.begin', this);
+		this.program = makeProgramFromConfig(
+			parsedConfig,
+			name,
+			programsLen,
+			index,
+		)!;
+		this.checker = this.program && this.program.getTypeChecker();
+
+		this.program?.getSourceFiles().forEach((sourceFile) => {
+			if (
+				this.program.isSourceFileFromExternalLibrary(sourceFile) ||
+				sourceFile.isDeclarationFile
+			) {
+				return;
+			}
+			const doxSourceFile = new DoxSourceFile(this, sourceFile);
+			this.filesMap.set(doxSourceFile.fileName, doxSourceFile);
+		});
+
+		this.filesMap.forEach((doxFile) => doxFile.discoverDeclarations());
+		this.filesMap.forEach((doxFile) => doxFile.buildRelationships());
+		const rootDeclarations = this.getRootDeclarations();
+		this.doxBranch = new DoxBranch(this, rootDeclarations);
 	}
 
 	public get doxPackage() {
@@ -65,74 +83,84 @@ export class DoxReference extends Dox {
 	public get doxProject() {
 		return this.parent.doxProject;
 	}
-
-	public tsWrap = (item: tsItem): wrapper.TsWrapper | undefined => {
-		const wrapped = wrapper.wrap(this.checker, this.program, item);
+	public get doxOptions() {
+		return this.doxProject.options;
+	}
+	public tsWrap = (item: tsItem): TsWrapper | undefined => {
+		const wrapped = wrap(this.checker, this.program, item);
 		if (!wrapped) notices.noWrap(item);
 		return wrapped;
 	};
-	public discoverFiles(fileList = this.entryFileList) {
-		fileList.forEach((fileName) => {
-			let skip = false;
-			const emitInfo = [this, fileName, () => (skip = true)] as const;
 
-			if (
-				this.filesMap.has(fileName) ||
-				this.ignoredFiles.includes(fileName)
-			)
-				return;
-
-			this.emit('reference.file.discovered', ...emitInfo);
-			if (skip) return;
-
-			const fileSource = this.program.getSourceFile(fileName);
-			if (!fileSource) {
-				this.ignoredFiles.push(fileName);
-				return notices.discoverFiles.fileSourceError(fileName);
-			}
-
-			const fileSymbol = this.checker.getSymbolAtLocation(fileSource);
-			if (!fileSymbol) {
-				this.ignoredFiles.push(fileName);
-				return notices.discoverFiles.fileSymbolWarning(
-					fileName,
-					'No ts.Symbol for a ts.SourceFile.',
-				);
-			}
-
-			const doxSourceFile = new DoxSourceFile(
-				this,
-				fileSource,
-				fileSymbol,
-			);
-			this.filesMap.set(fileName, doxSourceFile);
-
-			this.emit('reference.file.registered', ...emitInfo, doxSourceFile);
-			if (skip) return;
-
-			this.discoverFiles(doxSourceFile.childFiles);
-		});
-	}
-	public discoverDeclarations = () => {
-		this.filesMap.forEach((file) => file.discoverDeclarations());
-	};
-
-	public buildRelationships = () => {
-		if (this.end) return notices.calledMultiple.call(this);
-
-		this.filesMap.forEach((file) => file.buildRelationships());
-		this.emit('reference.end', this);
-		this.end = true;
-	};
-
-	public getRootDeclarations = () => {
+	private getRootDeclarations = () => {
 		if (this.rootDeclarations) return this.rootDeclarations;
 		this.rootDeclarations = [];
-		this.emit('declarations.findRootDeclarations', this.rootDeclarations);
+		this.events.emit(
+			'core.declarations.findRootDeclarations',
+			this.rootDeclarations,
+			this.doxPackage.name,
+			this.name,
+		);
 		return this.rootDeclarations;
 	};
 }
+
+function makeProgramFromConfig(
+	parsedConfig: ts.ParsedCommandLine,
+	name: string,
+	programsLen: number,
+	index: number,
+) {
+	const { fileNames, options } = parsedConfig;
+	const { configFilePath, outDir, out, outFile, noEmit } = options;
+	const program = ts.createProgram(fileNames, options);
+	notices.logProgram(
+		String(parsedConfig.options.configFilePath),
+		name,
+		index,
+		programsLen,
+	);
+	return runDiagnostics(program, String(configFilePath))
+		? program
+		: undefined;
+
+	function runDiagnostics(program: ts.Program, fileName: string) {
+		const diagnostics = program.getGlobalDiagnostics();
+		diagnostics.forEach((diagnostic) => {
+			notices.diagnostics.warn(diagnostic.messageText.toString());
+		});
+		if (diagnostics.length) notices.diagnostics.error(fileName);
+		return diagnostics.length ? false : true;
+	}
+}
+
 const notices = {
+	logProgram: (
+		filePath: string,
+		name: string,
+		index: number,
+		programsLen: number,
+	) => {
+		const memoryUsed = loggerUtils.formatBytes(process.memoryUsage().rss);
+		log.info(
+			log.identifier(__filename),
+			`Creating tsc program ${
+				Number(index) + 1
+			} of ${programsLen} as ${name}:`,
+			filePath,
+			loggerUtils.colourise('FgGray', memoryUsed),
+		);
+	},
+	diagnostics: {
+		warn: (message: string) =>
+			log.warn(log.identifier(__filename), message),
+		error: (fileName: string) =>
+			log.error(
+				log.identifier(__filename),
+				'Error in ts.Program:',
+				String(fileName),
+			),
+	},
 	discoverFiles: {
 		fileSourceError: (fileName: string) =>
 			log.error(
@@ -149,7 +177,7 @@ const notices = {
 			),
 	},
 	noWrap: (item: tsItem) => {
-		const message = wrapper.isSymbol(item) ? item.name : item.getText();
+		const message = isSymbol(item) ? item.name : item.getText();
 		log.error(
 			log.identifier(__filename),
 			'Could not wrap a item:',
@@ -163,4 +191,3 @@ const notices = {
 		);
 	},
 };
-const seenFileError: string[] = [];

@@ -1,5 +1,8 @@
 cwd := $(CURDIR)
 built := false
+buildWatchText := \033kbuild:watch\033\\\033]2;build:watch\007
+buildWatchTestText := \033kbuild:watch:test\033\\\033]2;build:watch:test\007
+TerminalText := \033kTerminal\033\\\033]2;Terminal\007
 
 define path-join
 	$(shell node -e "console.log(path.join('$(shell echo $1 | xargs)','$(shell echo $2 | xargs)'))")
@@ -13,6 +16,10 @@ endef
 define copyDir
 	cp -r $(call path, $1) $(call path, $2)
 endef
+define shellTitle
+	$(shell echo -e '\033k'$1'\033\\'; echo -e '\033]2;'$1'\007')
+endef
+
 
 groomNpmPackage := $(call path, './scripts/groomNpmPackage.mjs')
 
@@ -31,8 +38,11 @@ build:
 	make postBuild
 
 buildWatch:
+	@echo -e '${buildWatchText}'
 	npx tsc -b -w
-	make postBuild
+
+terminal:
+	@echo -e '${TerminalText}';
 
 buildAllTests: build buildTestFactory buildTests
 
@@ -43,6 +53,7 @@ buildTests:
 	npx tsc -b -v $(call path, './test/tsconfig.json')
 	
 buildTestsWatch:
+	@echo -e '${buildWatchTestText}'
 	npx tsc -b -w $(call path, './test/tsconfig.json')
 
 postBuild:

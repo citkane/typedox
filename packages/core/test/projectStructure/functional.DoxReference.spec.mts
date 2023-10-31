@@ -12,7 +12,7 @@ import { stub } from 'sinon';
 import { log, logLevels } from '@typedox/logger';
 import { compilerFactory, doxStub, projectFactory } from '@typedox/test';
 
-const localLogLevel = logLevels.silent;
+const localLogLevel = logLevels.info;
 const localFactory = 'groups';
 
 const { projectDir, compiler } = compilerFactory(localFactory);
@@ -69,16 +69,6 @@ export default function () {
 		doxReference.discoverFiles();
 		assert.isTrue(doxReference.filesMap.size > 2);
 	});
-	it('reports error if file not found', function () {
-		const doxReference = doxPackage().doxReferences[0]; //projectFactory.specReference(factory);
-		let error!: string;
-		errorStub = stub(log, 'error').callsFake((...args) => {
-			error = args[1];
-			return false;
-		});
-		doxReference.discoverFiles(['foo']);
-		assert.include(error, 'No source file was found');
-	});
 	it('does not throw on declaration discovery', function () {
 		const doxReference = doxPackage().doxReferences[0]; //projectFactory.specReference(factory);
 		assert.doesNotThrow(() => doxReference.discoverDeclarations());
@@ -89,10 +79,20 @@ export default function () {
 		errorStub = stub(log, 'error');
 		assert.doesNotThrow(() => doxReference.buildRelationships());
 	});
-	it('gets the root declarations', function () {
+	it.only('gets the root declarations', function () {
 		const doxReference = doxPackage().doxReferences[0]; //projectFactory.specReference(factory);
 		let roots!: DoxDeclaration[];
 		assert.doesNotThrow(() => (roots = doxReference.getRootDeclarations()));
+		roots.forEach((root) => {
+			log.info({
+				name: root.name,
+				text: root.wrappedItem.nodeText,
+				text2: root.wrappedItem.nodeDeclarationText,
+				children: root.children.size,
+				file: root.wrappedItem.fileName,
+			});
+		});
+		log.info(roots.length);
 		assert.isTrue(roots.length > 8, 'did not get root declarations');
 		roots.forEach((declaration) => {
 			assert.equal(

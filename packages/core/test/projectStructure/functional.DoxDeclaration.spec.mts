@@ -1,6 +1,11 @@
 import { assert } from 'chai';
 import ts from 'typescript';
-import { DeclarationGroup, Dox, DoxDeclaration, DoxSourceFile } from '@typedox/core';
+import {
+	DeclarationGroup,
+	Dox,
+	DoxDeclaration,
+	DoxSourceFile,
+} from '@typedox/core';
 import { stub } from 'sinon';
 import { log, logLevels } from '@typedox/logger';
 import { declarationFactory, doxStub, projectFactory } from '@typedox/test';
@@ -39,7 +44,10 @@ export default function () {
 		);
 		let declaration!: DoxDeclaration;
 
-		assert.exists(symbol);
+		assert.exists(symbol, 'symbol');
+		assert.exists(doxFile.doxProject, 'doxProject');
+		assert.exists(doxFile.doxProject.options, 'options');
+		new DoxDeclaration(doxFile, symbol!);
 		assert.doesNotThrow(
 			() => (declaration = new DoxDeclaration(doxFile, symbol!)),
 		);

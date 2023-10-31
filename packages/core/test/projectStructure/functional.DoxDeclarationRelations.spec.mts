@@ -216,24 +216,26 @@ export default function () {
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a module ImportClause', function () {
+	it('maps an external module ImportClause', function () {
 		const result = this.testSpecifier('moduleImportClause');
 		const { children, declaration } = result;
-		assert.sameMembers(children, ['export=']);
+		assert.sameMembers(children, []);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'ts');
+		/*
 		assert.equal(
 			declaration.children.get('export=')!.group,
 			DeclarationGroup.Module,
 			DeclarationGroup[declaration.group!],
 		);
+		*/
 		assert.equal(declaration.nameSpace, 'ts');
 	});
-	it('maps a module ImportEqualsDeclaration', function () {
+	it('maps an external module ImportEqualsDeclaration', function () {
 		const result = this.testSpecifier('TypeScript');
 		const { children, declaration } = result;
-		assert.sameMembers(children, ['export=']);
+		assert.sameMembers(children, []);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'ts');

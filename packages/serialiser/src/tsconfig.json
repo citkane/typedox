@@ -1,6 +1,6 @@
 {
 	"extends": "@typedox/tsconfigs/backend.tsconfig.json",
-	"include": ["."],
+	"include": [".", "./**/*"],
 	"compilerOptions": {
 		"outDir": "../dist"
 	}

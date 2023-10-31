@@ -1,6 +1,11 @@
 import { assert } from 'chai';
 
-import { DoxProject, DoxPackage, DoxReference, DoxSourceFile } from '@typedox/core';
+import {
+	DoxProject,
+	DoxPackage,
+	DoxReference,
+	DoxSourceFile,
+} from '@typedox/core';
 import { doxStub, projectFactory } from '@typedox/test';
 import { log, logLevels } from '@typedox/logger';
 import {
@@ -63,7 +68,7 @@ export default function () {
 			'enums',
 			'variables',
 		]);
-		assert.hasAllKeys(this.serialisedReference.namespaces, [
+		assert.hasAllKeys(this.serialisedReference!.namespaces, [
 			'grandchildSpace',
 			'childSpace',
 			'emptyDeclaration',
@@ -71,11 +76,11 @@ export default function () {
 			'default',
 			'moduleDeclaration',
 		]);
-		assert.hasAllKeys(this.serialisedReference.classes, [
+		assert.hasAllKeys(this.serialisedReference!.classes, [
 			'Class',
 			'LocalClass',
 		]);
-		assert.hasAllKeys(this.serialisedReference.variables, [
+		assert.hasAllKeys(this.serialisedReference!.variables, [
 			'grandchild',
 			'localExport',
 			'localDeclaration',
@@ -87,12 +92,12 @@ export default function () {
 			'greatGrandchild',
 			'nsExport',
 		]);
-		assert.hasAllKeys(this.serialisedReference.functions, [
+		assert.hasAllKeys(this.serialisedReference!.functions, [
 			'localFunc',
 			'func',
 			'arrowFunc',
 		]);
-		assert.hasAllKeys(this.serialisedReference.enums, ['enumerator']);
+		assert.hasAllKeys(this.serialisedReference!.enums, ['enumerator']);
 	});
 	it('serialises a npm package', function () {
 		assert.exists(this.serialisedPackage);
@@ -107,7 +112,7 @@ export default function () {
 		const ref = this.serialisedReference;
 		const group = this.serialisedPackage.references.groups;
 
-		assert.deepEqualExcludingEvery(group, ref, ['id' as any]);
+		assert.deepEqualExcludingEvery(group!, ref!, ['id' as any]);
 		assert.equal(this.serialisedPackage.name, 'typedoxTestingGroups');
 		assert.equal(this.serialisedPackage.version, '0.0.0');
 	});

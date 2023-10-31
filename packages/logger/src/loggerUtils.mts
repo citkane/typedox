@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as util from 'util';
 import { fileURLToPath } from 'url';
-import { log, logLevels } from './Logger.mjs';
+import { log } from './Logger.mjs';
 
 export function filename(importMetaUrl: URL | string) {
 	return fileURLToPath(importMetaUrl);

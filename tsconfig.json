@@ -4,13 +4,12 @@
 		{ "path": "./packages/logger/src" },
 		{ "path": "./packages/wrapper/src" },
 		{ "path": "./packages/core/src" },
+		{ "path": "./src/events" },
 		{ "path": "./packages/serialiser/src" },
-		{ "path": "./src" }
+		{ "path": "./packages/fileManager/src" },
+		{ "path": "./src/main" },
+		{ "path": "./src/bin" },
+		{ "path": "./packages/frontend/src" }
 	],
-	"include": ["bin"],
-	"compilerOptions": {
-		"rootDir": ".",
-		"outDir": "./dist",
-		"tsBuildInfoFile": "./dist/tsconfig.bin.tsbuildinfo"
-	}
+	"exclude": ["."]
 }
