@@ -51,6 +51,7 @@ export class DoxPackage extends Dox {
 		super();
 		const packageConfig = config.jsonFileToObject(npmFilePath);
 		const { name, version, workspaces } = packageConfig;
+
 		this.parent = parent;
 		this.name = name;
 		this.version = version;
@@ -147,6 +148,7 @@ function parseWorkspacesToPackageNames(
 		const workspaceFile = path.isAbsolute(workspacePath)
 			? path.join(workspacePath, npmFileConvention)
 			: path.join(startDir, workspacePath, npmFileConvention);
+
 		if (!fs.existsSync(workspaceFile)) return accumulator;
 		const packageConfig = config.jsonFileToObject(workspaceFile);
 		if (packageConfig.name) accumulator.push(packageConfig.name);

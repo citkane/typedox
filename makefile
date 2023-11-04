@@ -5,7 +5,7 @@ buildWatchTestText := \033kbuild:watch:test\033\\\033]2;build:watch:test\007
 TerminalText := \033kTerminal\033\\\033]2;Terminal\007
 
 define path-join
-	$(shell node -e "console.log(path.join('$(shell echo $1 | xargs)','$(shell echo $2 | xargs)'))")
+	$(shell node -e "console.log(path.join($1,$2))")
 endef
 define path
 	$(call path-join, '${cwd}', $1)
@@ -24,12 +24,8 @@ endef
 groomNpmPackage := $(call path, './scripts/groomNpmPackage.mjs')
 
 initBuild:
-	@if [ -f doxisbuilding ]; then \
-		rm doxisbuilding; \
-	else \
-		touch doxisbuilding; \
-		make build; \
-	fi
+#	touch $(call path, 'initBuild')
+	make build
 
 build:
 	npx tsc -b -v
@@ -75,13 +71,12 @@ buildTestsWatch:
 	npx tsc -b -w $(call path, './test/tsconfig.json')
 
 postBuild:
-	@chmod +x $(call path, './dist/bin/typedox.mjs')
+	@-chmod +x $(call path, './dist/bin/typedox.mjs')
 
 testAll: buildAllTests
 	npm exec -c "NODE_ENV=test c8 mocha"
 
 clean:
-	rm -f $(call path, 'doxisbuilding')
 	rm -rf $(call path, 'dist')
 	rm -rf $(call path, 'test/dist')
 	rm -rf $(call path, 'test/runners')

@@ -3,6 +3,7 @@ import { Dox, DoxDeclaration } from '../index.mjs';
 import { notices } from './notices.mjs';
 import { log } from '@typedox/logger';
 import wrapper, { TsWrapper } from '@typedox/wrapper';
+import path from 'path';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -299,7 +300,8 @@ export class Relate extends Dox {
 			const { exports } = locationSymbol;
 			let tsDeclarations = exports?.get(name as any)?.declarations;
 			let declaration = tsDeclarations && tsDeclarations[0];
-			const targetFile = declaration?.getSourceFile().fileName;
+			let targetFile = declaration?.getSourceFile().fileName;
+			targetFile = targetFile && path.resolve(targetFile);
 
 			if (targetFile) return targetFile;
 

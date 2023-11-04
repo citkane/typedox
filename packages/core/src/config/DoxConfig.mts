@@ -102,10 +102,12 @@ export class DoxConfig {
 	};
 	private getEntryProject = () => {
 		if (this.clProject || this.customProject) return undefined;
-		const entryFile = ts.findConfigFile(
+
+		let entryFile = ts.findConfigFile(
 			this.projectRootDir,
 			ts.sys.fileExists,
 		);
+		entryFile = entryFile ? path.resolve(entryFile) : undefined;
 		return entryFile && !entryFile.startsWith(this.projectRootDir)
 			? undefined
 			: entryFile

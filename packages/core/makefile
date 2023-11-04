@@ -1,7 +1,7 @@
 cwd := $(CURDIR)
 
 define path-join
-	$(shell node -e "console.log(path.join('$(shell echo $1 | xargs)','$(shell echo $2 | xargs)'))")
+	$(shell node -e "console.log(path.join($1,$2))")
 endef
 define path
 	$(call path-join, '${cwd}', $1)

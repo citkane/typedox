@@ -3,6 +3,7 @@ import ts from 'typescript';
 import { DoxDeclaration, DoxReference, declarationsMap } from '../index.mjs';
 import { Dox } from './Dox.mjs';
 import { log } from '@typedox/logger';
+import path from 'path';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -38,7 +39,7 @@ export class DoxSourceFile extends Dox {
 		this.parent = parent;
 		this.checker = parent.checker;
 		this.sourceFile = sourceFile;
-		this.fileName = sourceFile.fileName;
+		this.fileName = path.resolve(sourceFile.fileName);
 		this.fileSymbol = this.checker.getSymbolAtLocation(sourceFile);
 		this.fileType =
 			this.fileSymbol && this.checker.getTypeOfSymbol(this.fileSymbol);

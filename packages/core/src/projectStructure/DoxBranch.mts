@@ -124,14 +124,6 @@ export class DoxBranch extends Dox {
 		const values = [...children.values()].filter(
 			(declaration) => !this.branchDeclarations.has(declaration),
 		);
-		/*
-		log.info(
-			'_'.repeat(100),
-			this.doxPackage.name,
-			this.doxReference.name,
-			declaration.name,
-		);
-		*/
 		const newBranch = new DoxBranch(this, values);
 		nameSpaces.set(declaration.name, newBranch);
 	};

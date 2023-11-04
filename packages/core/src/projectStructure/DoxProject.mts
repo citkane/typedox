@@ -114,6 +114,7 @@ function getProgramRootDir(
 	const { composite, configFilePath } = parsedConfig.options;
 	const fileDirs = parsedConfig.fileNames.reduce(
 		(accumulator, fileName) => {
+			fileName = path.resolve(fileName);
 			const dir = path.dirname(fileName);
 			const len = dir.split(path.sep).length;
 			accumulator.dirs.push(dir);
@@ -136,10 +137,12 @@ function getProgramRootDir(
 		configFilePath &&
 		(typeof configFilePath === 'string' || configFilePath instanceof String)
 	) {
-		return path.dirname(configFilePath.toString());
+		return path.dirname(path.resolve(configFilePath.toString()));
 	}
 
-	const configFile = ts.findConfigFile(programRootDir, ts.sys.fileExists);
+	let configFile = ts.findConfigFile(programRootDir, ts.sys.fileExists);
+	configFile = configFile ? path.resolve(configFile) : undefined;
+
 	return configFile && path.dirname(configFile);
 }
 

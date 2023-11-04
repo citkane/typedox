@@ -97,7 +97,6 @@ export function serialiseBranch(treeBranch: DoxBranch) {
 }
 
 export function serialiseNamespace(nameSpace: DoxBranch) {
-	log.info(nameSpace.doxReference.name);
 	return {
 		...serialiseBranch(nameSpace),
 		...{ category: CategoryKind.Namespace },

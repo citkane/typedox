@@ -33,7 +33,6 @@ export class FileManager {
 	saveDataFile = (data: object, ...args: string[]) => {
 		const assetsDir = path.join(__dirname, '../../../frontend/assets');
 		const filePath = path.join(assetsDir, ...args);
-		log.warn(filePath);
 		const dir = path.dirname(filePath);
 		if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 		const string = JSON.stringify(data, null, '\t');

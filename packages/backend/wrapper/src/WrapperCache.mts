@@ -8,6 +8,7 @@ import {
 	getNodesAndTypeFromSymbol,
 	getTsSymbolFromNodes,
 } from './wrapperUtils.mjs';
+import path from 'path';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -100,12 +101,13 @@ const cacheCallbacks = {
 	targetFileName: function (this: wrapContainer) {
 		const { wrapper, checker, program } = this;
 		const { tsNode, localDeclaration, target } = wrapper;
-		if (target) return target.fileName;
+		if (target) return path.resolve(target.fileName);
 
 		const targetNode: ts.Node =
 			localDeclaration?.valueDeclaration || tsNode;
 
-		if (ts.isSourceFile(targetNode)) return targetNode.fileName;
+		if (ts.isSourceFile(targetNode))
+			return path.resolve(targetNode.fileName);
 
 		const wrapped = wrap(checker, program, targetNode);
 		const moduleSpecifier = wrapped?.moduleSpecifier;
@@ -114,6 +116,7 @@ const cacheCallbacks = {
 
 		const symbol = checker.getSymbolAtLocation(moduleSpecifier);
 		let fileName = symbol?.valueDeclaration?.getSourceFile().fileName;
+		fileName = fileName && path.resolve(fileName);
 		if (fileName) return fileName;
 		const { text } = moduleSpecifier as any;
 		fileName =
@@ -124,11 +127,13 @@ const cacheCallbacks = {
 				ts.sys,
 			).resolvedModule?.resolvedFileName || (text as string);
 
+		fileName = fileName && path.resolve(fileName);
 		return fileName;
 	},
 	fileName: function (this: wrapContainer) {
 		const { wrapper } = this;
-		return wrapper.tsNode.getSourceFile().fileName as string;
+		const fileName = wrapper.tsNode.getSourceFile().fileName as string;
+		return path.resolve(fileName);
 	},
 	callSignatures: function (this: wrapContainer) {
 		const { wrapper } = this;
@@ -139,7 +144,7 @@ const cacheCallbacks = {
 
 		return rootNode(wrapper.tsNode).getText();
 
-		function rootNode(node: ts.Node) {
+		function rootNode(node: ts.Node): ts.Node {
 			if (!node.parent || ts.isSourceFile(node.parent)) return node;
 			return rootNode(node.parent);
 		}

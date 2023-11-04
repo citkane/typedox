@@ -2,6 +2,7 @@ import ts from 'typescript';
 import notices from './notices.mjs';
 import { log, loggerUtils } from '@typedox/logger';
 import { TsWrapper } from './Wrapper.mjs';
+import path from 'path';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -135,7 +136,9 @@ export function declared(symbol: ts.Symbol) {
 	if (!declarations) return accumulator;
 
 	const declared = declarations.reduce((accumulator, declaration) => {
-		accumulator.fileName ??= declaration.getSourceFile().fileName;
+		accumulator.fileName ??= path.resolve(
+			declaration.getSourceFile().fileName,
+		);
 		if (ts.isTypeAliasDeclaration(declaration)) {
 			if (accumulator.typeAlias)
 				log.error(
