@@ -6,8 +6,6 @@
 		".": "./dist/index.mjs"
 	},
 	"scripts": {
-		"build": "make build",
-		"build:watch": "make buildWatch",
 		"test": "cd ../../ && mocha -g '/(logger)/i'"
 	},
 	"repository": {

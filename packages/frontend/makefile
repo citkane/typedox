@@ -1,10 +1,8 @@
-cwd := $(CURDIR)
-
 define path-join
-	$(shell node -e "console.log(path.join($1,$2))")
+$(shell node -e "console.log(path.join($1,$2))")
 endef
 define path
-	$(call path-join, '${cwd}', $1)
+$(call path-join, '$(CURDIR)', $1)
 endef
 
 docData := $(call path, '../docs/data')
@@ -28,5 +26,9 @@ buildWatch: cssWatch linkData
 	npx tsc -b -w ${tsconfig}
 
 clean:
+ifeq ($(OS),Windows_NT)
+	-rmdir /s/q $(call path, './assets')
+else
 	rm -rf $(call path, './assets')
+endif
 

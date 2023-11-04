@@ -3,29 +3,41 @@ built := false
 buildWatchText := \033kbuild:watch\033\\\033]2;build:watch\007
 buildWatchTestText := \033kbuild:watch:test\033\\\033]2;build:watch:test\007
 TerminalText := \033kTerminal\033\\\033]2;Terminal\007
+windows := Windows_NT
 
 define path-join
-	$(shell node -e "console.log(path.join($1,$2))")
+$(shell node -e "console.log(path.join($1,$2))")
 endef
 define path
-	$(call path-join, '${cwd}', $1)
+$(call path-join, '${cwd}', $1)
 endef
 define copy
-	cp $(call path, $1) $(call path, $2)
+cp $(call path, $1) $(call path, $2)
 endef
 define copyDir
-	cp -r $(call path, $1) $(call path, $2)
+cp -r $(call path, $1) $(call path, $2)
 endef
 define shellTitle
-	$(shell echo -e '\033k'$1'\033\\'; echo -e '\033]2;'$1'\007')
+$(shell echo -e '\033k'$1'\033\\'; echo -e '\033]2;'$1'\007')
 endef
 
 
 groomNpmPackage := $(call path, './scripts/groomNpmPackage.mjs')
 
 initBuild:
-#	touch $(call path, 'initBuild')
-	make build
+ifeq ($(OS),Windows_NT)
+	@-type nul > initBuild
+else
+	@-touch $(call path, 'initBuild')
+endif
+	@-make build
+
+finishedBuild:
+ifeq ($(OS),Windows_NT)
+	-del $(call path, 'initBuild')
+else
+	rm -rf $(call path, 'initBuild')
+endif
 
 build:
 	npx tsc -b -v
@@ -76,21 +88,34 @@ postBuild:
 testAll: buildAllTests
 	npm exec -c "NODE_ENV=test c8 mocha"
 
-clean:
-	rm -rf $(call path, 'dist')
-	rm -rf $(call path, 'test/dist')
-	rm -rf $(call path, 'test/runners')
-	rm -rf $(call path, 'test/coverage')
-	cd $(call path, 'packages/core') && make clean
-	cd $(call path, 'packages/backend/logger') && make clean
-	cd $(call path, 'packages/backend/wrapper') && make clean
-	cd $(call path, 'packages/backend/serialiser') && make clean
-	cd $(call path, 'packages/backend/fileManager') && make clean
-	cd $(call path, 'packages/frontend') && make clean
+clean: finishedBuild
+ifeq ($(OS),Windows_NT)
+	-rmdir /s/q $(call path, 'dist')
+	-rmdir /s/q $(call path,'test/dist' )
+	-rmdir /s/q $(call path, 'test/runners')
+	-rmdir /s/q $(call path,'test/coverage' )
+else
+	-rm -rf $(call path, 'dist')
+	-rm -rf $(call path, 'test/dist')
+	-rm -rf $(call path, 'test/runners')
+	-rm -rf $(call path, 'test/coverage')
+endif
+	-cd $(call path, 'packages/core') && make clean
+	-cd $(call path, 'packages/backend/logger') && make clean
+	-cd $(call path, 'packages/backend/wrapper') && make clean
+	-cd $(call path, 'packages/backend/serialiser') && make clean
+	-cd $(call path, 'packages/backend/fileManager') && make clean
+	-cd $(call path, 'packages/frontend') && make clean
+
 
 cleanInstall: clean
-	rm -rf $(call path, 'node_modules')
-	rm -rf $(call path, 'package-lock.json')
+ifeq ($(OS),Windows_NT)
+	-rmdir /s/q $(call path, 'node_modules')
+	-del $(call path, 'package-lock.json')
+else
+	-rm -rf $(call path, 'node_modules')
+	-rm -rf $(call path, 'package-lock.json')
+endif
 
 prepack:
 	@cp $(call path, package.json) $(call path, _package.json)
@@ -109,7 +134,6 @@ prepack:
 	@node ${groomNpmPackage} $(call path, packages/frontend/package.json)
 
 postpack:
-	@rm -f doxisbuilding
 	@mv $(call path, _package.json) $(call path, package.json)
 	@mv $(call path, packages/core/_package.json) $(call path, packages/core/package.json)
 	@mv $(call path, packages/backend/logger/_package.json) $(call path, packages/backend/logger/package.json)

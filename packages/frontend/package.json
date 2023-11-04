@@ -4,7 +4,6 @@
 	"description": "Frontend for typedox",
 	"type": "module",
 	"scripts": {
-		"build": "make build",
 		"build:css": "make css",
 		"build:watch": "make buildWatch",
 		"build:watch:css": "make cssWatch",

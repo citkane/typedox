@@ -10,7 +10,7 @@
 		"./events": "./dist/events/mainEventsApi.mjs"
 	},
 	"scripts": {
-		"build": "make build",
+		"build:dist": "make build",
 		"build:watch": "make buildWatch",
 		"build:tests": "make buildAllTests",
 		"build:watch:tests": "make buildTestsWatch",
@@ -18,7 +18,7 @@
 		"test:coverage": "make testAll",
 		"docs": "make buildDocs",
 		"docs:verbose": "make buildDocsVerbose",
-		"prepare": "make initBuild",
+		"postinstall": "make initBuild",
 		"prepack": "make prepack",
 		"postpack": "make postpack"
 	},

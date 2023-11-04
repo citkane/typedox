@@ -1,13 +1,1 @@
-docs
-temp
-runners
-coverage
-scratch
-
-assets
-*.tsbuildinfo
-scratch
-dist
-node_modules
-.nyc_output
-buildInfo
+*

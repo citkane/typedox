@@ -3,8 +3,6 @@
 	"version": "0.0.0",
 	"description": "Manages file operations for typedox",
 	"scripts": {
-		"build": "make build",
-		"build:watch": "make buildWatch",
 		"test": "cd ../../ && mocha -g '/file manager/i'"
 	},
 	"exports": {

@@ -1,10 +1,10 @@
 cwd := $(CURDIR)
 
 define path-join
-	$(shell node -e "console.log(path.join($1,$2))")
+$(shell node -e "console.log(path.join($1,$2))")
 endef
 define path
-	$(call path-join, '${cwd}', $1)
+$(call path-join, '${cwd}', $1)
 endef
 
 dist := $(call path, '../../dist/wrapper')
@@ -22,4 +22,8 @@ prebuild:
 	@node ${groomNpmPackage.mjs} $(call path-join, ${dist}, './package.json')
 
 clean:
+ifeq ($(OS),Windows_NT)
+	-rmdir /s/q $(call path, './dist')
+else
 	rm -rf $(call path, './dist')
+endif
