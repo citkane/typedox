@@ -1,0 +1,28 @@
+dox-widget-drawer {
+	display: block;
+}
+
+dox-widget-drawer {
+	user-select: none;
+	cursor: pointer;
+	.header {
+		:hover {
+			background-color: var(--colour-bg-hover);
+		}
+		> div {
+			padding: 0.4rem 0.5rem;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+	}
+	:hover {
+		background-color: var(--colour-bg-default);
+	}
+}
+dox-widget-drawer.closed {
+	.drawers {
+		overflow: hidden;
+		height: 0;
+	}
+}

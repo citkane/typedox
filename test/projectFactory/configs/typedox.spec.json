@@ -1,0 +1,8 @@
+//Comments are included for testing purposes.
+/** please do not remove */
+{
+	"doxOut": "testDocs",
+	/** A comment */
+	"typeDependencies": ["hay", "may"]
+	//Another comment
+}

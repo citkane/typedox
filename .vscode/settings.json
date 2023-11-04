@@ -1,0 +1,22 @@
+{
+	"cSpell.words": [
+		"categorise",
+		"Colour",
+		"colourise",
+		"Commandline",
+		"configurators",
+		"doesnotexist",
+		"doxout",
+		"emsp",
+		"Filelist",
+		"serialise",
+		"serialiser",
+		"serialises",
+		"typedox",
+		"typedoxjson",
+		"Vstub"
+	],
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.formatOnPaste": true
+}

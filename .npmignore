@@ -1,0 +1,8 @@
+*
+
+!dist/**/*
+!packages/**/package.json
+!packages/**/dist/**
+
+*.tsbuildinfo
+packages/_tsconfigs

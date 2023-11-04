@@ -1,0 +1,22 @@
+{
+	"name": "@typedox/test",
+	"version": "0.0.0",
+	"description": "Test factories and stubs for typedox",
+	"exports": {
+		".": "./dist/index.mjs",
+		"./core": "./runners/core/core.spec.mjs",
+		"./logger": "./runners/logger/logger.spec.mjs",
+		"./serialiser": "./runners/serialiser/serialiser.spec.mjs",
+		"./wrapper": "./runners/wrapper/wrapper.spec.mjs"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/citkane/typedox.git"
+	},
+	"author": "Michael Jonker",
+	"license": "GPL-3.0-or-later",
+	"bugs": {
+		"url": "https://github.com/citkane/typedox/issues"
+	},
+	"homepage": "https://github.com/citkane/typedox#readme"
+}

@@ -1,0 +1,72 @@
+{
+	"name": "typedox",
+	"version": "0.0.0",
+	"description": "Document Generator for Typedoc",
+	"bin": {
+		"typedox": "./dist/bin/typedox.mjs"
+	},
+	"exports": {
+		".": "./dist/index.mjs",
+		"./events": "./dist/events/mainEventsApi.mjs"
+	},
+	"scripts": {
+		"build:dist": "make build",
+		"build:watch": "make buildWatch",
+		"build:tests": "make buildAllTests",
+		"build:watch:tests": "make buildTestsWatch",
+		"test": "NODE_ENV=test mocha",
+		"test:coverage": "make testAll",
+		"docs": "make buildDocs",
+		"docs:verbose": "make buildDocsVerbose",
+		"postinstall": "make initBuild",
+		"prepack": "make prepack",
+		"postpack": "make postpack"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/citkane/typedox.git"
+	},
+	"keywords": [
+		"typescript",
+		"tsdoc",
+		"documentation",
+		"generator",
+		"frontend"
+	],
+	"author": "Michael Jonker",
+	"license": "GPL-3.0-or-later",
+	"bugs": {
+		"url": "https://github.com/citkane/typedox/issues"
+	},
+	"homepage": "https://github.com/citkane/typedox#readme",
+	"workspaces": [
+		"packages/_tsconfigs",
+		".",
+		"packages/core",
+		"packages/backend/logger",
+		"packages/backend/wrapper",
+		"packages/backend/serialiser",
+		"packages/backend/fileManager",
+		"packages/frontend",
+		"test/"
+	],
+	"devDependencies": {
+		"@types/chai": "^4.3.6",
+		"@types/mocha": "^10.0.1",
+		"@types/sinon": "^10.0.16",
+		"c8": "^8.0.1",
+		"chai": "^4.3.8",
+		"chai-exclude": "^2.1.0",
+		"mocha": "^10.2.0",
+		"prettier": "^3.0.1",
+		"sinon": "^16.0.0",
+		"source-map-support": "^0.5.21"
+	},
+	"dependencies": {
+		"typescript": "^5.2.2"
+	},
+	"engines": {
+		"npm": ">=7.0.2 <=9.8.1",
+		"node": ">=15.0.1 <=20.6.1"
+	}
+}

@@ -1,0 +1,24 @@
+{
+	"name": "@typedox/filemanager",
+	"version": "0.0.0",
+	"description": "Manages file operations for typedox",
+	"scripts": {
+		"test": "cd ../../ && mocha -g '/file manager/i'"
+	},
+	"exports": {
+		".": "./dist/index.mjs"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/citkane/typedox.git"
+	},
+	"author": "Michael Jonker",
+	"license": "GPL-3.0-or-later",
+	"bugs": {
+		"url": "https://github.com/citkane/typedox/issues"
+	},
+	"homepage": "https://github.com/citkane/typedox#readme",
+	"devDependencies": {
+		"@types/node": "^20.8.10"
+	}
+}
