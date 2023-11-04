@@ -1,8 +1,0 @@
-{
-	"include": ["."],
-
-    "compilerOptions": {
-        "outDir": "../dist",
-        "composite":true,
-    }
-}

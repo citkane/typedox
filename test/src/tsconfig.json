@@ -1,8 +1,0 @@
-{
-	"extends": "@typedox/tsconfigs/test.tsconfig.json",
-	"include": [".", "../allTests.spec.mts", "../e2e.spec.mts"],
-	"exclude": ["../allTests.spec.mts", "../e2e.spec.mts"],
-	"compilerOptions": {
-		"outDir": "../dist"
-	}
-}

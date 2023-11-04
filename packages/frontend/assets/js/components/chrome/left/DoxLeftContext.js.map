@@ -1,1 +1,0 @@
-{"version":3,"file":"DoxLeftContext.js","sourceRoot":"","sources":["../../../../../src/components/chrome/left/DoxLeftContext.ts"],"names":[],"mappings":"AAAA,MAAM,OAAO,cAAe,SAAQ,WAAW;IAC9C,iBAAiB;QAChB,OAAO,CAAC,GAAG,CAAC,yBAAyB,CAAC,CAAC;IACxC,CAAC;CACD;AAED,MAAM,cAAc,GAAG,kBAAkB,CAAC;AAC1C,cAAc,CAAC,MAAM,CAAC,cAAc,EAAE,cAAc,CAAC,CAAC"}
