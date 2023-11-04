@@ -1,1 +1,0 @@
-{"version":3,"file":"DoxNavLeftMenu.js","sourceRoot":"","sources":["../../../src/components-chrome/DoxNavLeftMenu.ts"],"names":[],"mappings":"AAAA,MAAM,OAAO,cAAe,SAAQ,WAAW;IAC9C,iBAAiB;QAChB,OAAO,CAAC,GAAG,CAAC,sBAAsB,CAAC,CAAC;IACrC,CAAC;CACD;AAED,MAAM,cAAc,GAAG,mBAAmB,CAAC;AAC3C,cAAc,CAAC,MAAM,CAAC,cAAc,EAAE,cAAc,CAAC,CAAC"}

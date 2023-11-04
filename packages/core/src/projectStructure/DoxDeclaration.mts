@@ -3,7 +3,7 @@ import { DeclarationFlags, DoxSourceFile, declarationsMap } from '../index.mjs';
 import { Dox } from './Dox.mjs';
 import { Relate } from '../declarationUtils/Relate.mjs';
 import { Declare } from '../declarationUtils/Declare.mjs';
-import getGroupKind from '../declarationUtils/group.mjs';
+import getCategoryKind from '../declarationUtils/category.mjs';
 import { log } from '@typedox/logger';
 import { TsWrapper } from '@typedox/wrapper';
 
@@ -38,8 +38,9 @@ export class DoxDeclaration extends Dox {
 	public valueNode!: ts.Node;
 	public wrappedItem!: TsWrapper;
 	public name: string;
+	public error = false;
 
-	private groupTsKind!: ts.SyntaxKind;
+	private categoryTsKind!: ts.SyntaxKind;
 	private _done?: boolean;
 
 	constructor(
@@ -52,6 +53,7 @@ export class DoxDeclaration extends Dox {
 		this.parent = parent;
 		this.doxSourceFile = this.getDoxSourceFile(parent);
 		this.wrappedItem = this.tsWrap(item)!;
+
 		this.name = this.wrappedItem?.name || '';
 
 		if (this.wrappedItem && !this.isExternalTarget()) {
@@ -64,9 +66,14 @@ export class DoxDeclaration extends Dox {
 			this.events.emit('core.declaration.begin', this);
 
 			const declare = new Declare(this);
-			declare.declare(this.wrappedItem);
+			try {
+				declare.declare(this.wrappedItem);
+			} catch (err) {
+				this.errored();
+			}
+
 			this.valueNode = declare.valueNode;
-			this.groupTsKind = declare.groupTsKind;
+			this.categoryTsKind = declare.categoryTsKind;
 			this.flags = declare.flags;
 			this.nameSpace = declare.nameSpace;
 			notExported && (this.flags.notExported = true);
@@ -74,16 +81,15 @@ export class DoxDeclaration extends Dox {
 
 			this.events.emit('core.declaration.declared', this);
 		} else {
-			this.destroy();
-			this.done();
+			this.errored();
 		}
 	}
 
-	public get group() {
-		return getGroupKind(
+	public get category() {
+		return getCategoryKind(
 			this.valueNode,
 			this.wrappedItem,
-			this.groupTsKind,
+			this.categoryTsKind,
 			this.checker,
 		);
 	}
@@ -119,16 +125,27 @@ export class DoxDeclaration extends Dox {
 			_fileName!.includes('node_modules')
 		);
 	}
-	public relate = new Relate(this, this.done).relate;
+	public relate = (wrappedItem: TsWrapper) => {
+		try {
+			new Relate(this, this.done).relate(wrappedItem);
+		} catch (err) {
+			this.errored();
+		}
+	};
 	public destroy() {
 		this.children.forEach((child) => child.parents.delete(this));
-		this.name = '';
+		this.error = true;
 		this.events.off(
 			'core.declarations.findRootDeclarations',
 			this.events.api['core.declarations.findRootDeclarations'].bind(
 				this,
 			),
 		);
+	}
+	private errored(err?: unknown) {
+		if (err) log.error(err);
+		this.destroy();
+		this.done();
 	}
 	private done(isTarget?: boolean) {
 		if (isTarget || this._done) return;

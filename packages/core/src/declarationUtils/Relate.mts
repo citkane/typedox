@@ -71,7 +71,7 @@ export class Relate extends Dox {
 		target
 			? this.relate(target, true)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.notFound.call(this, wrapped, 'target') &&
+			  notices.throw.call(this, wrapped, 'target', log.stackTracer()) &&
 			  this.declaration.destroy();
 	};
 	/**
@@ -134,8 +134,12 @@ export class Relate extends Dox {
 			wrapped.target
 				? this.relate(wrapped.target)
 				: /* istanbul ignore next: soft error for debugging */
-				  notices.notFound.call(relation, wrapped, 'target') &&
-				  this.destroy();
+				  notices.throw.call(
+						relation,
+						wrapped,
+						'target',
+						log.stackTracer(),
+				  ) && this.destroy();
 		}
 	};
 	/**
@@ -165,7 +169,7 @@ export class Relate extends Dox {
 		wrapped.target
 			? this.relate(wrapped.target)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.notFound.call(this, wrapped, 'target') &&
+			  notices.throw.call(this, wrapped, 'target', log.stackTracer()) &&
 			  this.declaration.destroy();
 	};
 	/**
@@ -213,10 +217,9 @@ export class Relate extends Dox {
 		!skipNotice && this.debug('NamespaceExport');
 
 		const { targetFileName } = wrapped;
-
-		const file =
-			targetFileName &&
-			this.declaration.doxReference.filesMap.get(targetFileName);
+		const file = !!targetFileName
+			? this.declaration.doxReference.filesMap.get(targetFileName)
+			: undefined;
 		/* istanbul ignore next: soft error for debugging */
 		if (!file) {
 			this.fileNotFound(wrapped, targetFileName);
@@ -248,14 +251,14 @@ export class Relate extends Dox {
 	private fileNotFound = (wrapped: TsWrapper, fileName?: string) => {
 		const message = `An invalid file was referenced: "${wrapped.nodeDeclarationText}" in`;
 		fileName
-			? notices.notFound.call(
+			? notices.throw.call(
 					this,
 					wrapped,
 					wrapped.fileName,
 					message,
 					'warn',
 			  )
-			: notices.notFound.call(this, wrapped, 'file');
+			: notices.throw.call(this, wrapped, 'file', log.stackTracer());
 	};
 	/**
 	 * Finds and returns the typedox doxDeclaration that has been referenced in a relationship.

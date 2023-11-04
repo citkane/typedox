@@ -1,12 +1,12 @@
 {
 	"extends": "@typedox/tsconfigs/backend.tsconfig.json",
 	"references": [
-		{ "path": "./packages/logger/src" },
-		{ "path": "./packages/wrapper/src" },
+		{ "path": "./packages/backend/logger/src" },
+		{ "path": "./packages/backend/wrapper/src" },
 		{ "path": "./packages/core/src" },
 		{ "path": "./src/events" },
-		{ "path": "./packages/serialiser/src" },
-		{ "path": "./packages/fileManager/src" },
+		{ "path": "./packages/backend/serialiser/src" },
+		{ "path": "./packages/backend/fileManager/src" },
 		{ "path": "./src/main" },
 		{ "path": "./src/bin" },
 		{ "path": "./packages/frontend/src" }

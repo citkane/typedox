@@ -16,10 +16,11 @@
 		"build:watch:tests": "make buildTestsWatch",
 		"test": "NODE_ENV=test mocha",
 		"test:coverage": "make testAll",
+		"docs": "make buildDocs",
+		"docs:verbose": "make buildDocsVerbose",
 		"prepare": "make initBuild",
 		"prepack": "make prepack",
-		"postpack": "make postpack",
-		"postinstall": "make postinstall"
+		"postpack": "make postpack"
 	},
 	"repository": {
 		"type": "git",
@@ -40,13 +41,13 @@
 	"homepage": "https://github.com/citkane/typedox#readme",
 	"workspaces": [
 		"packages/_tsconfigs",
-		"packages/logger",
-		"packages/wrapper",
-		"packages/core",
-		"packages/serialiser",
-		"packages/fileManager",
-		"packages/frontend",
 		".",
+		"packages/core",
+		"packages/backend/logger",
+		"packages/backend/wrapper",
+		"packages/backend/serialiser",
+		"packages/backend/fileManager",
+		"packages/frontend",
 		"test/"
 	],
 	"devDependencies": {

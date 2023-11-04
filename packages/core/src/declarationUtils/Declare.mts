@@ -7,7 +7,7 @@ import { TsWrapper, isLiteral, isSpecifierKind } from '@typedox/wrapper';
 const __filename = log.getFilename(import.meta.url);
 
 export class Declare extends Dox {
-	public groupTsKind!: ts.SyntaxKind;
+	public categoryTsKind!: ts.SyntaxKind;
 	public declaration: DoxDeclaration;
 	public flags: DeclarationFlags = {};
 	public nameSpace?: string;
@@ -26,7 +26,7 @@ export class Declare extends Dox {
 	public declare = (wrapped: TsWrapper, isTarget = false) => {
 		if (!isSpecifierKind(wrapped.kind)) {
 			this.valueNode = wrapped.tsNode;
-			this.groupTsKind ??= wrapped.kind;
+			this.categoryTsKind ??= wrapped.kind;
 			return;
 		}
 
@@ -73,7 +73,7 @@ export class Declare extends Dox {
 
 		if (isLiteral(expression)) {
 			this.valueNode = expression.parent;
-			this.groupTsKind = expression.kind;
+			this.categoryTsKind = expression.kind;
 			return;
 		}
 
@@ -83,13 +83,7 @@ export class Declare extends Dox {
 
 		target
 			? this.declare(target)
-			: notices.notFound.call(
-					this,
-					wrapped,
-					'target',
-					undefined,
-					'error',
-			  );
+			: notices.throw.call(this, wrapped, 'target', log.stackTracer());
 	};
 	/**
 	 * export * from './child/child
@@ -97,7 +91,7 @@ export class Declare extends Dox {
 	private declareExportDeclaration = (wrapped: TsWrapper) => {
 		this.debug('ExportDeclaration');
 
-		this.groupTsKind = this.declaration.wrappedItem.kind;
+		this.categoryTsKind = this.declaration.wrappedItem.kind;
 	};
 	/**
 	 * export { child } from './child/child;
@@ -109,7 +103,7 @@ export class Declare extends Dox {
 		wrapped.target
 			? this.declare(wrapped.target)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.notFound.call(this, wrapped, 'target');
+			  notices.throw.call(this, wrapped, 'target', log.stackTracer());
 	};
 	/**
 	 * import TypeScript from 'typescript';
@@ -123,7 +117,12 @@ export class Declare extends Dox {
 		wrappedTarget
 			? this.declare(wrappedTarget)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.notFound.call(this, wrapped, 'immediatelyAliasedSymbol');
+			  notices.throw.call(
+					this,
+					wrapped,
+					'immediatelyAliasedSymbol',
+					log.stackTracer(),
+			  );
 	};
 	/**
 	 * export import childSpace = childSpace;
@@ -136,7 +135,7 @@ export class Declare extends Dox {
 		wrapped.target
 			? this.declare(wrapped.target)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.notFound.call(this, wrapped, 'target');
+			  notices.throw.call(this, wrapped, 'target', log.stackTracer());
 	};
 	/**
 	 * import { grandchild, childSpace } from './grandchild/grandchild'
@@ -149,10 +148,11 @@ export class Declare extends Dox {
 		wrappedTarget
 			? this.declare(wrappedTarget)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.notFound.call(
+			  notices.throw.call(
 					this,
 					wrapped,
 					'immediatelyAliasedSymbol',
+					log.stackTracer(),
 			  ) && this.declaration.destroy();
 	};
 	/**
@@ -165,7 +165,7 @@ export class Declare extends Dox {
 		const node = wrapped.tsNode as ts.ModuleDeclaration;
 		this.valueNode = node;
 		this.nameSpace = node.name.getText();
-		this.groupTsKind = node.kind;
+		this.categoryTsKind = node.kind;
 
 		/*
 		wrapped.declaredModuleSymbols?.forEach((symbol) => {
@@ -189,7 +189,7 @@ export class Declare extends Dox {
 		!skipNotice && this.debug('NamespaceExport');
 
 		this.nameSpace = wrapped.name;
-		this.groupTsKind = ts.SyntaxKind.ModuleDeclaration;
+		this.categoryTsKind = ts.SyntaxKind.ModuleDeclaration;
 	};
 	/**
 	 * import * as childSpace from '../child/child';
@@ -215,7 +215,7 @@ export class Declare extends Dox {
 			
 			wrapped: TsWrapper,
 		) {
-			this.groupTsKind = ts.SyntaxKind.ModuleDeclaration;
+			this.categoryTsKind = ts.SyntaxKind.ModuleDeclaration;
 			this.valueItem = wrapped;
 		},
 		*/

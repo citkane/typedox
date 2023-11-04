@@ -2,6 +2,7 @@ import ts from 'typescript';
 import { TsWrapper, isSymbol, wrap } from '@typedox/wrapper';
 import { log, loggerUtils } from '@typedox/logger';
 import {
+	CategoryKind,
 	DoxBranch,
 	DoxDeclaration,
 	DoxPackage,
@@ -37,6 +38,7 @@ export class DoxReference extends Dox {
 	public doxBranch: DoxBranch;
 	public checker: ts.TypeChecker;
 	public program: ts.Program;
+	public category = CategoryKind.Reference;
 
 	private rootDeclarations?: DoxDeclaration[];
 	private parent: DoxPackage;

@@ -18,24 +18,23 @@ export const notices = {
 			);
 		},
 	},
-	notFound:
+	throw:
 		/* istanbul ignore next: soft error for debugging */
 		function (
 			this: Relate | Declare,
 			wrapped: TsWrapper,
 			notFound: string,
+			trace: string,
 			message = 'Did not find a',
-			level = 'error' as Exclude<keyof typeof logLevels, 'silent'>,
 		) {
-			log[level](
+			log.throwError(
 				log.identifier(this),
 				`[${wrapped.kindString}]`,
 				message,
 				`${notFound}`,
-				level === 'error' ? wrapped.report : '',
-				level === 'error' ? log.stackTracer() : '',
+				wrapped.report,
+				//trace,
 			);
-			return undefined;
 		},
 	report:
 		/* istanbul ignore next: soft error for debugging */
@@ -58,14 +57,14 @@ export const notices = {
 				local,
 			);
 		},
-	groupKind: function (
+	categoryKind: function (
 		tsKind: ts.SyntaxKind,
 		wrapped: TsWrapper,
 		fileName: string,
 	) {
 		log.error(
 			log.identifier(fileName),
-			'Did not discover a group kind:',
+			'Did not discover a category kind:',
 			ts.SyntaxKind[tsKind],
 			wrapped.report,
 		);

@@ -1,13 +1,15 @@
-import * as path from 'path';
+import path from 'path';
+import fs from 'fs';
 import {
 	DoxProject,
 	DoxReference,
 	namedRegistry,
 	config,
 	DoxSourceFile,
+	CategoryKind,
 } from '../index.mjs';
 import { Dox } from './Dox.mjs';
-import { log, loggerUtils } from '@typedox/logger';
+import { log } from '@typedox/logger';
 import ts from 'typescript';
 
 const __filename = log.getFilename(import.meta.url);
@@ -34,8 +36,10 @@ const __filename = log.getFilename(import.meta.url);
 export class DoxPackage extends Dox {
 	public doxReferences: DoxReference[];
 	public filesMap = new Map<string, DoxSourceFile>();
-	public version: string;
 	public name: string;
+	public version: string;
+	public workspaces: string[];
+	public category = CategoryKind.Package;
 
 	private parent: DoxProject;
 	constructor(
@@ -46,10 +50,15 @@ export class DoxPackage extends Dox {
 	) {
 		super();
 		const packageConfig = config.jsonFileToObject(npmFilePath);
-		const { name, version } = packageConfig;
+		const { name, version, workspaces } = packageConfig;
 		this.parent = parent;
 		this.name = name;
 		this.version = version;
+		this.workspaces = parseWorkspacesToPackageNames(
+			path.dirname(npmFilePath),
+			workspaces,
+			this.options.npmFileConvention,
+		);
 
 		this.events.emit('core.package.begin', this, packageConfig);
 		log.info(log.identifier(this), `Making package ${name}: ${version}`);
@@ -61,6 +70,9 @@ export class DoxPackage extends Dox {
 
 		log.info(log.identifier(this), 'done', '\n');
 		this.events.emit('core.package.end', this, packageConfig);
+	}
+	public get options() {
+		return this.doxProject.options;
 	}
 	public get doxProject() {
 		return this.parent;
@@ -100,7 +112,7 @@ export class DoxPackage extends Dox {
 			.reduce((accumulator, rootDir) => {
 				accumulator[rootDir] = getNameFromRootDir(rootDirs, rootDir, [
 					path.basename(rootDir),
-				]).join('-');
+				]).join('/');
 				return accumulator;
 			}, {} as namedRegistry<string>);
 
@@ -121,4 +133,24 @@ export class DoxPackage extends Dox {
 
 		return referenceNameMap;
 	}
+}
+
+function parseWorkspacesToPackageNames(
+	startDir: string,
+	workspaces: string[] | undefined,
+	npmFileConvention: string,
+) {
+	const accumulator = [] as string[];
+	if (!workspaces) return accumulator;
+
+	return workspaces.reduce((accumulator, workspacePath) => {
+		const workspaceFile = path.isAbsolute(workspacePath)
+			? path.join(workspacePath, npmFileConvention)
+			: path.join(startDir, workspacePath, npmFileConvention);
+		if (!fs.existsSync(workspaceFile)) return accumulator;
+		const packageConfig = config.jsonFileToObject(workspaceFile);
+		if (packageConfig.name) accumulator.push(packageConfig.name);
+
+		return accumulator;
+	}, accumulator);
 }

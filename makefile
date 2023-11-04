@@ -29,17 +29,35 @@ initBuild:
 	else \
 		touch doxisbuilding; \
 		make build; \
-		make buildTestFactory; \
-		make buildTests; \
 	fi
 
 build:
 	npx tsc -b -v
+	cd $(call path, 'packages/frontend') && make css
 	make postBuild
 
 buildWatch:
 	@echo -e '${buildWatchText}'
 	npx tsc -b -w
+
+preDocBuild:
+#	mkdir -p $(call path, 'docs/assets/core')
+#	cp -f $(call path, 'packages/core/dist/indexFrontend.mjs') $(call path, 'docs/assets/core/indexFrontend.mjs')
+#	rm -rf $(call path, './packages/frontend/assets/core')
+#	rm -f $(call path, './packages/frontend/assets/js/_doxMenu.js')
+
+postDocBuild:
+#	mkdir -p $(call path, './packages/frontend/assets/core')
+#	ln -s $(call path, 'docs/assets/core/indexFrontend.mjs') $(call path, './packages/frontend/assets/core/indexFrontend.mjs')
+#	ln -s $(call path, './docs/assets/js/_doxMenu.js') $(call path, './packages/frontend/assets/js/_doxMenu.js')
+
+buildDocs: preDocBuild
+	npx typedox
+	make postDocBuild
+
+buildDocsVerbose: preDocBuild
+	npx typedox --logLevel debug
+	make postDocBuild
 
 terminal:
 	@echo -e '${TerminalText}';
@@ -63,41 +81,47 @@ testAll: buildAllTests
 	npm exec -c "NODE_ENV=test c8 mocha"
 
 clean:
+	rm -f $(call path, 'doxisbuilding')
 	rm -rf $(call path, 'dist')
 	rm -rf $(call path, 'test/dist')
 	rm -rf $(call path, 'test/runners')
 	rm -rf $(call path, 'test/coverage')
 	cd $(call path, 'packages/core') && make clean
-	cd $(call path, 'packages/logger') && make clean
-	cd $(call path, 'packages/wrapper') && make clean
-	cd $(call path, 'packages/serialiser') && make clean
+	cd $(call path, 'packages/backend/logger') && make clean
+	cd $(call path, 'packages/backend/wrapper') && make clean
+	cd $(call path, 'packages/backend/serialiser') && make clean
+	cd $(call path, 'packages/backend/fileManager') && make clean
+	cd $(call path, 'packages/frontend') && make clean
 
 cleanInstall: clean
 	rm -rf $(call path, 'node_modules')
 	rm -rf $(call path, 'package-lock.json')
 
-postinstall:
-	@echo postinstall
-
 prepack:
 	@cp $(call path, package.json) $(call path, _package.json)
 	@cp $(call path, packages/core/package.json) $(call path, packages/core/_package.json)
-	@cp $(call path, packages/logger/package.json) $(call path, packages/logger/_package.json)
-	@cp $(call path, packages/serialiser/package.json) $(call path, packages/serialiser/_package.json)
-	@cp $(call path, packages/wrapper/package.json) $(call path, packages/wrapper/_package.json)
+	@cp $(call path, packages/backend/logger/package.json) $(call path, packages/backend/logger/_package.json)
+	@cp $(call path, packages/backend/serialiser/package.json) $(call path, packages/backend/serialiser/_package.json)
+	@cp $(call path, packages/backend/wrapper/package.json) $(call path, packages/backend/wrapper/_package.json)
+	@cp $(call path, packages/backend/fileManager/package.json) $(call path, packages/backend/fileManager/_package.json)
+	@cp $(call path, packages/frontend/package.json) $(call path, packages/frontend/_package.json)
 	@node ${groomNpmPackage} $(call path, package.json)
 	@node ${groomNpmPackage} $(call path, packages/core/package.json)
-	@node ${groomNpmPackage} $(call path, packages/logger/package.json)
-	@node ${groomNpmPackage} $(call path, packages/serialiser/package.json)
-	@node ${groomNpmPackage} $(call path, packages/wrapper/package.json)
+	@node ${groomNpmPackage} $(call path, packages/backend/logger/package.json)
+	@node ${groomNpmPackage} $(call path, packages/backend/serialiser/package.json)
+	@node ${groomNpmPackage} $(call path, packages/backend/wrapper/package.json)
+	@node ${groomNpmPackage} $(call path, packages/backend/fileManager/package.json)
+	@node ${groomNpmPackage} $(call path, packages/frontend/package.json)
 
 postpack:
 	@rm -f doxisbuilding
 	@mv $(call path, _package.json) $(call path, package.json)
 	@mv $(call path, packages/core/_package.json) $(call path, packages/core/package.json)
-	@mv $(call path, packages/logger/_package.json) $(call path, packages/logger/package.json)
-	@mv $(call path, packages/serialiser/_package.json) $(call path, packages/serialiser/package.json)
-	@mv $(call path, packages/wrapper/_package.json) $(call path, packages/wrapper/package.json)
+	@mv $(call path, packages/backend/logger/_package.json) $(call path, packages/backend/logger/package.json)
+	@mv $(call path, packages/backend/serialiser/_package.json) $(call path, packages/backend/serialiser/package.json)
+	@mv $(call path, packages/backend/wrapper/_package.json) $(call path, packages/backend/wrapper/package.json)
+	@mv $(call path, packages/backend/fileManager/_package.json) $(call path, packages/backend/fileManager/package.json)
+	@mv $(call path, packages/frontend/_package.json) $(call path, packages/frontend/package.json)
 
 getGroomPackage:
 	@echo ${groomNpmPackage}

@@ -1,10 +1,5 @@
 import { log, loggerUtils } from '@typedox/logger';
-import {
-	DeclarationGroup,
-	Dox,
-	DoxDeclaration,
-	DoxReference,
-} from '../index.mjs';
+import { CategoryKind, Dox, DoxDeclaration, DoxReference } from '../index.mjs';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -69,9 +64,10 @@ export class DoxBranch extends Dox {
 			: this.getDoxReference(item.parent);
 	}
 	private bundleDeclaration = (declaration: DoxDeclaration) => {
-		const { group, flags } = declaration;
+		if (declaration.error) return;
+		const { category, flags } = declaration;
 		flags.isDefault && (this.default = declaration);
-		group === DeclarationGroup.ReExport
+		category === CategoryKind.reExport
 			? this.bundleReExport(declaration)
 			: this.branchDeclarations.set(declaration, declaration.name);
 	};
@@ -80,39 +76,39 @@ export class DoxBranch extends Dox {
 		this.branchDeclarations.set(declaration, declaration.name);
 	};
 	private registerDeclaration = (declaration: DoxDeclaration) => {
-		const { group, name } = declaration;
-		switch (group) {
-			case DeclarationGroup.Module:
+		const { category, name } = declaration;
+		switch (category) {
+			case CategoryKind.Namespace:
 				this.registerNameSpace(declaration);
 				break;
-			case DeclarationGroup.Class:
+			case CategoryKind.Class:
 				this.classes.set(name, declaration);
 				break;
-			case DeclarationGroup.Function:
+			case CategoryKind.Function:
 				this.functions.set(name, declaration);
 				break;
-			case DeclarationGroup.Variable:
+			case CategoryKind.Variable:
 				this.variables.set(name, declaration);
 				break;
-			case DeclarationGroup.Enum:
+			case CategoryKind.Enum:
 				this.enums.set(name, declaration);
 				break;
-			case DeclarationGroup.Type:
+			case CategoryKind.Type:
 				this.types.set(name, declaration);
 				break;
 			default:
 				log.error(
 					log.identifier(this),
-					'Did not find a group for a declaration: ',
-					`${DeclarationGroup[group]}\n`,
+					'Did not find a category for a declaration: ',
+					`${CategoryKind[category]}\n`,
 					declaration.wrappedItem.report,
 				);
 				break;
 		}
 	};
 	private bundleReExport = (declaration: DoxDeclaration) => {
-		const { name, group, children } = declaration;
-		const reReExport = group === DeclarationGroup.ReExport;
+		const { name, category, children } = declaration;
+		const reReExport = category === CategoryKind.reExport;
 		const isDuplicate = this.reExports.has(name);
 		return reReExport
 			? children.forEach(this.bundleReExport)

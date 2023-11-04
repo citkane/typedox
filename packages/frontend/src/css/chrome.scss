@@ -1,8 +1,17 @@
+dox-app,
+dox-breadcrumb,
+dox-footer,
+dox-main,
+dox-left,
+dox-left-menu {
+	display: block;
+}
+
 body,
 html {
-	position: absolute;
 	width: 100vw;
 	height: 100vh;
+	position: relative;
 	background: var(--colour-base);
 }
 
@@ -13,22 +22,28 @@ dox-app {
 	width: 100%;
 	height: 100%;
 	background: var(--colour-bg-default);
-	> .wrapper {
+	> div {
+		position: relative;
 		flex-grow: 1;
 		display: flex;
 		align-items: stretch;
+		overflow: hidden;
+	}
+	dox-footer {
+		background: var(--colour-bg-default);
+		.inner {
+			width: 100%;
+			height: 1.5rem;
+		}
 	}
 }
-dox-app dox-footer {
-	flex-basis: 1.5rem;
-	background: var(--colour-bg-default);
-}
-dox-nav-left {
+
+dox-left {
+	height: 100%;
 	position: relative;
 	flex-basis: 20rem;
 	background: var(--colour-bg-default);
 	display: flex;
-	align-items: stretch;
 	.trigger {
 		position: absolute;
 		height: 100%;
@@ -36,7 +51,16 @@ dox-nav-left {
 		right: -5px;
 		cursor: col-resize;
 	}
-	dox-nav-left-context {
+	dox-left-menu {
+		flex-grow: 1;
+		position: relative;
+		display: block;
+		height: 100%;
+		overflow-x: hidden;
+		overflow-y: scroll;
+		font-size: 0.8rem;
+	}
+	dox-left-context {
 		flex-basis: 3rem;
 		background: var(--colour-bg-default);
 	}

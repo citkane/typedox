@@ -3,6 +3,7 @@ import { config, DoxProject, DoxEvents } from '@typedox/core';
 import { FileManager } from '@typedox/filemanager';
 import { Serialiser } from '@typedox/serialiser';
 import { mainEventsApi } from 'typedox/events';
+import { copyAssetsToDocs } from './bff.mjs';
 
 const __filename = log.getFilename(import.meta.url);
 const events = new DoxEvents<mainEventsApi>(mainEventsApi);
@@ -24,6 +25,9 @@ export default function main(customOptions?: config.doxOptions) {
 
 	events.emit('main.built.project', doxProject!, done);
 	if (isDone) return;
+
+	const { projectRootDir, doxOut } = projectOptions;
+	copyAssetsToDocs(projectRootDir, doxOut, 'packages/frontend');
 }
 
 export type done = typeof done;
@@ -52,3 +56,8 @@ export function logApplicationHelp() {
 }
 export const isRequestForHelp = (argv = process.argv) =>
 	argv.includes(`${config.argHyphen}help`);
+
+export enum foo {
+	foo,
+	bar,
+}

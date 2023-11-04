@@ -4,7 +4,7 @@ runners
 coverage
 scratch
 
-
+assets
 *.tsbuildinfo
 scratch
 dist

@@ -4,14 +4,14 @@
 	"description": "Frontend for typedox",
 	"type": "module",
 	"scripts": {
-		"build:watch:css": "sass src/css/index.scss:assets/css/index.css --style compressed --watch",
-		"build:css": "sass src/css/index.scss:assets/css/index.css --style compressed",
 		"build": "make build",
+		"build:css": "make css",
 		"build:watch": "make buildWatch",
-		"test": "cd ../../ && mocha -g '/frontend/i'"
+		"build:watch:css": "make cssWatch",
+		"test": "cd ../../../ && mocha -g '/frontend/i'"
 	},
 	"exports": {
-		".": "./assets/js/index.js"
+		".": "./bff.js"
 	},
 	"repository": {
 		"type": "git",

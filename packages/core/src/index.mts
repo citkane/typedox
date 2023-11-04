@@ -10,7 +10,6 @@ import {
 } from './projectStructure/_namespace.mjs';
 import { DoxEvents } from './events/DoxEvents.mjs';
 import { coreEventsApi } from './events/coreEventsApi.mjs';
-
 import * as config from './config/_namespace.mjs';
 
 export interface DeclarationFlags {
@@ -18,16 +17,21 @@ export interface DeclarationFlags {
 	scopeKeyword?: 'const' | 'let' | 'var';
 	notExported?: true;
 }
-export enum DeclarationGroup {
-	unknown,
-	ReExport,
-	Module,
+export enum CategoryKind {
+	Project,
+	Package,
+	Reference,
+	Namespace,
+	Class,
 	Variable,
 	Function,
-	Class,
 	Enum,
 	Type,
+	reExport,
+	menuHeader,
+	unknown,
 }
+
 export {
 	config,
 	DoxBranch as Branch,
