@@ -1,5 +1,6 @@
-export { DoxApp } from '../DoxApp.js';
-export { DoxBreadcrumb } from './DoxBreadcrumb.js';
-export { DoxFooter } from './DoxFooter.js';
-export { DoxMain } from './DoxMain.js';
-export * from './left/_index.js';
+export * from './ChromeFooter.js';
+export * from './ChromeLeft.js';
+export * from './ChromeMain.js';
+export * from './LeftContext.js';
+export * from './LeftMenu.js';
+export * from './MainBreadcrumb.js';

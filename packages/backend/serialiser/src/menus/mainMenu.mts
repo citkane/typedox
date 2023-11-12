@@ -1,6 +1,11 @@
 import { CategoryKind } from '@typedox/core';
-import { menuBranch, serialisedBranch, serialisedPackage } from '../index.mjs';
-import { log } from '@typedox/logger';
+import {
+	DoxLocation,
+	DeclarationSerialised,
+	menuBranch,
+	serialisedBranch,
+	serialisedPackage,
+} from '../index.mjs';
 
 export function serialiseMainMenu(packages: Record<string, serialisedPackage>) {
 	const accumulator = [] as menuBranch[];
@@ -45,6 +50,7 @@ export function serialiseMainMenu(packages: Record<string, serialisedPackage>) {
 		let newChild: menuBranch | undefined;
 		const replacementChildren = menuBranch.children?.reduce(
 			(accumulator, child) => {
+				if (!child.name) return accumulator;
 				const keys = child.name.split('/');
 				if (keys.length <= 1) {
 					accumulator.push(child);
@@ -58,7 +64,12 @@ export function serialiseMainMenu(packages: Record<string, serialisedPackage>) {
 				const newParent = pullChild(indexName, accumulator);
 				newChild =
 					newParent?.child ||
-					makeMenuBranch(indexName, child.category, []);
+					makeMenuBranch(
+						indexName,
+						child.meta.category,
+						[],
+						child.meta.location,
+					);
 
 				if (!newParent) accumulator.push(newChild);
 
@@ -93,7 +104,12 @@ export function serialiseMainMenu(packages: Record<string, serialisedPackage>) {
 				const isNamespace = category === CategoryKind.Namespace;
 				const child = isNamespace
 					? makeMenuBranch(memberName, category, [])
-					: makeMenuBranch(memberName, category);
+					: makeMenuBranch(
+							memberName,
+							category,
+							undefined,
+							(member as DeclarationSerialised).location,
+					  );
 				branch.children ??= [];
 				branch.children.push(child);
 				if (!isNamespace) return;
@@ -114,10 +130,7 @@ export function serialiseMainMenu(packages: Record<string, serialisedPackage>) {
 			refKeys.forEach((key) => {
 				if (key === packageData.name) return;
 				const reference = references[key];
-				const childBranch = makeMenuBranch(
-					key,
-					references[key]!.category,
-				);
+				const childBranch = makeMenuBranch(key, reference!.category);
 				branch.children?.push(menuCategories(childBranch, reference));
 			});
 		} else {
@@ -129,15 +142,15 @@ export function serialiseMainMenu(packages: Record<string, serialisedPackage>) {
 		menuBranch.children = menuBranch.children?.reduce(
 			(accumulator, child) => {
 				let hadDupe: menuBranch | undefined;
-				const { name, category } = child;
+				const { name, meta } = child;
 				child.children = child.children?.filter((grandchild) => {
 					const isDupe =
 						grandchild.name === name &&
-						grandchild.category === category;
+						grandchild.meta.category === meta.category;
 					const refIsPackage =
 						grandchild.name === name &&
-						category === CategoryKind.Package &&
-						grandchild.category === CategoryKind.Reference;
+						meta.category === CategoryKind.Package &&
+						grandchild.meta.category === CategoryKind.Reference;
 
 					if (isDupe || refIsPackage) {
 						accumulator.push(grandchild);
@@ -176,6 +189,7 @@ function makeMenuBranch(
 	name: string,
 	category: CategoryKind,
 	children?: menuBranch[],
+	location?: DoxLocation,
 ) {
-	return { name, category, children } as menuBranch;
+	return { name, meta: { category, location }, children } as menuBranch;
 }

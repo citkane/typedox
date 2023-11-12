@@ -9,13 +9,13 @@ import {
 import { doxStub, projectFactory } from '@typedox/test';
 import { log, logLevels } from '@typedox/logger';
 import {
-	serialiseDoxReference,
-	serialiseDoxPackage,
-	serialiseDoxProject,
+	serialiseReference,
+	serialisePackage,
+	serialiseProject,
 } from '@typedox/serialiser';
 
 const localLogLevel = logLevels.silent;
-const localFactory = 'groups';
+const localFactory = 'categories';
 
 declare module 'mocha' {
 	export interface Context {
@@ -23,9 +23,9 @@ declare module 'mocha' {
 		doxPackage: DoxPackage;
 		sourceFile: DoxSourceFile;
 		doxReference: DoxReference;
-		serialisedReference: ReturnType<typeof serialiseDoxReference>;
-		serialisedPackage: ReturnType<typeof serialiseDoxPackage>;
-		serialisedProject: ReturnType<typeof serialiseDoxProject>;
+		serialisedReference: ReturnType<typeof serialiseReference>;
+		serialisedPackage: ReturnType<typeof serialisePackage>;
+		serialisedProject: ReturnType<typeof serialiseProject>;
 	}
 }
 export default function () {
@@ -53,20 +53,20 @@ export default function () {
 		assert.exists(this.doxReference);
 		assert.exists(this.sourceFile);
 
-		this.serialisedReference = serialiseDoxReference(this.doxReference);
-		this.serialisedPackage = serialiseDoxPackage(this.doxPackage);
-		this.serialisedProject = serialiseDoxProject(this.doxProject);
+		this.serialisedReference = serialiseReference(this.doxReference);
+		this.serialisedPackage = serialisePackage(this.doxPackage);
+		this.serialisedProject = serialiseProject(this.doxProject);
 	});
 	it('serialises a reference', function () {
 		assert.exists(this.serialisedReference);
 		assert.doesNotThrow(() => JSON.stringify(this.serialisedReference));
 		assert.hasAllKeys(this.serialisedReference, [
-			'default',
 			'namespaces',
 			'classes',
 			'functions',
 			'enums',
 			'variables',
+			'category',
 		]);
 		assert.hasAllKeys(this.serialisedReference!.namespaces, [
 			'grandchildSpace',
@@ -107,13 +107,18 @@ export default function () {
 			'name',
 			'version',
 			'references',
+			'category',
+			'workspaces',
 		]);
-		assert.hasAllKeys(this.serialisedPackage.references, ['groups']);
+		assert.hasAllKeys(this.serialisedPackage.references, ['categories']);
 		const ref = this.serialisedReference;
-		const group = this.serialisedPackage.references.groups;
+		const packageRef = this.serialisedPackage.references['categories'];
 
-		assert.deepEqualExcludingEvery(group!, ref!, ['id' as any]);
-		assert.equal(this.serialisedPackage.name, 'typedoxTestingGroups');
+		assert.deepEqualExcludingEvery(packageRef!, ref!, [
+			'id' as any,
+			'parents',
+		]);
+		assert.equal(this.serialisedPackage.name, 'typedoxTestingCategories');
 		assert.equal(this.serialisedPackage.version, '0.0.0');
 	});
 	it('serialises a dox project', function () {
@@ -121,12 +126,12 @@ export default function () {
 		assert.doesNotThrow(() => JSON.stringify(this.serialisedProject));
 		assert.hasAllKeys(this.serialisedProject, ['packages']);
 		assert.hasAllKeys(this.serialisedProject.packages, [
-			'typedoxTestingGroups',
+			'typedoxTestingCategories',
 		]);
 		assert.deepEqualExcludingEvery(
-			this.serialisedProject.packages.typedoxTestingGroups,
+			this.serialisedProject.packages.typedoxTestingCategories,
 			this.serialisedPackage,
-			['id' as any],
+			['id' as any, 'parents'],
 		);
 	});
 }

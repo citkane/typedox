@@ -6,22 +6,14 @@ import { TsWrapper } from '@typedox/wrapper';
 
 const __filename = log.getFilename(import.meta.url);
 
-export default function (
+export function getCategoryKind(
 	valueNode: ts.Node,
 	wrappedItem: TsWrapper,
 	categoryTsKind: ts.SyntaxKind,
 	checker: ts.TypeChecker,
 ) {
-	const {
-		kind,
-		isModule,
-		isType,
-		isReExport,
-		isFunction,
-		isClass,
-		isVariable,
-		isEnum,
-	} = parseCategory(categoryTsKind, isArrowFunction(valueNode, checker));
+	const { kind, isModule, isType, isFunction, isClass, isVariable, isEnum } =
+		parseCategory(categoryTsKind, isArrowFunction(valueNode, checker));
 
 	const categoryKind = isModule
 		? CategoryKind.Namespace
@@ -29,8 +21,6 @@ export default function (
 		? CategoryKind.Variable
 		: isType
 		? CategoryKind.Type
-		: isReExport
-		? CategoryKind.reExport
 		: isFunction
 		? CategoryKind.Function
 		: isClass
@@ -72,16 +62,12 @@ function parseCategory(kind: ts.SyntaxKind, isArrowFunction: boolean) {
 		kind === syntax.TypeAliasDeclaration ||
 		kind === syntax.InterfaceDeclaration;
 
-	const isReExport =
-		kind === syntax.ImportSpecifier || kind === syntax.ExportDeclaration;
-
 	const isEnum = kind === syntax.EnumDeclaration;
 
 	return {
 		kind,
 		isModule,
 		isType,
-		isReExport,
 		isFunction,
 		isClass,
 		isVariable,

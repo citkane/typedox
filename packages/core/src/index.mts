@@ -1,21 +1,12 @@
 import ts from 'typescript';
-import { DoxConfig } from './config/_namespace.mjs';
-import {
-	DoxBranch,
-	DoxProject,
-	DoxPackage,
-	DoxDeclaration,
-	DoxReference,
-	DoxSourceFile,
-} from './projectStructure/_namespace.mjs';
-import { DoxEvents } from './events/DoxEvents.mjs';
-import { coreEventsApi } from './events/coreEventsApi.mjs';
-import * as config from './config/_namespace.mjs';
 
 export interface DeclarationFlags {
-	isDefault?: boolean;
-	scopeKeyword?: 'const' | 'let' | 'var';
+	isDefault?: true;
+	isExternal?: true;
+	isReExporter?: true;
+	reExported?: true;
 	notExported?: true;
+	scopeKeyword?: 'const' | 'let' | 'var';
 }
 export enum CategoryKind {
 	Project,
@@ -23,35 +14,13 @@ export enum CategoryKind {
 	Reference,
 	Namespace,
 	Class,
-	Variable,
 	Function,
+	Variable,
 	Enum,
 	Type,
-	reExport,
 	menuHeader,
 	unknown,
 }
-
-export {
-	config,
-	DoxBranch as Branch,
-	DoxConfig,
-	DoxDeclaration,
-	DoxPackage,
-	DoxProject,
-	DoxReference,
-	DoxSourceFile,
-	DoxEvents,
-	coreEventsApi,
-};
-
-export type tsConfigFile = string;
-export type referenceName = string;
-
-export * from './projectStructure/_namespace.mjs';
-
-export type fileMap = Map<string, DoxSourceFile>;
-export type declarationsMap = Map<string, DoxDeclaration>;
 
 export type referencedExport =
 	| ts.NamespaceExport
@@ -60,8 +29,6 @@ export type referencedExport =
 
 export type localDeclaration = ts.VariableDeclaration | ts.ClassDeclaration;
 export type declaration = referencedExport | localDeclaration;
-
-export type logableObjects = DoxDeclaration;
 
 export type tsItem = ts.Node | ts.Symbol;
 
@@ -85,3 +52,14 @@ export interface tscRawConfig {
 
 export type namedDef<def> = [string | undefined, def];
 export type namedRegistry<reg> = Record<string, reg>;
+
+export { Dox } from './Dox.mjs';
+export { DoxBranch } from './DoxBranch.mjs';
+export { DoxDeclaration } from './DoxDeclaration.mjs';
+export { DoxPackage } from './DoxPackage.mjs';
+export { DoxProject } from './DoxProject.mjs';
+export { DoxReference } from './DoxReference.mjs';
+export { DoxSourceFile } from './DoxSourceFile.mjs';
+export * from './events/_index.mjs';
+export * as config from './config/_namespace.mjs';
+export * as declarationUtils from './declarationUtils/_index.mjs';

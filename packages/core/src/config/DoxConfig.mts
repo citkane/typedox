@@ -1,36 +1,55 @@
-import * as path from 'path';
+import path from 'path';
 import ts from 'typescript';
 
-import { tscRawConfig, config } from '../index.mjs';
-import { log, logLevels } from '@typedox/logger';
+import { tscRawConfig } from '../index.mjs';
+import { log, logLevelKeys, logLevels } from '@typedox/logger';
+import {
+	makeDoxOptions,
+	getTscParsedCommandline,
+	options,
+	ensureAbsPath,
+	ensureFileExists,
+	findAllRawConfigs,
+	makeParsedConfigs,
+	CoreArgsApi,
+	ArgsApi,
+} from './_namespace.mjs';
 
+type optionsSansLogLevel = {
+	[key in Exclude<
+		keyof options<CoreArgsApi>,
+		'logLevel'
+	>]: options<CoreArgsApi>[key];
+};
+
+export interface coreDoxOptions extends optionsSansLogLevel {
+	logLevel: logLevels;
+}
 export class DoxConfig {
-	public projectOptions: config.doxOptions;
-	public tscParsedConfigs!: ts.ParsedCommandLine[];
+	public options: coreDoxOptions;
+	public tscParsedConfigs: ts.ParsedCommandLine[];
 
 	private clProject: string[] | undefined;
 	private customProject: string[] | undefined;
 	private entryProject: string[] | undefined;
-	private tscCommandlineConfig: ts.ParsedCommandLine;
+	private tscClConfig: ts.ParsedCommandLine;
 	private tscRawConfigs!: tscRawConfig[];
-	private projectRootDir: string;
 
-	constructor(clOptions?: string[]);
-	constructor(doxOptions?: config.doxOptions, clOptions?: string[]);
 	constructor(
-		doxOrClArgs?: config.doxOptions | string[],
-		argv = process.argv as string[],
+		testDoxOverrides?: Partial<options<CoreArgsApi>>,
+		testClOverrrides?: string[],
 	) {
-		const [doxOptions, clArgs] = config.resolveConstructorOverload(
-			doxOrClArgs,
-			argv,
+		const coreArgs = new CoreArgsApi() as ArgsApi<CoreArgsApi>;
+		const options = makeDoxOptions<CoreArgsApi>(
+			coreArgs,
+			testClOverrrides,
+			testDoxOverrides,
 		);
-		const tscCommandlineConfig = config.getTscParsedCommandline(clArgs);
-		const projectOptions = doxOptions || config.getDefaultDoxOptions();
-
-		this.projectOptions = projectOptions;
-		this.tscCommandlineConfig = tscCommandlineConfig;
-		this.projectRootDir = path.resolve(this.projectOptions.projectRootDir);
+		this.options = {
+			...options,
+			...{ logLevel: logLevels[options.logLevel as logLevelKeys] },
+		} as coreDoxOptions;
+		this.tscClConfig = getTscParsedCommandline(coreArgs);
 
 		this.clProject = this.getClProject();
 		this.customProject = this.getCustomProject();
@@ -42,24 +61,6 @@ export class DoxConfig {
 		this.tscParsedConfigs = this.getTscParsedConfigs();
 	}
 
-	public get options() {
-		return {
-			projectRootDir: this.projectRootDir,
-			doxOut: this.doxOut,
-			typeDependencies: this.typeDependencies,
-			logLevel: logLevels[this.projectOptions.logLevel],
-			tsConfigs: this.tsConfigs,
-			npmFileConvention: this.projectOptions.npmFileConvention,
-			typedox: this.projectOptions.typedox,
-		};
-	}
-
-	private get doxOut() {
-		return config.ensureAbsPath(
-			this.projectRootDir,
-			this.projectOptions.doxOut,
-		);
-	}
 	private get tsConfigs() {
 		return this.clProject
 			? this.clProject
@@ -67,58 +68,48 @@ export class DoxConfig {
 			? this.customProject
 			: this.entryProject;
 	}
-	private get typeDependencies() {
-		return this.projectOptions.typeDependencies;
-	}
 
-	private get tscCommandLineOptions() {
-		const clOptions = {
-			...this.tscCommandlineConfig.options,
-		} as ts.CompilerOptions;
-		clOptions.types = this.typeDependencies;
-		return clOptions;
-	}
 	private getClProject = (): string[] | undefined => {
-		let project = this.tscCommandLineOptions.project;
+		let project = this.tscClConfig.options.project;
 		const filePath = project
-			? config.ensureAbsPath(this.projectRootDir, project)
+			? ensureAbsPath(this.options.projectRootDir, project)
 			: undefined;
 
-		return filePath ? [config.ensureFileExists(filePath)!] : undefined;
+		return filePath ? [ensureFileExists(filePath)!] : undefined;
 	};
 	private getCustomProject = () => {
 		if (this.clProject) return undefined;
-		const tsConfigs = this.projectOptions.tsConfigs;
+		const tsConfigs = (this.options as coreDoxOptions).tsConfigs;
 
-		const custom = tsConfigs
+		const custom = tsConfigs.length
 			? tsConfigs.map((fileName) =>
-					config.ensureAbsPath(this.projectRootDir, fileName),
+					ensureAbsPath(this.options.projectRootDir, fileName),
 			  )
 			: undefined;
 
 		return custom && custom.length
-			? custom.map((file) => config.ensureFileExists(file)!)
+			? custom.map((file) => ensureFileExists(file)!)
 			: undefined;
 	};
 	private getEntryProject = () => {
 		if (this.clProject || this.customProject) return undefined;
 
 		let entryFile = ts.findConfigFile(
-			this.projectRootDir,
+			this.options.projectRootDir,
 			ts.sys.fileExists,
 		);
 		entryFile = entryFile ? path.resolve(entryFile) : undefined;
-		return entryFile && !entryFile.startsWith(this.projectRootDir)
+		return entryFile && !entryFile.startsWith(this.options.projectRootDir)
 			? undefined
 			: entryFile
-			? [config.ensureFileExists(entryFile)!]
+			? [ensureFileExists(entryFile)!]
 			: undefined;
 	};
 	private getTscRawConfigs = (tsConfigs: string[]): tscRawConfig[] => {
 		const isRootInit = !!this.entryProject || !!this.clProject;
-		const rawConfigs = config.findAllRawConfigs(
+		const rawConfigs = findAllRawConfigs(
 			tsConfigs,
-			config.ensureAbsPath.bind(null, this.projectRootDir),
+			ensureAbsPath.bind(null, this.options.projectRootDir),
 			isRootInit,
 		);
 
@@ -126,11 +117,11 @@ export class DoxConfig {
 	};
 	private getTscParsedConfigs = () => {
 		const isRootLevel = !!this.entryProject || !!this.clProject;
-		const existingOptions = isRootLevel ? this.tscCommandLineOptions : {};
+		const existingOptions = isRootLevel ? this.tscClConfig.options : {};
 		//existingOptions.module = ts.ModuleKind.NodeNext;
 		//existingOptions.types = this.options.typeDependencies;
 
-		const parsedConfigs = config.makeParsedConfigs(
+		const parsedConfigs = makeParsedConfigs(
 			this.tscRawConfigs,
 			existingOptions,
 		);
@@ -143,8 +134,10 @@ const notices = {
 	throwError: function (this: DoxConfig) {
 		log.throwError(
 			log.identifier(this),
-			'Could not locate any tsconfig files to start the documentation process under the directory:',
+			'Could not locate any tsconfig.json files in the root directory:',
 			this.options.projectRootDir,
+			'\n\n',
+			`Try setting the "tsConfigs" option to specifify sub-directory locations.\n`,
 		);
 	},
 };

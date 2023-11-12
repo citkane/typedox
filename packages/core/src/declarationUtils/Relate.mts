@@ -1,8 +1,8 @@
-import ts from 'typescript';
-import { Dox, DoxDeclaration } from '../index.mjs';
+import ts, { __String } from 'typescript';
+import { CategoryKind, Dox, DoxDeclaration, DoxSourceFile } from '../index.mjs';
 import { notices } from './notices.mjs';
 import { log } from '@typedox/logger';
-import wrapper, { TsWrapper } from '@typedox/wrapper';
+import wrapper, { TsWrapper, isSpecifierKind } from '@typedox/wrapper';
 import path from 'path';
 
 const __filename = log.getFilename(import.meta.url);
@@ -20,22 +20,21 @@ export class Relate extends Dox {
 		this.declaration = declaration;
 		this.done = done.bind(this.declaration);
 	}
-	public relate = (wrapped: TsWrapper, isTarget = false) => {
-		if (!wrapper.isSpecifierKind(wrapped.kind)) return this.done(isTarget);
-
+	public relate = (wrapped: TsWrapper, localDeclaration = false) => {
+		if (!isSpecifierKind(wrapped.kind)) return;
 		const key = ts.SyntaxKind[wrapped.kind] as keyof ReturnType<
 			typeof functionFactory
 		>;
 		const relateFunction = functionFactory.call(this)[key];
 
 		relateFunction
-			? relateFunction(wrapped)
+			? relateFunction(wrapped, localDeclaration)
 			: /* istanbul ignore next: soft error for debugging */
 			  notices.report.call(
 					this.declaration,
 					wrapped,
 					'relate',
-					isTarget,
+					localDeclaration,
 					__filename,
 			  );
 
@@ -50,6 +49,7 @@ export class Relate extends Dox {
 				ModuleDeclaration: this.relateModuleDeclaration,
 				NamespaceExport: this.relateNamespaceExport,
 				NamespaceImport: this.relateNamespaceImport,
+				InterfaceDeclaration: this.relateInterfaceDeclaration,
 			};
 		}
 	};
@@ -60,62 +60,64 @@ export class Relate extends Dox {
 	 * export = nameSpace.clause;
 	 * export = {foo:'foo, bar:'bar'}
 	 */
-	private relateExportAssignment = (wrapped: TsWrapper) => {
+	private relateExportAssignment = (
+		wrapped: TsWrapper,
+		localDeclaration = false,
+	) => {
 		this.debug('ExportAssignment');
 
 		const expression = (wrapped.tsNode as ts.ExportAssignment).expression;
 
-		if (wrapper.isLiteral(expression)) return this.done();
+		if (wrapper.isLiteral(expression)) return;
 		const expressionWrap = this.declaration.tsWrap(expression);
 		const target =
 			wrapped.target || expressionWrap?.target || expressionWrap;
 		target
 			? this.relate(target, true)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.throw.call(this, wrapped, 'target', log.stackTracer()) &&
+			  notices.throw.call(this, wrapped, 'target') &&
 			  this.declaration.destroy();
 	};
 	/**
 	 * export * from './child/child
 	 */
-	private relateExportDeclaration = (wrapped: TsWrapper) => {
+	private relateExportDeclaration = (
+		wrapped: TsWrapper,
+		localDeclaration = false,
+	) => {
 		this.debug('ExportDeclaration');
-		/*
+
 		const { targetFileName } = wrapped;
 		const file =
-			targetFileName && this.declaration.doxFilesMap.get(targetFileName);
-
+			!!targetFileName &&
+			this.declaration.doxFilesMap.get(targetFileName);
+		if (!!targetFileName && !file) {
+			this.declaration.flags.isExternal = true;
+			return;
+		}
 		if (!file) {
 			this.fileNotFound(wrapped, targetFileName);
 			this.declaration.destroy();
 			return;
 		}
 
-		const reExports: TsWrapper[] = [];
-		file.declarationsMap.forEach((child) => {
-			const { wrappedItem, name } = child;
-			const { tsNode } = wrappedItem;
-			const isExportDeclaration = ts.isExportDeclaration(tsNode);
-
-			if (this.defaultStrings.includes(name)) return;
-			isExportDeclaration
-				? reExports.push(wrappedItem)
-				: this.adopt(child);
-		});
-		reExports.forEach((reExport) => {
-			this.relate(reExport, true);
-		});
-		*/
-		this.done();
+		this.extractLocalSpace(file);
 	};
 	/**
 	 * export { child } from './child/child;
 	 * export { localVar, grandchild, grandchildSpace };
 	 */
-	private relateExportSpecifier = (wrapped: TsWrapper) => {
+	private relateExportSpecifier = (
+		wrapped: TsWrapper,
+		localDeclaration = false,
+	) => {
 		this.debug('ExportSpecifier');
 
-		const { adopt, findChildDeclaration, done } = this;
+		const {
+			adopt,
+			findRelatedDeclaration: findChildDeclaration,
+			done,
+		} = this;
 
 		wrapped.moduleSpecifier
 			? parseModule.call(this.declaration, wrapped.moduleSpecifier)
@@ -135,84 +137,111 @@ export class Relate extends Dox {
 			wrapped.target
 				? this.relate(wrapped.target)
 				: /* istanbul ignore next: soft error for debugging */
-				  notices.throw.call(
-						relation,
-						wrapped,
-						'target',
-						log.stackTracer(),
-				  ) && this.destroy();
+				  notices.throw.call(relation, wrapped, 'target');
 		}
 	};
 	/**
 	 * import TypeScript from 'typescript';
 	 * import clause from './child/child';
 	 */
-	private relateImportClause = (wrapped: TsWrapper) => {
+	private relateImportClause = (
+		wrapped: TsWrapper,
+		localDeclaration = false,
+	) => {
 		this.debug('ImportClause');
 
-		const child = this.findChildDeclaration(
+		const parent = this.findRelatedDeclaration(
 			wrapped,
 			wrapped.moduleSpecifier!,
 			this.defaultStrings,
 		);
 		/* istanbul ignore next: soft error for debugging */
-		if (!child) return this.done();
+		if (!parent) {
+			this.declaration.flags.isExternal = true;
+			return;
+		}
 
-		this.adopt(child);
+		parent.adopt(this.declaration);
 	};
 	/**
 	 * export import childSpace = childSpace;
 	 * export import bar = local.bar;
 	 * export import bar = local.bar;
 	 */
-	private relateImportEqualsDeclaration = (wrapped: TsWrapper) => {
+	private relateImportEqualsDeclaration = (
+		wrapped: TsWrapper,
+		localDeclaration = false,
+	) => {
 		this.debug('ImportEqualsDeclaration');
 		wrapped.target
 			? this.relate(wrapped.target)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.throw.call(this, wrapped, 'target', log.stackTracer()) &&
+			  notices.throw.call(this, wrapped, 'target') &&
 			  this.declaration.destroy();
 	};
 	/**
 	 * import { grandchild, childSpace } from './grandchild/grandchild'
 	 */
-	private relateImportSpecifier = (wrapped: TsWrapper) => {
+	private relateImportSpecifier = (
+		wrapped: TsWrapper,
+		localDeclaration = false,
+	) => {
 		this.debug('ImportSpecifier');
 
-		const child = this.findChildDeclaration(
+		const parent = this.findRelatedDeclaration(
 			wrapped,
 			wrapped.moduleSpecifier!,
 		);
-		/* istanbul ignore next: soft error for debugging */
-		if (!child) return this.done();
-
-		this.adopt(child);
+		if (!parent) {
+			this.declaration.flags.isExternal = true;
+			return;
+		}
+		parent.adopt(this.declaration);
 	};
 	/**
 	 * export namespace moduleDeclaration { local; childSpace; };
 	 * declare namespace local {foo = 'foo'}
 	 */
-	private relateModuleDeclaration = (wrapped: TsWrapper) => {
+	private relateModuleDeclaration = (
+		wrapped: TsWrapper,
+		localDeclaration = false,
+	) => {
 		this.debug('ModuleDeclaration');
-		wrapped.declaredModuleSymbols!.forEach((symbol) => {
-			/*
-			const child = new DoxDeclaration(this.declaration, symbol);
-			this.adopt(child);
-			
+
+		wrapped.declaredModuleSymbols?.forEach((symbol) => {
 			const wrapped = this.declaration.tsWrap(symbol);
-			if (wrapped) {
-				const child = new DoxDeclaration(this.declaration, symbol)
-				//this.relate(wrapped, true);
+			if (wrapped.error) return;
+
+			let child: DoxDeclaration | undefined;
+			const aliasedSymbol = wrapped.immediatelyAliasedSymbol;
+
+			if (aliasedSymbol) {
+				const declarations = aliasedSymbol?.declarations;
+				const fileName =
+					!!declarations && declarations[0].getSourceFile().fileName;
+
+				const sourceFile = !!fileName
+					? this.declaration.doxFilesMap.get(fileName)
+					: undefined;
+				const declarationMap = sourceFile?.declarationsMap;
+
+				child = !!declarationMap
+					? declarationMap.get(aliasedSymbol!.escapedName)
+					: undefined;
 			}
-			*/
+			if (!child) {
+				child = new DoxDeclaration(this.declaration, symbol, true);
+				child.relate(child.wrappedItem);
+			}
+			this.adopt(child);
 		});
-		this.done();
 	};
 	/**
 	 * export * as childSpace from './child/child';
 	 */
 	private relateNamespaceExport = (
 		wrapped: TsWrapper,
+		localDeclaration = false,
 		skipNotice = false,
 	) => {
 		!skipNotice && this.debug('NamespaceExport');
@@ -221,45 +250,65 @@ export class Relate extends Dox {
 		const file = !!targetFileName
 			? this.declaration.doxReference.filesMap.get(targetFileName)
 			: undefined;
-		/* istanbul ignore next: soft error for debugging */
+
+		if (!!targetFileName && !file) {
+			this.declaration.flags.isExternal = true;
+			return;
+		}
 		if (!file) {
+			/* istanbul ignore next: soft error for debugging */
+
 			this.fileNotFound(wrapped, targetFileName);
 			this.declaration.destroy();
 			return;
 		}
-
-		file.declarationsMap.forEach((child) => {
-			const { wrappedItem } = child;
-			const isExportDeclaration = ts.isExportDeclaration(
-				wrappedItem.tsNode,
-			);
-			if (!isExportDeclaration) return this.adopt(child);
-
-			this.relate(wrappedItem, true);
-		});
-		this.done();
+		this.extractLocalSpace(file);
 	};
 	/**
 	 * import * as childSpace from '../child/child';
 	 */
-	private relateNamespaceImport = (wrapped: TsWrapper) => {
+	private relateNamespaceImport = (
+		wrapped: TsWrapper,
+		localDeclaration = false,
+	) => {
 		this.debug('NamespaceImport');
 
 		const aliasFnc = this.relateNamespaceExport;
-		aliasFnc.call(this, wrapped, true);
+		aliasFnc.call(this, wrapped, localDeclaration, true);
+	};
+	private relateInterfaceDeclaration = (
+		wrapped: TsWrapper,
+		localDeclaration = false,
+	) => {
+		this.debug('InterfaceDeclaration');
 	};
 
+	private extractLocalSpace(file: DoxSourceFile) {
+		const reExports: TsWrapper[] = [];
+		const isLocalFile =
+			file.fileName === this.declaration.doxSourceFile.fileName;
+
+		file.declarationsMap.forEach((child) => {
+			const { wrappedItem, escapedName, flags } = child;
+			const { tsNode } = wrappedItem;
+			const isExportDeclaration = ts.isExportDeclaration(tsNode);
+			const isNotExported = !isLocalFile && flags.notExported;
+			if (
+				this.defaultStrings.includes(escapedName) ||
+				child === this.declaration ||
+				isNotExported
+			) {
+				return;
+			}
+			child.flags.reExported = true;
+			isExportDeclaration
+				? reExports.push(wrappedItem)
+				: this.adopt(child, true);
+		});
+		reExports.forEach((reExport) => this.relate(reExport, true));
+	}
 	private fileNotFound = (wrapped: TsWrapper, fileName?: string) => {
-		const message = `An invalid file was referenced: "${wrapped.nodeDeclarationText}" in`;
-		fileName
-			? notices.throw.call(
-					this,
-					wrapped,
-					wrapped.fileName,
-					message,
-					'warn',
-			  )
-			: notices.throw.call(this, wrapped, 'file', log.stackTracer());
+		notices.throw.call(this, wrapped, fileName);
 	};
 	/**
 	 * Finds and returns the typedox doxDeclaration that has been referenced in a relationship.
@@ -271,10 +320,10 @@ export class Relate extends Dox {
 	 * @param names could be just a [name], or the unforeseeable option ['export=','default']
 	 * @returns the related doxDeclaration
 	 */
-	private findChildDeclaration = (
+	private findRelatedDeclaration = (
 		source: TsWrapper,
 		expression: ts.Expression,
-		names = [source.alias || source.name],
+		names = [source.escapedAlias || source.escapedName],
 	): DoxDeclaration | undefined => {
 		const { checker, doxFilesMap } = this.declaration;
 		const location = checker.getSymbolAtLocation(expression);
@@ -294,7 +343,7 @@ export class Relate extends Dox {
 		return declaration;
 
 		function getFilename(
-			name: string,
+			name: __String,
 			locationSymbol: ts.Symbol,
 		): string | undefined {
 			const { exports } = locationSymbol;
@@ -316,11 +365,8 @@ export class Relate extends Dox {
 				: undefined;
 		}
 	};
-	private adopt = (child: DoxDeclaration) => {
-		const { declaration } = this;
-		if (declaration.children.has(child.name)) return this.done();
-		child.parents.set(declaration, true);
-		declaration.children.set(child.name, child);
-		this.done();
-	};
+
+	private get adopt() {
+		return this.declaration.adopt;
+	}
 }

@@ -4,12 +4,7 @@ export const fetchDataFromFile = async <T>(fileNamePath: string) => {
 		? fileNamePath
 		: `${fileNamePath}.json`;
 
-	try {
-		const data = await fetchFile(fileNamePath, 'json');
-		return <T>data;
-	} catch (error) {
-		console.error(error);
-	}
+	return fetchFile(fileNamePath, 'json') as Promise<T>;
 };
 
 const fetchFile = (

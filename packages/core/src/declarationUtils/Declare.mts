@@ -83,15 +83,15 @@ export class Declare extends Dox {
 
 		target
 			? this.declare(target)
-			: notices.throw.call(this, wrapped, 'target', log.stackTracer());
+			: notices.throw.call(this, wrapped, 'target');
 	};
 	/**
 	 * export * from './child/child
 	 */
 	private declareExportDeclaration = (wrapped: TsWrapper) => {
 		this.debug('ExportDeclaration');
-
-		this.categoryTsKind = this.declaration.wrappedItem.kind;
+		this.flags.isReExporter = true;
+		//this.categoryTsKind = this.declaration.wrappedItem.kind;
 	};
 	/**
 	 * export { child } from './child/child;
@@ -103,7 +103,7 @@ export class Declare extends Dox {
 		wrapped.target
 			? this.declare(wrapped.target)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.throw.call(this, wrapped, 'target', log.stackTracer());
+			  notices.throw.call(this, wrapped, 'target');
 	};
 	/**
 	 * import TypeScript from 'typescript';
@@ -111,18 +111,16 @@ export class Declare extends Dox {
 	 */
 	private declareImportClause = (wrapped: TsWrapper) => {
 		this.debug('ImportClause');
-
-		const target = wrapped.immediatelyAliasedSymbol;
+		/*
+		const target =
+			wrapped.immediatelyAliasedSymbol || wrapped.aliasedSymbol;
+		log.info('_'.repeat(10), target?.name);
 		const wrappedTarget = target && this.declaration.tsWrap(target);
-		wrappedTarget
-			? this.declare(wrappedTarget)
+		*/
+		!!wrapped.target
+			? this.declare(wrapped.target)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.throw.call(
-					this,
-					wrapped,
-					'immediatelyAliasedSymbol',
-					log.stackTracer(),
-			  );
+			  notices.throw.call(this, wrapped, 'target');
 	};
 	/**
 	 * export import childSpace = childSpace;
@@ -132,10 +130,10 @@ export class Declare extends Dox {
 	private declareImportEqualsDeclaration = (wrapped: TsWrapper) => {
 		this.debug('ImportEqualsDeclaration');
 
-		wrapped.target
+		!!wrapped.target
 			? this.declare(wrapped.target)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.throw.call(this, wrapped, 'target', log.stackTracer());
+			  notices.throw.call(this, wrapped, 'target');
 	};
 	/**
 	 * import { grandchild, childSpace } from './grandchild/grandchild'
@@ -143,17 +141,10 @@ export class Declare extends Dox {
 	private declareImportSpecifier = (wrapped: TsWrapper) => {
 		this.debug('ImportSpecifier');
 
-		const target = wrapped.immediatelyAliasedSymbol;
-		const wrappedTarget = target && this.declaration.tsWrap(target);
-		wrappedTarget
-			? this.declare(wrappedTarget)
+		!!wrapped.target
+			? this.declare(wrapped.target)
 			: /* istanbul ignore next: soft error for debugging */
-			  notices.throw.call(
-					this,
-					wrapped,
-					'immediatelyAliasedSymbol',
-					log.stackTracer(),
-			  ) && this.declaration.destroy();
+			  notices.throw.call(this, wrapped, 'target');
 	};
 	/**
 	 * export namespace moduleDeclaration { local; childSpace; };

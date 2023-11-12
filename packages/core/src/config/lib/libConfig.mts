@@ -7,14 +7,6 @@ import { log } from '@typedox/logger';
 
 const __filename = log.getFilename(import.meta.url);
 
-export function resolveConstructorOverload(
-	projectOrClArgs?: config.doxOptions | string[],
-	argv = process.argv,
-): [config.doxOptions | undefined, string[]] {
-	return Array.isArray(projectOrClArgs)
-		? [undefined, projectOrClArgs]
-		: [projectOrClArgs, argv];
-}
 export function makeParsedConfig(
 	existingOptions: ts.CompilerOptions,
 	tscRawConfig: tscRawConfig,
@@ -113,7 +105,7 @@ export function makeRawTscConfigFromFile(filePath: string, init: boolean) {
 		return ts.readConfigFile(configPath, ts.sys.readFile) as tscRawConfig;
 	}
 }
-
+/*
 export function getDoxFilepathFromArgs(
 	doxClArgsAndValues = config.getClArgs().doxClArgs,
 	doxArgs = config.doxArgs,
@@ -135,59 +127,10 @@ export function getDoxFilepathFromArgs(
 
 	return absDox ? typedox : path.join(projectRootDir, typedox);
 }
-export function parseDoxClArgsToOptions(
-	doxClArgsAndValues = config.getClArgs().doxClArgs,
-	doxArgs = config.doxArgs,
-) {
-	const doxOptions = {} as config.doxOptions;
-	if (!doxClArgsAndValues.length) return doxOptions;
+*/
+/*
 
-	type argKey = keyof config.doxArgs;
-	type hyphenatedArgKey = `--${string}`;
-
-	const hyphenatedKeys = config.getHyphenatedArgKeys(doxArgs);
-	let subjectDoxArg: argKey;
-
-	doxClArgsAndValues.forEach((currentArgOrValue, index) => {
-		const isCurrentlyKey = hyphenatedKeys.includes(currentArgOrValue);
-
-		subjectDoxArg = isCurrentlyKey
-			? (config.unHyphenateArg(
-					currentArgOrValue as hyphenatedArgKey,
-			  ) as argKey)
-			: subjectDoxArg;
-
-		const defaultArgValue = config.clone(
-			doxArgs[subjectDoxArg].defaultValue,
-		);
-		const set = doxArgs[subjectDoxArg].set;
-		const adopt = adoptOrphan.bind(
-			null,
-			defaultArgValue,
-			doxArgs[subjectDoxArg].set,
-		);
-
-		const adopted = isCurrentlyKey && lookForOrphanOption(index, adopt);
-		!adopted &&
-			!isCurrentlyKey &&
-			set(doxOptions, currentArgOrValue as any);
-	});
-	function adoptOrphan(
-		defaultValue: any,
-		set: config.doxArg<any, any>['set'],
-	) {
-		typeof defaultValue === 'boolean' && set(doxOptions, true as any);
-	}
-	function lookForOrphanOption(index: number, adopt: () => void) {
-		const parent = doxClArgsAndValues[index + 1];
-		const isOrphan = !parent || parent.startsWith(config.argHyphen);
-		isOrphan && adopt();
-
-		return isOrphan;
-	}
-
-	return doxOptions;
-}
+*/
 export function deepFreeze(item: any, seen = new Map<object, true>()) {
 	if (typeof item !== 'object' || seen.has(item)) return item;
 	seen.set(item, true);

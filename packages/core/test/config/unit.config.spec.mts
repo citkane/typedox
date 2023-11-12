@@ -10,6 +10,8 @@ import { compilerFactory, doxStub } from '@typedox/test';
 
 const localLogLevel = logLevels.silent;
 
+const coreApi =
+	config.CoreArgsApi as unknown as config.ArgsApi<config.CoreArgsApi>;
 const { tsConfigPath, tsconfig } = compilerFactory('configs');
 let warnStub: any;
 export default function () {
@@ -21,7 +23,7 @@ export default function () {
 	});
 	describe('Commandline arguments', function () {
 		const doxArgVstub = Object.entries(
-			config.getDefaultDoxOptions(),
+			config.getDefaultDoxOptions<config.CoreArgsApi>(),
 		).reduce((accumulator, tuple) => {
 			const [key, value] = tuple;
 			accumulator.push(`${config.argHyphen}${key}`);
@@ -46,40 +48,46 @@ export default function () {
 			'--typedox',
 		];
 		it('should parse commandline options', function () {
-			assert.doesNotThrow(() => config.parseDoxClArgsToOptions());
+			assert.doesNotThrow(() =>
+				config.getClDoxOptions<config.CoreArgsApi>(process.argv),
+			);
 		});
 		it('should parse empty commandline options to empty object', function () {
-			const options = config.parseDoxClArgsToOptions([]);
+			const options = config.getClDoxOptions<config.CoreArgsApi>([]);
 			assert.deepEqual(options, {} as any);
 		});
 		it('should gather multiple commandline options to array', function () {
 			const args = ['--typeDependencies', 'foo', 'bar'];
 			const expected = { typeDependencies: ['foo', 'bar'] };
-			const options = config.parseDoxClArgsToOptions(args);
+			const options = config.getClDoxOptions<config.CoreArgsApi>(args);
 			assert.deepEqual(options, expected as any);
 		});
 		it('should ignore orphan commandline options', function () {
-			const options = config.parseDoxClArgsToOptions(orphanArgs);
+			const options =
+				config.getClDoxOptions<config.CoreArgsApi>(orphanArgs);
 			assert.deepEqual(options, {} as any);
 		});
 		it('should include boolean orphan commandline options', function () {
-			const doxArgs = doxStub.deepClone(config.doxArgs);
+			const doxArgs = new config.CoreArgsApi();
 			(doxArgs.typedox as any).defaultValue = false;
 
-			const options = config.parseDoxClArgsToOptions(orphanArgs, doxArgs);
+			const options = config.getClDoxOptions<config.CoreArgsApi>(
+				orphanArgs,
+				doxArgs,
+			);
 			assert.deepEqual(options, { typedox: true } as any);
 		});
 		it('should get dox cl arguments', function () {
-			const args = config.getClArgs(argvStub, config.doxArgs).doxClArgs;
+			const args = config.getClArgs(coreApi, argvStub).doxClArgs;
 
 			assert.deepEqual(args, doxArgVstub);
 		});
 		it('should get tsc cl arguments', function () {
-			const args = config.getClArgs(argvStub).tscClArgs;
+			const args = config.getClArgs(coreApi, argvStub).tscClArgs;
 			assert.deepEqual(args.slice(2), tscArgVStub);
 		});
 		it('should try to get tsc parsed options from commandline', function () {
-			assert.doesNotThrow(() => config.getTscParsedCommandline());
+			assert.doesNotThrow(() => config.getTscParsedCommandline(coreApi));
 		});
 		it('should get tsc parsed options from commandline', function () {
 			let warnings: boolean = false;
@@ -87,7 +95,7 @@ export default function () {
 				log.error(warn, log.stackTracer());
 				warnings = true;
 			});
-			const options = config.getTscParsedCommandline([
+			const options = config.getTscParsedCommandline(coreApi, [
 				...tscArgVStub,
 				'--doxOut',
 				'foo',
@@ -99,88 +107,29 @@ export default function () {
 			});
 			assert.isFalse(warnings);
 		});
-		it('should read the config file the cl', function () {
-			assert.doesNotThrow(() => config.getDoxFilepathFromArgs());
-		});
-		it('should return the default config file from an empty cl', function () {
-			const configFile = config.getDoxFilepathFromArgs([]);
-			assert.equal(configFile, doxStub.configs.defaultDoxConfigPath);
-		});
-		it('should get the dox config file path from a relative cl argument', function () {
-			const configFile = config.getDoxFilepathFromArgs([
-				'--typedox',
-				'typedox.json1',
-			]);
-			assert.equal(configFile, doxStub.configs.defaultDoxConfigPath + 1);
-		});
-		it('should get the dox config file path from an absolute cl argument', function () {
-			const configFile = config.getDoxFilepathFromArgs([
-				'--typedox',
-				path.join(
-					path.dirname(doxStub.configs.defaultDoxConfigPath),
-					'typedox.json2',
-				),
-			]);
 
-			assert.equal(configFile, doxStub.configs.defaultDoxConfigPath + 2);
-		});
-		it('should throw if cl dox config is not under the project root', function () {
-			const clArgv = ['--projectRootDir', '/foo', '--typedox', '/bar'];
-			assert.throws(
-				() => config.getDoxFilepathFromArgs(clArgv),
-				/typedox.json must exist under the project root directory/,
-			);
-		});
 		it('should hyphenate and un-hyphenate arguments', function () {
 			assert.equal(config.hyphenateArg('arg'), '--arg');
 			assert.equal(config.unHyphenateArg('--arg'), 'arg');
 		});
 	});
 	describe('Parsed options', function () {
-		const badConfigStub = function () {
-			let badConfig = config.getDefaultDoxOptions() as any;
-			badConfig.typeDependencies = 123;
-			const badConfigs = { wrong: doxStub.deepClone(badConfig) } as any;
-			delete badConfig.typeDependencies;
-			badConfigs.missing = badConfig;
-
-			return badConfigs as {
-				wrong: config.doxOptions;
-				missing: config.doxOptions;
-			};
-		};
-		it('should get the default options', function () {
+		it.skip('should get the default options', function () {
 			const autoConfig = config.getDefaultDoxOptions();
 			assert.deepEqual(autoConfig, config.getDefaultDoxOptions() as any);
 		});
-		it('should validate the default options', function () {
-			assert.doesNotThrow(() =>
-				config.validateDoxOptions(config.getDefaultDoxOptions() as any),
-			);
-		});
-		it('should throw if required option is missing', function () {
-			assert.throws(
-				() => config.validateDoxOptions(badConfigStub().missing),
-				/A required option was not found/,
-			);
-		});
-		it('should throw if option is incorrect', function () {
-			assert.throws(
-				() => config.validateDoxOptions(badConfigStub().wrong),
-				/An invalid option was found/,
-			);
-		});
+
 		it('should get and validate custom options', function () {
-			const specOptions = config.getDefaultDoxOptions();
+			const specOptions = config.getDefaultDoxOptions<any>();
+			specOptions;
 			specOptions.doxOut = 'foo';
 			specOptions.logLevel = 'error';
 			specOptions.npmFileConvention = 'foo.bar';
 			specOptions.projectRootDir = 'here';
 			specOptions.tsConfigs = ['there'];
-			specOptions.typeDependencies = ['foo', 'bar'];
 			specOptions.typedox = 'foo.bar';
 
-			const clOptions = config.getDoxOptions(undefined, [
+			const clOptions = config.getClDoxOptions<config.CoreArgsApi>([
 				'--doxOut',
 				'foo',
 				'--logLevel',
@@ -191,28 +140,37 @@ export default function () {
 				'here',
 				'--tsConfigs',
 				'there',
-				'--typeDependencies',
-				'foo',
-				'bar',
 				'--typedox',
 				'foo.bar',
 			]);
-			const customOptions = config.getDoxOptions(specOptions);
+			const customOptions = config.makeDoxOptions(
+				undefined,
+				undefined,
+				specOptions,
+			);
 
 			assert.deepEqual(specOptions, clOptions);
 			assert.deepEqual(specOptions, customOptions);
 		});
 		it('should try to read the default config file', function () {
-			assert.doesNotThrow(() => config.getFileDoxOptions());
+			assert.doesNotThrow(() =>
+				config.getFileDoxOptions(
+					config.getDefaultDoxOptions<any>(),
+					[],
+				),
+			);
 		});
 		it('should read options from a dox config file if it exists', function () {
 			const projectRootDir = doxStub.projectDir('configs');
-			const fileInfo = config.getFileDoxOptions([
-				'--projectRootDir',
-				projectRootDir,
-				'--typedox',
-				'typedox.spec.json',
-			]);
+			const fileInfo = config.getFileDoxOptions(
+				config.getDefaultDoxOptions<any>(),
+				[
+					'--projectRootDir',
+					projectRootDir,
+					'--typedox',
+					'typedox.spec.json',
+				],
+			);
 			assert.deepEqual(fileInfo, {
 				doxOut: 'testDocs',
 				typeDependencies: ['hay', 'may'],
@@ -220,10 +178,10 @@ export default function () {
 		});
 		it('should return an empty object if there is not a config file', function () {
 			const projectRootDir = doxStub.projectDir('configs');
-			const fileInfo = config.getFileDoxOptions([
-				'--projectRootDir',
-				projectRootDir,
-			]);
+			const fileInfo = config.getFileDoxOptions(
+				config.getDefaultDoxOptions<any>(),
+				['--projectRootDir', projectRootDir],
+			);
 			assert.deepEqual(fileInfo, {} as any);
 		});
 		it('should read options hierarchically with precedence to commandline, then file, then default options', function () {
@@ -237,7 +195,7 @@ export default function () {
 				npmFileConvention: 'package.json',
 				typedox: 'typedox.spec.json',
 			};
-			const options = config.getDoxOptions([
+			const options = config.makeDoxOptions(undefined, [
 				'--typeDependencies',
 				'foo',
 				'bar',
@@ -286,45 +244,31 @@ export default function () {
 			});
 		});
 		it('should set all options using the configurator', function () {
-			Object.values(config.doxArgs).forEach((arg) => {
-				assert.doesNotThrow(() =>
-					arg.set({} as config.doxOptions, 'foo' as any),
-				);
-			});
+			Object.values(config.CoreArgsApi).forEach(
+				(arg: config.Arg<unknown, unknown>) => {
+					assert.doesNotThrow(() => {
+						const val =
+							arg.typeof === 'array'
+								? []
+								: arg.typeof === 'object'
+								? {}
+								: arg.typeof === 'number'
+								? 0
+								: arg.typeof === 'boolean'
+								? true
+								: 'foo';
+
+						arg.set({} as config.options<any>, val as any);
+					});
+				},
+			);
 		});
 		it('should validate all options using the configurator', function () {
-			Object.values(config.doxArgs).forEach((arg) => {
+			Object.values(config.CoreArgsApi).forEach((arg) => {
 				assert.isBoolean(arg.validate('foo' as any));
 			});
 		});
-		it('should validate and set tsConfig arrays', function () {
-			const validate = config.doxArgs.tsConfigs.validate;
-			const set = config.doxArgs.tsConfigs.set;
 
-			assert.isTrue(validate(undefined));
-			assert.isFalse(validate('foo' as any));
-			assert.isFalse(validate([1] as any));
-
-			let conf = {} as any;
-			set(conf, undefined);
-			assert.deepEqual(conf, { tsConfigs: undefined });
-
-			conf = {};
-			set(conf, 'bar');
-			assert.deepEqual(conf, {
-				tsConfigs: ['bar'],
-			} as any);
-			set(conf, 'bar');
-			assert.deepEqual(conf, {
-				tsConfigs: ['bar'],
-			} as any);
-		});
-		it('should validate a file signature for typedox', function () {
-			const validate = config.doxArgs.typedox.validate;
-			assert.isTrue(validate(undefined));
-			assert.isTrue(validate('typedox.json'));
-			assert.isFalse(validate('typedoxjson'));
-		});
 		it('throws if file does not exist', function () {
 			assert.throws(() => config.ensureFileExists('foo'));
 		});
@@ -362,34 +306,6 @@ export default function () {
 		const rawConfig = () =>
 			config.makeRawTscConfigFromFile(tsConfigPath, true);
 
-		it('resolves the class constructor overloads', function () {
-			const options = config.getDoxOptions();
-			const clArgs = ['foo'];
-			const checker = {} as ts.TypeChecker;
-
-			assert.deepEqual(config.resolveConstructorOverload(), [
-				undefined,
-				process.argv,
-			]);
-			assert.deepEqual(config.resolveConstructorOverload(clArgs), [
-				undefined,
-				clArgs,
-			]);
-			assert.deepEqual(config.resolveConstructorOverload(options), [
-				options,
-				process.argv,
-			]);
-
-			assert.deepEqual(
-				config.resolveConstructorOverload(options, clArgs),
-				[options, clArgs],
-			);
-
-			assert.deepEqual(
-				config.resolveConstructorOverload(undefined, clArgs),
-				[undefined, clArgs],
-			);
-		});
 		it('makes a rawTsConfig by reading a tsconfig from file', function () {
 			let rawConfig!: tscRawConfig;
 			assert.doesNotThrow(

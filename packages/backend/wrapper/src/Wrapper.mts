@@ -19,17 +19,18 @@ let cachedWrappers = new Map<ts.Symbol | ts.Node, TsWrapper>();
  * Provides a convenience dox API wrapper around the typescript compiler API.
  */
 export class TsWrapper extends TsWrapperCache {
+	error = false;
 	constructor(checker: ts.TypeChecker, program: ts.Program, tsItem: tsItem) {
 		super(checker, program);
 		const { wrongType, unsuccessful } = notices.throw;
 
-		if (!isNodeOrSymbol(tsItem)) wrongType(this, log.stackTracer());
+		if (!isNodeOrSymbol(tsItem)) wrongType.call(this, log.stackTracer());
 
 		isNode(tsItem) && this.cacheSet('tsNodes', [tsItem]);
 		isSymbol(tsItem) && this.cacheSet('tsSymbol', tsItem);
 
-		if (!this.tsNodes || !this.tsSymbol || !this.tsType) {
-			unsuccessful(this, log.stackTracer(), tsItem);
+		if (!this.tsNode || !this.tsNodes || !this.tsSymbol || !this.tsType) {
+			unsuccessful.call(this, log.stackTracer(), tsItem);
 		}
 	}
 	public cacheFlush = () => {
@@ -64,11 +65,16 @@ export class TsWrapper extends TsWrapperCache {
 	public get name() {
 		return this.tsSymbol.name;
 	}
+	public get escapedName() {
+		return this.tsSymbol.escapedName;
+	}
 	/** The name alias, if any, of a `ts.Node` */
 	public get alias(): wrappedCache['alias'] {
 		return this.cacheGet('alias');
 	}
-
+	public get escapedAlias() {
+		return this.alias && ts.escapeLeadingUnderscores(this.alias);
+	}
 	public get kind() {
 		return this.tsNode.kind;
 	}
@@ -104,16 +110,28 @@ export class TsWrapper extends TsWrapperCache {
 	public get fileName(): wrappedCache['fileName'] {
 		return this.cacheGet('fileName');
 	}
+	/**
+	 * The symbol (if any) within the same file for the declaration of a reference symbol
+	 */
 	public get localDeclaration(): wrappedCache['localDeclaration'] {
 		return this.cacheGet('localDeclaration');
 	}
+	/**
+	 * The first symbol (if any) within or outside the file of a reference symbol chain
+	 */
 	public get immediatelyAliasedSymbol(): wrappedCache['immediateAliasedSymbol'] {
 		return this.cacheGet('immediateAliasedSymbol');
 	}
 	public get target(): TsWrapper | undefined {
-		const target = this.cacheGet('target');
-		return target ? wrap(this.checker, this.program, target) : undefined;
+		const target = this.cacheGet('target') as ts.Symbol | undefined;
+		if (!target || !target.name || target.name === 'unknown')
+			return undefined;
+
+		return wrap(this.checker, this.program, target);
 	}
+	/**
+	 * The last symbol (if any) within or outside the file of a reference symbol chain
+	 */
 	public get aliasedSymbol(): wrappedCache['aliasedSymbol'] {
 		return this.cacheGet('aliasedSymbol');
 	}
@@ -153,8 +171,8 @@ export class TsWrapper extends TsWrapperCache {
 
 	/** A pre-formatted simple report on the wrapped item. */
 	public get report() {
+		if (this.error) return undefined;
 		const report: tsWrapperReport = {};
-
 		reportKeys.forEach((key) => {
 			const value = parseReportKey.call(this, key);
 			value !== undefined && (report[key] = value);
@@ -167,7 +185,7 @@ export function wrap(
 	checker: ts.TypeChecker,
 	program: ts.Program,
 	tsItem: tsItem,
-): TsWrapper | undefined {
+): TsWrapper {
 	const keyRef = getRef(checker, tsItem);
 	if (cachedWrappers.has(keyRef)) return cachedWrappers.get(keyRef)!;
 	let wrapped: TsWrapper | undefined;
@@ -175,25 +193,25 @@ export function wrap(
 		wrapped = new TsWrapper(checker, program, keyRef);
 		cachedWrappers.set(keyRef, wrapped);
 	} catch (error: any) {
-		error.message && log.error(error);
+		wrapped ??= { error: true } as TsWrapper;
+		//error.message && log.error(error);
 		abort(checker, tsItem);
-		wrapped = undefined;
 	}
 
 	return wrapped;
-}
-function getRef(checker: ts.TypeChecker, item: tsItem) {
-	if (isNode(item)) {
-		const symbol =
-			'symbol' in item
-				? (item.symbol as ts.Symbol)
-				: checker.getSymbolAtLocation(item);
-		return symbol || item;
-	} else {
-		return item;
+	function getRef(checker: ts.TypeChecker, item: tsItem) {
+		if (isNode(item)) {
+			const symbol =
+				'symbol' in item
+					? (item.symbol as ts.Symbol)
+					: checker.getSymbolAtLocation(item);
+			return symbol || item;
+		} else {
+			return item;
+		}
 	}
-}
-function abort(checker: ts.TypeChecker, item: tsItem) {
-	const symbol = getRef(checker, item);
-	symbol && cachedWrappers.delete(symbol);
+	function abort(checker: ts.TypeChecker, item: tsItem) {
+		const symbol = getRef(checker, item);
+		symbol && cachedWrappers.delete(symbol);
+	}
 }

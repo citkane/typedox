@@ -11,7 +11,7 @@ const { projectDir, tsconfig } = compilerFactory('configs');
 let infoStub: ReturnType<typeof stub>;
 let warningStub: ReturnType<typeof stub>;
 let errorStub: ReturnType<typeof stub>;
-let doxOptions: config.doxOptions;
+let doxConfig: config.DoxConfig;
 
 export default function () {
 	before(function () {
@@ -25,24 +25,24 @@ export default function () {
 	});
 
 	it('creates a doxProject instance', function () {
-		doxOptions = config.getDoxOptions([
+		doxConfig = new config.DoxConfig(undefined, [
 			'--projectRootDir',
 			projectDir,
 			'--npmFileConvention',
 			'package.spec.json',
 		]);
 		let project!: DoxProject;
-		assert.doesNotThrow(() => (project = new DoxProject(doxOptions)));
+		assert.doesNotThrow(() => (project = new DoxProject(doxConfig)));
 		assert.isTrue(Dox.isDoxProject(project));
 	});
 
 	it('throws if no package.json is found', function () {
 		const root = path.join(projectDir, 'grandchild');
 		const tsconfig = path.join(projectDir, 'grandchild/tsconfig.json');
-		doxOptions = config.getDoxOptions(['--projectRootDir', root]);
+		doxConfig = new config.DoxConfig(undefined, ['--projectRootDir', root]);
 
 		assert.throws(
-			() => new DoxProject(doxOptions),
+			() => new DoxProject(doxConfig),
 			/no npm package files were found for the project/,
 		);
 	});
@@ -58,14 +58,16 @@ export default function () {
 			return false;
 		});
 
-		doxOptions = config.getDoxOptions([
+		doxConfig = new config.DoxConfig(undefined, [
 			'--projectRootDir',
 			projectDir,
 			'--npmFileConvention',
 			'package.spec.json',
+			'--noLib',
+			'true',
 		]);
 		assert.throws(
-			() => new DoxProject(doxOptions, ['--noLib', 'true']),
+			() => new DoxProject(doxConfig),
 			/no npm package files were found for the project/,
 		);
 		assert.isTrue(warnings.length >= 32);

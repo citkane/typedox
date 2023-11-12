@@ -4,6 +4,7 @@ import { makeDeclarationLocation } from './location/location.mjs';
 import { serialiseType } from './types/types.mjs';
 import { DeclarationSerialised } from './index.mjs';
 import { DoxDeclaration } from '@typedox/core';
+import { log } from '@typedox/logger';
 
 export class Serialised {
 	public serialised: DeclarationSerialised;

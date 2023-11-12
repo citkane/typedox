@@ -11,9 +11,10 @@
 	},
 	"scripts": {
 		"build:dist": "make build",
-		"build:watch": "make buildWatch",
+		"build:dist:watch": "make buildWatch",
 		"build:tests": "make buildAllTests",
-		"build:watch:tests": "make buildTestsWatch",
+		"build:tests:watch": "make buildTestsWatch",
+		"build:css:watch": "npm run build:css:watch -w @typedox/frontend",
 		"test": "NODE_ENV=test mocha",
 		"test:coverage": "make testAll",
 		"docs": "make buildDocs",
@@ -28,10 +29,9 @@
 	},
 	"keywords": [
 		"typescript",
-		"tsdoc",
 		"documentation",
-		"generator",
-		"frontend"
+		"document",
+		"generator"
 	],
 	"author": "Michael Jonker",
 	"license": "GPL-3.0-or-later",
@@ -66,7 +66,7 @@
 		"typescript": "^5.2.2"
 	},
 	"engines": {
-		"npm": ">=7.0.2 <=9.8.1",
+		"npm": ">=7.7.0 <=9.8.1",
 		"node": ">=15.0.1 <=20.6.1"
 	}
 }

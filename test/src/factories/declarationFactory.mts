@@ -4,12 +4,13 @@ import { projectFactory } from './projectFactory.mjs';
 import { factoryFolders, projectFactoryDir } from '../test.stubs.mjs';
 import { log } from '@typedox/logger';
 import { DoxDeclaration } from '@typedox/core';
+import { __String } from 'typescript';
 
 const __filename = log.getFilename(import.meta.url);
 
 export function declarationFactory(
 	factory: factoryFolders,
-	key: string,
+	key: __String,
 	file: string = 'index.ts',
 ): DoxDeclaration {
 	const fileName = path.join(projectFactoryDir, factory, file);
@@ -23,6 +24,7 @@ export function declarationFactory(
 		true,
 	);
 	const declarationsMap = sourceFile.declarationsMap;
+	//log.info(sourceFile.sourceFile);
 	if (!declarationsMap.has(key))
 		log.throwError(
 			log.identifier(__filename),

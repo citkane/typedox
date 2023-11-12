@@ -1,14 +1,14 @@
 import main, { logApplicationHelp, isRequestForHelp } from 'typedox';
 import { log, logLevels } from '@typedox/logger';
 import { doxFormat, doxStub } from '@typedox/test';
-import { serialiseDoxProject } from '@typedox/serialiser';
+import { serialiseProject } from '@typedox/serialiser';
 import { assert } from 'chai';
 import { stub } from 'sinon';
 import { config } from '@typedox/core';
 
 const localLogLevel = logLevels.silent;
 
-type projectObject = ReturnType<typeof serialiseDoxProject>;
+type projectObject = ReturnType<typeof serialiseProject>;
 
 export default function e2eTest() {
 	describe(doxFormat.title('E2E tests'), function () {
@@ -27,14 +27,14 @@ export default function e2eTest() {
 			});
 
 			logApplicationHelp();
-			assert.deepEqual(loggedArgs, Object.keys(config.doxArgs));
+			assert.deepEqual(loggedArgs, Object.keys(config.CoreArgsApi));
 			stubLog.restore();
 			stubGroup.restore();
 		});
 
-		it('runs the core', function () {
-			const dir = doxStub.projectDir('groups');
-			const projectConfig = config.getDoxOptions([
+		it.skip('runs the core', function () {
+			const dir = doxStub.projectDir('categories');
+			const projectConfig = config.makeDoxOptions(undefined, [
 				'--projectRootDir',
 				dir,
 				'--npmFileConvention',

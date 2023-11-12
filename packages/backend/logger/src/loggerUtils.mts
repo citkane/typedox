@@ -10,9 +10,9 @@ export function initLowerCamel(word: string) {
 	return word[0].toLocaleLowerCase() + word.slice(1);
 }
 
-export const colourise = (color: keyof typeof c, text: string) =>
-	c[color] + text + c.Reset;
-const c = {
+export const colourise = (color: keyof typeof colours, text: string) =>
+	colours[color] + text + colours.Reset;
+const colours = {
 	Reset: '\x1b[0m',
 	Bright: '\x1b[1m',
 	Dim: '\x1b[2m',

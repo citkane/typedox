@@ -1,6 +1,5 @@
 import path from 'path';
 import {
-	Branch,
 	DoxProject,
 	DoxPackage,
 	DoxReference,
@@ -48,16 +47,12 @@ const specDoxProject = (folder: factoryFolders, mute = false): DoxProject => {
 
 	if (specCache[folder].project) return specCache[folder].project!;
 
-	const doxOptions = config.getDoxOptions([
-		'--projectRootDir',
-		projectDir,
-		'--npmFileConvention',
-		'package.spec.json',
-		'--tsConfigs',
-		tsConfigPath,
-	]);
-
-	const project = new DoxProject(doxOptions);
+	const doxConfig = new config.DoxConfig({
+		projectRootDir: projectDir,
+		npmFileConvention: 'package.spec.json',
+		tsConfigs: [tsConfigPath],
+	});
+	const project = new DoxProject(doxConfig);
 	specCache[folder].options = doxStub.deepClone(project.options);
 
 	return (specCache[folder].project = project);
@@ -71,28 +66,13 @@ const specDoxPackage = (
 ) => {
 	!mute && warnAboutDefaults('specDoxPackage');
 	const id = folder + index;
+	const key = Array.from(doxProject.doxPackages.keys())[index];
 	if (specCache[folder].package[id]) return specCache[folder].package[id];
 
-	const len = doxProject.doxPackages.length;
+	const len = doxProject.doxPackages.size;
 	if (index >= len) throw Error(`doxProject only has ${len} doxPackages`);
 
-	doxProject.doxPackages.forEach((doxPackage) => {
-		doxPackage.doxReferences.forEach((reference) => {
-			reference.discoverFiles();
-			reference.discoverDeclarations();
-		});
-	});
-	doxProject.doxPackages.forEach((doxPackage) => {
-		doxPackage.doxReferences.forEach((reference) => {
-			reference.buildRelationships();
-		});
-	});
-	doxProject.doxPackages.forEach((doxPackage) => {
-		doxPackage.doxReferences.forEach((reference) => {
-			reference.buildDocumentBranches();
-		});
-	});
-	return (specCache[folder].package[id] ??= doxProject.doxPackages[index]);
+	return (specCache[folder].package[id] ??= doxProject.doxPackages.get(key)!);
 };
 const specDoxReference = (
 	folder: factoryFolders,

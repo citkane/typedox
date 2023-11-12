@@ -2,6 +2,8 @@ import ts from 'typescript';
 import { DeclarationType } from '../index.mjs';
 import { DoxDeclaration } from '@typedox/core';
 
+const escape = ts.escapeLeadingUnderscores;
+
 export function serialiseType(declaration: DoxDeclaration): DeclarationType {
 	const { wrappedItem } = declaration;
 	const { tsType } = wrappedItem;
@@ -21,7 +23,7 @@ export function serialiseType(declaration: DoxDeclaration): DeclarationType {
 }
 function serialiseAlias(declaration: DoxDeclaration, symbol: ts.Symbol) {
 	const name = symbol.name;
-	const id = declaration.doxSourceFile.declarationsMap.get(name)?.id;
+	const id = declaration.doxSourceFile.declarationsMap.get(escape(name))?.id;
 	return { kind: 'Alias', name, id };
 }
 function serialiseStringLiteral(type: ts.Type) {

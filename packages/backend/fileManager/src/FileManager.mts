@@ -7,23 +7,23 @@ import { fileEventsApi } from './fileEventsApi.mjs';
 import ts from 'typescript';
 
 type eventsApi = fileEventsApi & serialiserEventsApi;
+const events = new DoxEvents<eventsApi>(fileEventsApi, serialiserEventsApi);
 const __filename = log.getFilename(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class FileManager {
-	private events: DoxEvents<eventsApi>;
-	private options: config.doxOptions;
-	constructor(options: config.doxOptions) {
+	private options: config.coreDoxOptions;
+	constructor(options: config.coreDoxOptions) {
 		log.info(log.identifier(this), 'FileManager is listening', '\n');
 
 		this.options = options;
 		this.saveEnumJson();
-		this.events = new DoxEvents<eventsApi>(
-			fileEventsApi,
-			serialiserEventsApi,
-		);
-		this.events.on('serialiser.mainMenu.serialised', (menu) => {
+		events.on('serialiser.mainMenu.serialised', (menu) => {
 			this.saveDataFile(menu, '../assets/_mainMenu.json');
+		});
+		events.on('serialiser.declaration.serialised', (declaration) => {
+			const fileName = declaration.location.query + '.json';
+			this.saveDataFile(declaration, 'data', fileName);
 		});
 	}
 	saveEnumJson() {

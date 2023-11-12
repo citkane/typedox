@@ -6,7 +6,7 @@ import path from 'path';
 
 /** Get a ready made test project from the test "projectScenarios" folder */
 export function compilerFactory(
-	folder: factoryFolders = 'groups',
+	folder: factoryFolders = 'categories',
 	tsconfig = 'tsconfig.json',
 ) {
 	//const { projectFactoryDir } = stubs;
@@ -55,7 +55,7 @@ export function compilerFactory(
 				starExport,
 			};
 		};
-		return { program, checker, getFile };
+		return { program, checker, parsedConfig, getFile };
 	};
 
 	return { projectDir, tsConfigPath, tsconfig, compiler };

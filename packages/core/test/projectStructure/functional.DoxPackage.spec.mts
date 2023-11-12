@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { config, DoxPackage, programsInPackage, Dox } from '@typedox/core';
+import { config, DoxPackage, Dox, DoxProject } from '@typedox/core';
 import path from 'path';
 import { log, logLevels } from '@typedox/logger';
 import { compilerFactory, doxStub } from '@typedox/test';
@@ -13,7 +13,7 @@ export default function () {
 	});
 
 	it('creates a class instance', function () {
-		const doxOptions = config.getDoxOptions([
+		const doxOptions = config.makeDoxOptions(undefined, [
 			'--projectRootDir',
 			projectDir,
 			'--npmFileConvention',
@@ -21,13 +21,23 @@ export default function () {
 		]);
 		const project = doxStub.doxProject(doxOptions);
 		const packagePath = path.join(projectDir, 'package.spec.json');
-		const program = compiler().program;
-		const programs = [[program, projectDir]] as programsInPackage;
+		const { program, parsedConfig } = compiler();
+
 		let doxPackage!: DoxPackage;
 
 		assert.exists(program, 'program');
+		const programsRootDir = DoxProject.getProgramRootDir(
+			parsedConfig,
+			projectDir,
+		);
 		assert.doesNotThrow(
-			() => (doxPackage = new DoxPackage(project, packagePath, programs)),
+			() =>
+				(doxPackage = new DoxPackage(
+					project,
+					packagePath,
+					[parsedConfig],
+					[programsRootDir!],
+				)),
 		);
 		assert.isTrue(Dox.isDoxPackage(doxPackage));
 	});

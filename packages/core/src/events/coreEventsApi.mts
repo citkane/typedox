@@ -1,6 +1,4 @@
-import { log } from '@typedox/logger';
 import {
-	Dox,
 	DoxDeclaration,
 	DoxPackage,
 	DoxProject,
@@ -25,21 +23,18 @@ export const coreEventsApi = {
 	'core.declaration.end': declarationStaged,
 };
 
-let c = 0;
-/** accumulates the doxDeclarations which have no parents, ie. the root project declarations */
 function findRootDeclarations(
 	this: DoxDeclaration,
 	accumulator: DoxDeclaration[],
 	packageName: string,
 	referenceName: string,
 ) {
-	if (
-		this.doxPackage.name !== packageName ||
-		this.doxReference.name !== referenceName
-	)
-		return;
-	if (!this.parents.size && Dox.isDoxSourceFile(this.parent))
-		accumulator.push(this);
+	return DoxDeclaration.findRootDeclarations.call(
+		this,
+		accumulator,
+		packageName,
+		referenceName,
+	);
 }
 function projectStaged(doxProject: DoxProject) {}
 function packageStaged(doxPackage: DoxPackage, npmPackage?: object) {}

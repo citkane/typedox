@@ -21,7 +21,7 @@ export default function () {
 			});
 			assert.exists(object);
 			assert.exists(object.serialised);
-			['id', 'name', 'group', 'flags', 'location', 'type'].forEach(
+			['id', 'name', 'category', 'flags', 'location', 'type'].forEach(
 				(key) => {
 					assert.exists(
 						object!.serialised[key as keyof DeclarationSerialised],

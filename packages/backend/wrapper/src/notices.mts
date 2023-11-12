@@ -6,19 +6,25 @@ import { isSymbol, tsItem } from './index.mjs';
 
 export default {
 	throw: {
-		wrongType: (wrapper: TsWrapper, trace: string) => {
+		wrongType: function (this: TsWrapper, trace: string) {
+			this.error = true;
 			log.throwError(
-				log.identifier(wrapper),
+				log.identifier(this),
 				'Expected a Node or Symbol',
 				trace,
 			);
 		},
-		unsuccessful: (wrapper: TsWrapper, trace: string, tsItem: tsItem) => {
+		unsuccessful: function (
+			this: TsWrapper,
+			trace: string,
+			tsItem: tsItem,
+		) {
+			this.error = true;
 			const descriptor = isSymbol(tsItem)
 				? tsItem.name
 				: tsItem.getText && tsItem.getText();
 			log.throwError(
-				log.identifier(wrapper),
+				log.identifier(this),
 				`Did not wrap a ${tsItem.constructor?.name}:`,
 				descriptor,
 				trace,
@@ -29,18 +35,8 @@ export default {
 			symbol: ts.Symbol,
 			message: string,
 		) {
+			this.error = true;
 			log.throwError(log.identifier(this), `${message}:`, symbol.name);
-		},
-		noSymbol: function (node: ts.Node, fileName: string) {
-			log.throwError(
-				log.identifier(fileName),
-				`Could not get a symbol from a node; ${loggerUtils.toLine(
-					node.getText(),
-					60,
-				)}`,
-				node.getSourceFile(),
-				fileName,
-			);
 		},
 	},
 	cacheSet: function (this: TsWrapperCache, key: string) {

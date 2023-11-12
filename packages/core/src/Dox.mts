@@ -6,9 +6,10 @@ import {
 	DoxProject,
 	DoxReference,
 	DoxSourceFile,
-} from '../index.mjs';
-import { coreEventsApi } from '../events/coreEventsApi.mjs';
-import { DoxEvents } from '../events/DoxEvents.mjs';
+} from './index.mjs';
+import { coreEventsApi } from './events/coreEventsApi.mjs';
+import { DoxEvents } from './events/DoxEvents.mjs';
+import ts from 'typescript';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -19,7 +20,10 @@ let uid = 0;
 
 export class Dox {
 	public events: DoxEvents<coreEventsApi>;
-	public defaultStrings = ['default', 'export='];
+	public defaultStrings = [
+		ts.escapeLeadingUnderscores('default'),
+		ts.escapeLeadingUnderscores('export='),
+	];
 	public get id() {
 		const id = uid;
 		uid++;

@@ -1,122 +1,150 @@
-import ts from 'typescript';
 import * as fs from 'fs';
 import { config } from '../../index.mjs';
 import { log } from '@typedox/logger';
+import { CoreArgsApi } from '../CoreArgsApi.mjs';
+import {
+	Arg,
+	ArgsApi,
+	doxArg,
+	getClArgs,
+	getHyphenatedArgKeys,
+} from '../_namespace.mjs';
 
 const __filename = log.getFilename(import.meta.url);
+const defaultCoreArgs = new CoreArgsApi() as ArgsApi<CoreArgsApi>;
 
-export function getDoxOptions(doxClArgsAndValues?: string[]): config.doxOptions;
-export function getDoxOptions(
-	customOptions?: config.doxOptions,
-	doxClArgsAndValues?: string[],
-): config.doxOptions;
-export function getDoxOptions(
-	customOrCl?: config.doxOptions | string[],
-	doxClArgsAndValues = config.getClArgs().doxClArgs,
-): config.doxOptions {
-	const doxArgs = config.doxArgs;
-	const arg0is =
-		customOrCl === undefined
-			? undefined
-			: Array.isArray(customOrCl)
-			? 'cl'
-			: 'custom';
+export type options<api extends ArgsApi<api>> = {
+	[K in keyof api]: api[K]['required'] extends true | undefined
+		? api[K]['defaultValue']
+		: api[K]['defaultValue'] | undefined;
+};
 
-	doxClArgsAndValues =
-		arg0is === 'cl' ? (customOrCl as string[]) : doxClArgsAndValues;
-
-	const customOptions =
-		arg0is === 'custom' ? (customOrCl as config.doxOptions) : undefined;
-
-	const options = customOptions || mergeOptions();
-
-	validateDoxOptions(options, doxArgs);
-
-	return options;
-
-	function mergeOptions() {
-		const defaultOptions = getDefaultDoxOptions(doxArgs);
-		const fileArgs = config.getFileDoxOptions(doxClArgsAndValues, doxArgs);
-		const clOptions = config.parseDoxClArgsToOptions(
-			doxClArgsAndValues,
-			doxArgs,
-		);
-		const options = {
-			...defaultOptions,
-			...fileArgs,
-			...clOptions,
-		} as config.doxOptions;
-
-		return options;
-	}
-}
-export function getDefaultDoxOptions(doxArgs = config.doxArgs) {
-	const argTuples = Object.entries(doxArgs).map((tuple) => {
-		const [key, item] = tuple;
-		return [key, config.clone(item.defaultValue)];
-	});
-	const optionObject = Object.fromEntries(argTuples);
-
-	return optionObject as config.doxOptions;
-}
-export function getFileDoxOptions(
-	doxClArgsAndValues = config.getClArgs().doxClArgs,
-	doxArgs = config.doxArgs,
+export function makeDoxOptions<api extends CoreArgsApi>(
+	args = defaultCoreArgs as ArgsApi<api>,
+	clArgs = process.argv,
+	testDoxOverrides?: options<ArgsApi<any>>,
 ) {
-	const optionsFile = config.getDoxFilepathFromArgs(
-		doxClArgsAndValues,
-		doxArgs,
-	);
+	const doxClArgV = getClArgs(args, clArgs).doxClArgs;
 
-	const fileArgs: config.doxOptions = fs.existsSync(optionsFile)
-		? config.jsonFileToObject(optionsFile)
-		: {};
-	return fileArgs;
-}
-export function getTscParsedCommandline(
-	tscClArgsAndValues = config.getClArgs().tscClArgs,
-) {
-	const tscOptions = ts.parseCommandLine(tscClArgsAndValues);
-	tscOptions.errors.forEach((error) => {
-		const ignore = config
-			.getHyphenatedArgKeys(config.doxArgs)
-			.find((key) => {
-				const messageText = String(error.messageText);
-				return (
-					messageText.includes(key) || messageText.includes('--file')
-				);
-			});
-		if (ignore) return;
+	const defaultOptions = getDefaultDoxOptions<api>(args);
+	const clOptions = getClDoxOptions<api>(doxClArgV, args);
+	const fileArgs = getFileDoxOptions<api>(defaultOptions, clOptions, args);
 
-		log.warn(
-			log.identifier(__filename),
-			log.identifier(ts.parseCommandLine),
-			error.messageText,
-		);
-	});
-	return tscOptions;
-}
-export function validateDoxOptions(
-	options: config.doxOptions,
-	doxArgs = config.doxArgs,
-) {
-	Object.keys(doxArgs).forEach((k) => {
-		const key = k as keyof config.doxArgs;
-		const coreArg = doxArgs[key];
-		const optionValue = options[key];
-		const validated = coreArg.validate(optionValue as any);
+	testDoxOverrides = testDoxOverrides && {
+		...defaultOptions,
+		...testDoxOverrides,
+	};
 
-		if (coreArg.required && optionValue === undefined)
+	const options = testDoxOverrides
+		? testDoxOverrides
+		: {
+				...defaultOptions,
+				...fileArgs,
+				...clOptions,
+		  };
+
+	Object.keys(args).forEach((k) => {
+		const key = k as keyof typeof args;
+		if (args[key].required && options[key] === undefined)
 			log.throwError(
 				log.identifier(__filename),
 				'A required option was not found:',
 				key,
 			);
+
+		args[key].set(options, options[key]);
+		const validated = args[key].validate(options[key]);
+
 		if (!validated)
 			log.throwError(
 				log.identifier(__filename),
-				'An invalid option was found:',
-				key,
+				`An invalid option value for "${String(key)}" was found:`,
+				options[key],
 			);
 	});
+
+	return options as options<ArgsApi<api>>;
+}
+export function getDefaultDoxOptions<api extends CoreArgsApi>(
+	args = defaultCoreArgs as ArgsApi<api>,
+) {
+	const argTuples = Object.entries(args).map((tuple) => {
+		const [key, item] = tuple;
+		return [key, config.clone((item as Arg<any, any>).defaultValue)];
+	});
+	const optionObject = Object.fromEntries(argTuples);
+
+	return optionObject as options<typeof args>;
+}
+export function getFileDoxOptions<api extends CoreArgsApi>(
+	defaultOptions: options<ArgsApi<api>>,
+	clOptions: options<ArgsApi<api>>,
+	args = defaultCoreArgs as ArgsApi<api>,
+) {
+	const file =
+		(clOptions as options<CoreArgsApi>).typedox ||
+		(defaultOptions as options<CoreArgsApi>).typedox;
+
+	if (!file) return {} as options<ArgsApi<api>>;
+
+	const holder = {} as options<CoreArgsApi>;
+	(args as CoreArgsApi).typedox?.set(holder, file);
+	const typedox = holder.typedox;
+
+	const fileArgs =
+		typedox && fs.existsSync(typedox)
+			? config.jsonFileToObject(typedox)
+			: {};
+
+	return fileArgs as options<ArgsApi<api>>;
+}
+export function getClDoxOptions<api>(
+	doxClArgsAndValues: string[],
+	args = defaultCoreArgs as ArgsApi<api>,
+) {
+	type argKey = keyof typeof args;
+	const doxOptions = {} as options<ArgsApi<api>>;
+	if (!doxClArgsAndValues.length) return doxOptions;
+
+	type hyphenatedArgKey = `--${string}`;
+	const hyphenatedKeys = getHyphenatedArgKeys(args);
+	let currentArg: argKey;
+	let argType: doxArg<any>['typeof'];
+
+	doxClArgsAndValues.forEach((currentArgOrValue, index) => {
+		const isCurrentlyKey = hyphenatedKeys.includes(currentArgOrValue);
+		if (isCurrentlyKey) {
+			const isFlag =
+				doxClArgsAndValues[index + 1]?.startsWith('-') ||
+				!doxClArgsAndValues[index + 1];
+			currentArg = config.unHyphenateArg(
+				currentArgOrValue as hyphenatedArgKey,
+			) as argKey;
+			argType = args[currentArg].typeof;
+			if (isFlag && argType === 'boolean') doxOptions[currentArg] = true;
+			return;
+		}
+		if (argType === 'array') {
+			doxOptions[currentArg] ??= [] as any[];
+			(doxOptions[currentArg] as any[]).push(currentArgOrValue);
+			return;
+		}
+		if (argType === 'object') {
+			let object: object;
+			try {
+				object = JSON.parse(currentArgOrValue);
+				doxOptions[currentArg] = object;
+			} catch (error) {
+				doxOptions[currentArg] = 'error';
+			}
+			return;
+		}
+		if (argType === 'number') {
+			doxOptions[currentArg] = parseInt(currentArgOrValue);
+			return;
+		}
+		doxOptions[currentArg] = currentArgOrValue;
+	});
+
+	return doxOptions;
 }

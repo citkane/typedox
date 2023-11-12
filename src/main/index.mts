@@ -1,3 +1,4 @@
+import 'source-map-support/register.js';
 import { log, logLevels } from '@typedox/logger';
 import { config, DoxProject, DoxEvents } from '@typedox/core';
 import { FileManager } from '@typedox/filemanager';
@@ -9,25 +10,26 @@ const __filename = log.getFilename(import.meta.url);
 const events = new DoxEvents<mainEventsApi>(mainEventsApi);
 let isDone = false;
 
-export default function main(customOptions?: config.doxOptions) {
-	const projectOptions = config.getDoxOptions(customOptions);
-	events.emit('main.made.options', projectOptions, done);
+export default function main(customOptions?: config.options<any>) {
+	const projectConfig = new config.DoxConfig(customOptions);
+	const { options } = projectConfig;
 
-	config.deepFreeze(projectOptions);
-	events.emit('main.froze.options', projectOptions);
+	events.emit('main.made.options', options, done);
+	config.deepFreeze(options);
+	events.emit('main.froze.options', options);
+	log.info(log.identifier(__filename), options);
 
 	if (isDone) return;
 
-	if (!log.isLogLevelSet) log.setLogLevel(logLevels[projectOptions.logLevel]);
-	new Serialiser(projectOptions);
-	new FileManager(projectOptions);
-	const doxProject = new DoxProject(projectOptions);
+	if (!log.isLogLevelSet) log.setLogLevel(options.logLevel);
+	new Serialiser(projectConfig.options);
+	new FileManager(projectConfig.options);
+	const doxProject = new DoxProject(projectConfig);
 
 	events.emit('main.built.project', doxProject!, done);
 	if (isDone) return;
 
-	const { projectRootDir, doxOut } = projectOptions;
-	copyAssetsToDocs(projectRootDir, doxOut, 'packages/frontend');
+	copyAssetsToDocs(options.doxOut, 'packages/frontend');
 }
 
 export type done = typeof done;
@@ -42,11 +44,12 @@ function done(value?: any) {
 }
 
 export function logApplicationHelp() {
-	Object.keys(config.doxArgs).map((k) => {
-		const key = k as keyof config.doxArgs;
-		const helpItem = config.doxArgs[key];
+	const args = new config.CoreArgsApi();
+	Object.keys(args).map((k) => {
+		const key = k as keyof typeof args;
+		const helpItem = args[key];
 
-		log.group(config.argHyphen + log.colourise('Underscore', key));
+		log.group(config.argHyphen + log.colourise('Underscore', String(key)));
 		log.log(helpItem.description);
 		log.log('Default value:', helpItem.defaultValue);
 		log.log();
@@ -56,8 +59,3 @@ export function logApplicationHelp() {
 }
 export const isRequestForHelp = (argv = process.argv) =>
 	argv.includes(`${config.argHyphen}help`);
-
-export enum foo {
-	foo,
-	bar,
-}

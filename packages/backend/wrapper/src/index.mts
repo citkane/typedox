@@ -37,6 +37,7 @@ export function isSpecifierKind(kind: ts.SyntaxKind) {
 		syntax.ModuleDeclaration,
 		syntax.NamespaceExport,
 		syntax.NamespaceImport,
+		//syntax.InterfaceDeclaration,
 		//syntax.BindingElement,
 		//syntax.ObjectLiteralExpression,
 	];

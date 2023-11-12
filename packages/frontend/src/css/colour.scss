@@ -1,17 +1,199 @@
+:root {
+	--sat: 50%;
+	--primary-sat: 6%;
+	--primary: 345;
+	--secondary: 210;
+	--accent1: 149;
+	--accent2: 9;
+	--accent3: 32;
+}
+
 @media (prefers-color-scheme: dark) {
 	:root {
 		color-scheme: dark;
-		--colour-base: rgb(2, 11, 15);
-		--colour-bg-default: rgba(60, 60, 60, 0.4);
-		--colour-bg-hover: rgb(51, 64, 73);
+		--col-primary-10: hsl(var(--primary), var(--primary-sat), 10%);
+		--col-primary-15: hsl(var(--primary), var(--primary-sat), 15%);
+		--col-primary-20: hsl(var(--primary), var(--primary-sat), 20%);
+		--col-primary-25: hsl(var(--primary), var(--primary-sat), 25%);
+		--col-primary-30: hsl(var(--primary), var(--primary-sat), 30%);
+		--col-primary-35: hsl(var(--primary), var(--primary-sat), 35%);
+		--col-primary-40: hsl(var(--primary), var(--primary-sat), 40%);
+		--col-primary-45: hsl(var(--primary), var(--primary-sat), 45%);
+		--col-primary-50: hsl(var(--primary), var(--primary-sat), 50%);
+		--col-primary-55: hsl(var(--primary), var(--primary-sat), 55%);
+		--col-primary-60: hsl(var(--primary), var(--primary-sat), 60%);
+		--col-primary-65: hsl(var(--primary), var(--primary-sat), 65%);
+		--col-primary-70: hsl(var(--primary), var(--primary-sat), 70%);
+		--col-primary-75: hsl(var(--primary), var(--primary-sat), 75%);
+		--col-primary-80: hsl(var(--primary), var(--primary-sat), 80%);
+		--col-primary-85: hsl(var(--primary), var(--primary-sat), 95%);
+		--col-primary-90: hsl(var(--primary), var(--primary-sat), 90%);
+
+		--col-secondary-10: hsl(var(--secondary), var(--sat), 10%);
+		--col-secondary-15: hsl(var(--secondary), var(--sat), 15%);
+		--col-secondary-20: hsl(var(--secondary), var(--sat), 20%);
+		--col-secondary-25: hsl(var(--secondary), var(--sat), 25%);
+		--col-secondary-30: hsl(var(--secondary), var(--sat), 30%);
+		--col-secondary-35: hsl(var(--secondary), var(--sat), 35%);
+		--col-secondary-40: hsl(var(--secondary), var(--sat), 40%);
+		--col-secondary-45: hsl(var(--secondary), var(--sat), 45%);
+		--col-secondary-50: hsl(var(--secondary), var(--sat), 50%);
+		--col-secondary-55: hsl(var(--secondary), var(--sat), 55%);
+		--col-secondary-60: hsl(var(--secondary), var(--sat), 60%);
+		--col-secondary-65: hsl(var(--secondary), var(--sat), 65%);
+		--col-secondary-70: hsl(var(--secondary), var(--sat), 70%);
+		--col-secondary-75: hsl(var(--secondary), var(--sat), 75%);
+		--col-secondary-80: hsl(var(--secondary), var(--sat), 80%);
+		--col-secondary-85: hsl(var(--secondary), var(--sat), 95%);
+		--col-secondary-90: hsl(var(--secondary), var(--sat), 90%);
+
+		--col-accent1-10: hsl(var(--accent1), var(--sat), 10%);
+		--col-accent1-15: hsl(var(--accent1), var(--sat), 15%);
+		--col-accent1-20: hsl(var(--accent1), var(--sat), 20%);
+		--col-accent1-25: hsl(var(--accent1), var(--sat), 25%);
+		--col-accent1-30: hsl(var(--accent1), var(--sat), 30%);
+		--col-accent1-35: hsl(var(--accent1), var(--sat), 35%);
+		--col-accent1-40: hsl(var(--accent1), var(--sat), 40%);
+		--col-accent1-45: hsl(var(--accent1), var(--sat), 45%);
+		--col-accent1-50: hsl(var(--accent1), var(--sat), 50%);
+		--col-accent1-55: hsl(var(--accent1), var(--sat), 55%);
+		--col-accent1-60: hsl(var(--accent1), var(--sat), 60%);
+		--col-accent1-65: hsl(var(--accent1), var(--sat), 65%);
+		--col-accent1-70: hsl(var(--accent1), var(--sat), 70%);
+		--col-accent1-75: hsl(var(--accent1), var(--sat), 75%);
+		--col-accent1-80: hsl(var(--accent1), var(--sat), 80%);
+		--col-accent1-85: hsl(var(--accent1), var(--sat), 95%);
+		--col-accent1-90: hsl(var(--accent1), var(--sat), 90%);
+
+		--col-accent2-10: hsl(var(--accent2), var(--sat), 10%);
+		--col-accent2-15: hsl(var(--accent2), var(--sat), 15%);
+		--col-accent2-20: hsl(var(--accent2), var(--sat), 20%);
+		--col-accent2-25: hsl(var(--accent2), var(--sat), 25%);
+		--col-accent2-30: hsl(var(--accent2), var(--sat), 30%);
+		--col-accent2-35: hsl(var(--accent2), var(--sat), 35%);
+		--col-accent2-40: hsl(var(--accent2), var(--sat), 40%);
+		--col-accent2-45: hsl(var(--accent2), var(--sat), 45%);
+		--col-accent2-50: hsl(var(--accent2), var(--sat), 50%);
+		--col-accent2-55: hsl(var(--accent2), var(--sat), 55%);
+		--col-accent2-60: hsl(var(--accent2), var(--sat), 60%);
+		--col-accent2-65: hsl(var(--accent2), var(--sat), 65%);
+		--col-accent2-70: hsl(var(--accent2), var(--sat), 70%);
+		--col-accent2-75: hsl(var(--accent2), var(--sat), 75%);
+		--col-accent2-80: hsl(var(--accent2), var(--sat), 80%);
+		--col-accent2-85: hsl(var(--accent2), var(--sat), 95%);
+		--col-accent2-90: hsl(var(--accent2), var(--sat), 90%);
+
+		--col-accent3-10: hsl(var(--accent3), var(--sat), 10%);
+		--col-accent3-15: hsl(var(--accent3), var(--sat), 15%);
+		--col-accent3-20: hsl(var(--accent3), var(--sat), 20%);
+		--col-accent3-25: hsl(var(--accent3), var(--sat), 25%);
+		--col-accent3-30: hsl(var(--accent3), var(--sat), 30%);
+		--col-accent3-35: hsl(var(--accent3), var(--sat), 35%);
+		--col-accent3-40: hsl(var(--accent3), var(--sat), 40%);
+		--col-accent3-45: hsl(var(--accent3), var(--sat), 45%);
+		--col-accent3-50: hsl(var(--accent3), var(--sat), 50%);
+		--col-accent3-55: hsl(var(--accent3), var(--sat), 55%);
+		--col-accent3-60: hsl(var(--accent3), var(--sat), 60%);
+		--col-accent3-65: hsl(var(--accent3), var(--sat), 65%);
+		--col-accent3-70: hsl(var(--accent3), var(--sat), 70%);
+		--col-accent3-75: hsl(var(--accent3), var(--sat), 75%);
+		--col-accent3-80: hsl(var(--accent3), var(--sat), 80%);
+		--col-accent3-85: hsl(var(--accent3), var(--sat), 95%);
+		--col-accent3-90: hsl(var(--accent3), var(--sat), 90%);
 	}
 }
 
 @media (prefers-color-scheme: light) {
 	:root {
 		color-scheme: light;
-		--colour-base: rgb(211, 220, 224);
-		--colour-bg-default: rgba(255, 255, 255, 0.4);
-		--colour-bg-hover: rgb(229, 238, 241);
+		--col-primary-10: hsl(var(--primary), var(--primary-sat), 90%);
+		--col-primary-15: hsl(var(--primary), var(--primary-sat), 85%);
+		--col-primary-20: hsl(var(--primary), var(--primary-sat), 80%);
+		--col-primary-25: hsl(var(--primary), var(--primary-sat), 75%);
+		--col-primary-30: hsl(var(--primary), var(--primary-sat), 70%);
+		--col-primary-35: hsl(var(--primary), var(--primary-sat), 65%);
+		--col-primary-40: hsl(var(--primary), var(--primary-sat), 60%);
+		--col-primary-45: hsl(var(--primary), var(--primary-sat), 55%);
+		--col-primary-50: hsl(var(--primary), var(--primary-sat), 50%);
+		--col-primary-55: hsl(var(--primary), var(--primary-sat), 45%);
+		--col-primary-60: hsl(var(--primary), var(--primary-sat), 40%);
+		--col-primary-65: hsl(var(--primary), var(--primary-sat), 35%);
+		--col-primary-70: hsl(var(--primary), var(--primary-sat), 30%);
+		--col-primary-75: hsl(var(--primary), var(--primary-sat), 25%);
+		--col-primary-80: hsl(var(--primary), var(--primary-sat), 20%);
+		--col-primary-85: hsl(var(--primary), var(--primary-sat), 15%);
+		--col-primary-90: hsl(var(--primary), var(--primary-sat), 10%);
+
+		--col-secondary-10: hsl(var(--secondary), var(--sat), 90%);
+		--col-secondary-15: hsl(var(--secondary), var(--sat), 85%);
+		--col-secondary-20: hsl(var(--secondary), var(--sat), 80%);
+		--col-secondary-25: hsl(var(--secondary), var(--sat), 75%);
+		--col-secondary-30: hsl(var(--secondary), var(--sat), 70%);
+		--col-secondary-35: hsl(var(--secondary), var(--sat), 65%);
+		--col-secondary-40: hsl(var(--secondary), var(--sat), 60%);
+		--col-secondary-45: hsl(var(--secondary), var(--sat), 55%);
+		--col-secondary-50: hsl(var(--secondary), var(--sat), 50%);
+		--col-secondary-55: hsl(var(--secondary), var(--sat), 45%);
+		--col-secondary-60: hsl(var(--secondary), var(--sat), 40%);
+		--col-secondary-65: hsl(var(--secondary), var(--sat), 35%);
+		--col-secondary-70: hsl(var(--secondary), var(--sat), 30%);
+		--col-secondary-75: hsl(var(--secondary), var(--sat), 25%);
+		--col-secondary-80: hsl(var(--secondary), var(--sat), 20%);
+		--col-secondary-85: hsl(var(--secondary), var(--sat), 15%);
+		--col-secondary-90: hsl(var(--secondary), var(--sat), 10%);
+
+		--col-accent1-10: hsl(var(--accent1), var(--sat), 90%);
+		--col-accent1-15: hsl(var(--accent1), var(--sat), 85%);
+		--col-accent1-20: hsl(var(--accent1), var(--sat), 80%);
+		--col-accent1-25: hsl(var(--accent1), var(--sat), 75%);
+		--col-accent1-30: hsl(var(--accent1), var(--sat), 70%);
+		--col-accent1-35: hsl(var(--accent1), var(--sat), 65%);
+		--col-accent1-40: hsl(var(--accent1), var(--sat), 60%);
+		--col-accent1-45: hsl(var(--accent1), var(--sat), 55%);
+		--col-accent1-50: hsl(var(--accent1), var(--sat), 50%);
+		--col-accent1-55: hsl(var(--accent1), var(--sat), 45%);
+		--col-accent1-60: hsl(var(--accent1), var(--sat), 40%);
+		--col-accent1-65: hsl(var(--accent1), var(--sat), 35%);
+		--col-accent1-70: hsl(var(--accent1), var(--sat), 30%);
+		--col-accent1-75: hsl(var(--accent1), var(--sat), 25%);
+		--col-accent1-80: hsl(var(--accent1), var(--sat), 20%);
+		--col-accent1-85: hsl(var(--accent1), var(--sat), 15%);
+		--col-accent1-90: hsl(var(--accent1), var(--sat), 10%);
+
+		--col-accent2-10: hsl(var(--accent2), var(--sat), 90%);
+		--col-accent2-15: hsl(var(--accent2), var(--sat), 85%);
+		--col-accent2-20: hsl(var(--accent2), var(--sat), 80%);
+		--col-accent2-25: hsl(var(--accent2), var(--sat), 75%);
+		--col-accent2-30: hsl(var(--accent2), var(--sat), 70%);
+		--col-accent2-35: hsl(var(--accent2), var(--sat), 65%);
+		--col-accent2-40: hsl(var(--accent2), var(--sat), 60%);
+		--col-accent2-45: hsl(var(--accent2), var(--sat), 55%);
+		--col-accent2-50: hsl(var(--accent2), var(--sat), 50%);
+		--col-accent2-55: hsl(var(--accent2), var(--sat), 45%);
+		--col-accent2-60: hsl(var(--accent2), var(--sat), 40%);
+		--col-accent2-65: hsl(var(--accent2), var(--sat), 35%);
+		--col-accent2-70: hsl(var(--accent2), var(--sat), 30%);
+		--col-accent2-75: hsl(var(--accent2), var(--sat), 25%);
+		--col-accent2-80: hsl(var(--accent2), var(--sat), 20%);
+		--col-accent2-85: hsl(var(--accent2), var(--sat), 15%);
+		--col-accent2-90: hsl(var(--accent2), var(--sat), 10%);
+
+		--col-accent3-10: hsl(var(--accent3), var(--sat), 90%);
+		--col-accent3-15: hsl(var(--accent3), var(--sat), 85%);
+		--col-accent3-20: hsl(var(--accent3), var(--sat), 80%);
+		--col-accent3-25: hsl(var(--accent3), var(--sat), 75%);
+		--col-accent3-30: hsl(var(--accent3), var(--sat), 70%);
+		--col-accent3-35: hsl(var(--accent3), var(--sat), 65%);
+		--col-accent3-40: hsl(var(--accent3), var(--sat), 60%);
+		--col-accent3-45: hsl(var(--accent3), var(--sat), 55%);
+		--col-accent3-50: hsl(var(--accent3), var(--sat), 50%);
+		--col-accent3-55: hsl(var(--accent3), var(--sat), 45%);
+		--col-accent3-60: hsl(var(--accent3), var(--sat), 40%);
+		--col-accent3-65: hsl(var(--accent3), var(--sat), 35%);
+		--col-accent3-70: hsl(var(--accent3), var(--sat), 30%);
+		--col-accent3-75: hsl(var(--accent3), var(--sat), 25%);
+		--col-accent3-80: hsl(var(--accent3), var(--sat), 20%);
+		--col-accent3-85: hsl(var(--accent3), var(--sat), 15%);
+		--col-accent3-90: hsl(var(--accent3), var(--sat), 10%);
 	}
 }

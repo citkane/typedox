@@ -1,4 +1,4 @@
-import { DoxEvents, config } from '@typedox/core';
+import { DoxDeclaration, DoxEvents, config } from '@typedox/core';
 import { log } from '@typedox/logger';
 import { serialiserEventsApi } from './serialiserEventsApi.mjs';
 import { mainEventsApi } from 'typedox/events';
@@ -9,8 +9,8 @@ const __filename = log.getFilename(import.meta.url);
 
 export class Serialiser {
 	events: DoxEvents<eventsApi>;
-	options: config.doxOptions;
-	constructor(options: config.doxOptions) {
+	options: config.coreDoxOptions;
+	constructor(options: config.coreDoxOptions) {
 		log.info(log.identifier(this), 'Serialiser is listening', '\n');
 		this.options = options;
 

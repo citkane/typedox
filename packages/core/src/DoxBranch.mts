@@ -1,5 +1,5 @@
 import { log, loggerUtils } from '@typedox/logger';
-import { CategoryKind, Dox, DoxDeclaration, DoxReference } from '../index.mjs';
+import { CategoryKind, Dox, DoxDeclaration, DoxReference } from './index.mjs';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -31,10 +31,9 @@ export class DoxBranch extends Dox {
 	public functions: Map<string, DoxDeclaration> = new Map();
 	public enums: Map<string, DoxDeclaration> = new Map();
 	public types: Map<string, DoxDeclaration> = new Map();
-	public default?: DoxDeclaration;
 	public doxReference: DoxReference;
 
-	private branchDeclarations: Map<DoxDeclaration, string> = new Map();
+	private branchDeclarations: DoxDeclaration[] = [];
 
 	constructor(
 		parent: DoxReference | DoxBranch,
@@ -44,11 +43,9 @@ export class DoxBranch extends Dox {
 		this.parent = parent;
 		this.doxReference = this.getDoxReference(parent);
 		declarations.forEach(this.bundleDeclaration);
-		this.reExports.forEach(this.mergeReExportIntoDeclarations);
 
-		Array.from(this.branchDeclarations.keys()).forEach(
-			this.registerDeclaration,
-		);
+		this.branchDeclarations.forEach(this.registerDeclaration);
+		this.reExports.forEach(this.registerDeclaration);
 	}
 
 	public get doxPackage() {
@@ -64,37 +61,39 @@ export class DoxBranch extends Dox {
 			: this.getDoxReference(item.parent);
 	}
 	private bundleDeclaration = (declaration: DoxDeclaration) => {
-		if (declaration.error) return;
-		const { category, flags } = declaration;
-		flags.isDefault && (this.default = declaration);
-		category === CategoryKind.reExport
+		declaration.flags.isReExporter
 			? this.bundleReExport(declaration)
-			: this.branchDeclarations.set(declaration, declaration.name);
+			: this.branchDeclarations.push(declaration);
 	};
-	private mergeReExportIntoDeclarations = (declaration: DoxDeclaration) => {
-		if (this.branchDeclarations.has(declaration)) return;
-		this.branchDeclarations.set(declaration, declaration.name);
-	};
+
 	private registerDeclaration = (declaration: DoxDeclaration) => {
 		const { category, name } = declaration;
+
 		switch (category) {
+			case CategoryKind.unknown:
+				break;
 			case CategoryKind.Namespace:
 				this.registerNameSpace(declaration);
 				break;
 			case CategoryKind.Class:
-				this.classes.set(name, declaration);
+				const { classes } = this;
+				!classes.has(name) && classes.set(name, declaration);
 				break;
 			case CategoryKind.Function:
-				this.functions.set(name, declaration);
+				const { functions: fncs } = this;
+				!fncs.has(name) && fncs.set(name, declaration);
 				break;
 			case CategoryKind.Variable:
-				this.variables.set(name, declaration);
+				const { variables: vars } = this;
+				!vars.has(name) && vars.set(name, declaration);
 				break;
 			case CategoryKind.Enum:
-				this.enums.set(name, declaration);
+				const { enums } = this;
+				!enums.has(name) && enums.set(name, declaration);
 				break;
 			case CategoryKind.Type:
-				this.types.set(name, declaration);
+				const { types } = this;
+				!types.has(name) && types.set(name, declaration);
 				break;
 			default:
 				log.error(
@@ -106,26 +105,28 @@ export class DoxBranch extends Dox {
 				break;
 		}
 	};
+
 	private bundleReExport = (declaration: DoxDeclaration) => {
-		const { name, category, children } = declaration;
-		const reReExport = category === CategoryKind.reExport;
-		const isDuplicate = this.reExports.has(name);
-		return reReExport
-			? children.forEach(this.bundleReExport)
-			: !isDuplicate && this.reExports.set(name, declaration);
+		declaration.localDeclarationMap.forEach((declaration) => {
+			const { name, category, localDeclarationMap, flags } = declaration;
+			if (!flags.isReExporter && !this.reExports.has(name)) {
+				this.reExports.set(name, declaration);
+			}
+			if (flags.isReExporter) {
+				this.bundleReExport(declaration);
+			}
+		});
 	};
 
 	private registerNameSpace = (declaration: DoxDeclaration) => {
 		const { warn } = notices.registerNameSpace;
-		const { name, children } = declaration;
-		const { nameSpaces } = this;
-		if (nameSpaces.has(name)) return warn(this, declaration);
+		const { name, children, localDeclarationMap } = declaration;
 
-		const values = [...children.values()].filter(
-			(declaration) => !this.branchDeclarations.has(declaration),
-		);
+		const values = [...children.values(), ...localDeclarationMap.values()];
+		if (this.nameSpaces.has(name)) return warn(this, declaration);
+
 		const newBranch = new DoxBranch(this, values);
-		nameSpaces.set(declaration.name, newBranch);
+		this.nameSpaces.set(declaration.name, newBranch);
 	};
 }
 
@@ -133,7 +134,7 @@ const seenNameSpaces: string[] = [];
 const notices = {
 	registerNameSpace: {
 		warn: (branch: DoxBranch, declaration: DoxDeclaration) => {
-			const { wrappedItem } = declaration;
+			const { wrappedItem, name } = declaration;
 			const {
 				nodeDeclarationText,
 				fileName,
@@ -145,7 +146,7 @@ const notices = {
 				return log.warn(
 					log.identifier(branch),
 					`[${branch.doxReference.name}]`,
-					'A namespace was already registered:',
+					`The "${name}" namespace was already registered:`,
 					loggerUtils.toLine(nodeDeclarationText, 30),
 					fileName,
 				);

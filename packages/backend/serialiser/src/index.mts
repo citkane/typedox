@@ -20,9 +20,13 @@ export { Serialised } from './Serialised.mjs';
 type comment = { comment: string };
 type tag = { tag: any };
 
+export type menuMeta = {
+	category: CategoryKind;
+	location?: DoxLocation;
+};
 export type menuBranch = {
 	name: string;
-	category: CategoryKind;
+	meta: menuMeta;
 	children?: menuBranch[];
 	index?: string;
 };
@@ -34,7 +38,7 @@ export type serialisedReference = ReturnType<typeof serialiseReference>;
 export type serialisedBranch = ReturnType<typeof serialiseBranch>;
 export type serialisedNamespace = ReturnType<typeof serialiseNamespace>;
 
-export interface DeclarationLocation {
+export interface DoxLocation {
 	query: string;
 	hash: string;
 }
@@ -49,7 +53,7 @@ export interface DeclarationSerialised {
 	name: string;
 	category: CategoryKind;
 	flags: DeclarationFlags;
-	location: DeclarationLocation;
+	location: DoxLocation;
 	type: DeclarationType;
 	jsDoc: jsDocCollection | undefined;
 	valueString?: string;

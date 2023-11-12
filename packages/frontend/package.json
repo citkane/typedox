@@ -4,9 +4,9 @@
 	"description": "Frontend for typedox",
 	"type": "module",
 	"scripts": {
+		"build:dist:watch": "make buildWatch",
 		"build:css": "make css",
-		"build:watch": "make buildWatch",
-		"build:watch:css": "make cssWatch",
+		"build:css:watch": "make cssWatch",
 		"test": "cd ../../../ && mocha -g '/frontend/i'"
 	},
 	"exports": {
@@ -24,5 +24,8 @@
 	"homepage": "https://github.com/citkane/typedox#readme",
 	"devDependencies": {
 		"sass": "^1.69.5"
+	},
+	"dependencies": {
+		"@material-design-icons/font": "^0.14.13"
 	}
 }

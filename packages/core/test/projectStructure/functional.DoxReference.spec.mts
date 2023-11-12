@@ -12,8 +12,8 @@ import { stub } from 'sinon';
 import { log, logLevels } from '@typedox/logger';
 import { compilerFactory, doxStub, projectFactory } from '@typedox/test';
 
-const localLogLevel = logLevels.info;
-const localFactory = 'groups';
+const localLogLevel = logLevels.silent;
+const localFactory = 'categories';
 
 const { projectDir, compiler } = compilerFactory(localFactory);
 
@@ -34,65 +34,27 @@ export default function () {
 	});
 
 	it('creates a class instance', function () {
-		const program = compiler().program;
+		const parsedConfig = compiler().parsedConfig;
 		let reference!: DoxReference;
 		assert.doesNotThrow(
 			() =>
 				(reference = new DoxReference(
 					doxStub.doxPackage(),
 					'test',
-					program,
-					[],
+					parsedConfig,
+					1,
+					0,
 				)),
 		);
 		assert.isTrue(Dox.isDoxReference(reference));
 	});
-	it('dedupes and maps a file to the register', function () {
-		const doxReference = doxPackage().doxReferences[0]; //projectFactory.specReference(factory);
-		const size = doxReference.filesMap.size;
-		const file = path.join(
-			projectDir,
-			'greatGrandchild/greatGrandchild.ts',
-		);
-		doxReference.filesMap.delete(file);
-		assert.doesNotThrow(() => doxReference.discoverFiles([file, file]));
-		assert.isTrue(
-			doxReference.filesMap.size === size,
-			`${size} : ${doxReference.filesMap.size}`,
-		);
-	});
-	it('parses files recursively', function () {
-		const doxReference = doxPackage().doxReferences[0]; //projectFactory.specReference(factory);
 
-		doxReference.filesMap = new Map<string, DoxSourceFile>();
-		assert.isTrue(doxReference.filesMap.size === 0);
-		doxReference.discoverFiles();
-		assert.isTrue(doxReference.filesMap.size > 2);
-	});
-	it('does not throw on declaration discovery', function () {
-		const doxReference = doxPackage().doxReferences[0]; //projectFactory.specReference(factory);
-		assert.doesNotThrow(() => doxReference.discoverDeclarations());
-	});
-	it('does not throw on relationship building', function () {
-		const doxReference = doxPackage().doxReferences[0]; //projectFactory.specReference(factory);
-		doxReference.buildRelationships();
-		errorStub = stub(log, 'error');
-		assert.doesNotThrow(() => doxReference.buildRelationships());
-	});
-	it.only('gets the root declarations', function () {
+	it('gets the root declarations', function () {
 		const doxReference = doxPackage().doxReferences[0]; //projectFactory.specReference(factory);
 		let roots!: DoxDeclaration[];
-		assert.doesNotThrow(() => (roots = doxReference.getRootDeclarations()));
-		roots.forEach((root) => {
-			log.info({
-				name: root.name,
-				text: root.wrappedItem.nodeText,
-				text2: root.wrappedItem.nodeDeclarationText,
-				children: root.children.size,
-				file: root.wrappedItem.fileName,
-			});
-		});
-		log.info(roots.length);
+		assert.doesNotThrow(
+			() => (roots = (doxReference as any).getRootDeclarations()),
+		);
 		assert.isTrue(roots.length > 8, 'did not get root declarations');
 		roots.forEach((declaration) => {
 			assert.equal(

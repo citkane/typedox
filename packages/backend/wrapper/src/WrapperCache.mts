@@ -1,4 +1,4 @@
-import ts from 'typescript';
+import ts, { __String } from 'typescript';
 import notices from './notices.mjs';
 import { log } from '@typedox/logger';
 import { TsWrapper, wrap } from './Wrapper.mjs';
@@ -94,6 +94,7 @@ const cacheCallbacks = {
 			? wrapper.tsNode.propertyName?.getText()
 			: undefined;
 	},
+
 	moduleSpecifier: function (this: wrapContainer) {
 		const { wrapper } = this;
 		return getModuleSpecifier(wrapper.tsNode);
@@ -109,9 +110,7 @@ const cacheCallbacks = {
 		if (ts.isSourceFile(targetNode))
 			return path.resolve(targetNode.fileName);
 
-		const wrapped = wrap(checker, program, targetNode);
-		const moduleSpecifier = wrapped?.moduleSpecifier;
-
+		const moduleSpecifier = targetNode && getModuleSpecifier(targetNode);
 		if (!moduleSpecifier) return undefined;
 
 		const symbol = checker.getSymbolAtLocation(moduleSpecifier);
@@ -149,6 +148,7 @@ const cacheCallbacks = {
 			return rootNode(node.parent);
 		}
 	},
+
 	aliasedSymbol: function (this: wrapContainer) {
 		const { wrapper, checker } = this;
 		try {
@@ -157,9 +157,9 @@ const cacheCallbacks = {
 			return undefined;
 		}
 	},
+
 	immediateAliasedSymbol: function (this: wrapContainer) {
 		const { wrapper, checker } = this;
-
 		try {
 			const symbol = checker.getImmediateAliasedSymbol(wrapper.tsSymbol);
 			return symbol;
@@ -167,6 +167,7 @@ const cacheCallbacks = {
 			return undefined;
 		}
 	},
+
 	localDeclaration: function (this: wrapContainer): ts.Symbol | undefined {
 		const { wrapper, checker, program } = this;
 		const { tsNode } = wrapper;
@@ -181,16 +182,15 @@ const cacheCallbacks = {
 			? local(tsNode)
 			: undefined;
 
-		const wrapped = symbol && wrap(checker, program, symbol);
-		return wrapped?.tsSymbol;
+		return symbol;
 
 		function local(
 			assignment: ts.ShorthandPropertyAssignment | ts.PropertyAssignment,
 		) {
-			const name = assignment.name.getText();
+			const name = ts.escapeLeadingUnderscores(assignment.name.getText());
 			const file = assignment.getSourceFile();
 			const { locals } = file as any;
-			const symbol = (locals as Map<string, ts.Symbol>)?.get(name);
+			const symbol = (locals as Map<__String, ts.Symbol>)?.get(name);
 
 			return symbol;
 		}
@@ -205,12 +205,12 @@ const cacheCallbacks = {
 			return symbol;
 		}
 	},
-	target: function (this: wrapContainer) {
-		const { wrapper, checker } = this;
-		const { expression } = wrapper.tsNode as any;
+	target: function (this: wrapContainer): ts.Symbol | undefined {
+		const { wrapper } = this;
 		const target =
-			wrapper.localDeclaration || wrapper.immediatelyAliasedSymbol; //||
-		//(expression as ts.Expression | undefined);
+			wrapper.localDeclaration ||
+			wrapper.immediatelyAliasedSymbol ||
+			wrapper.aliasedSymbol;
 
 		return target ? target : undefined;
 	},

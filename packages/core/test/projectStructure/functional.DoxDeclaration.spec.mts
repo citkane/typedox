@@ -1,17 +1,19 @@
 import { assert } from 'chai';
-import ts from 'typescript';
+import ts, { __String } from 'typescript';
 import {
-	DeclarationGroup,
+	CategoryKind,
 	Dox,
 	DoxDeclaration,
 	DoxSourceFile,
+	declarationUtils,
 } from '@typedox/core';
 import { stub } from 'sinon';
 import { log, logLevels } from '@typedox/logger';
 import { declarationFactory, doxStub, projectFactory } from '@typedox/test';
 
 const localLogLevel = logLevels.silent;
-const localFactory = 'groups';
+const localFactory = 'categories';
+const escape = ts.escapeLeadingUnderscores;
 
 declare module 'mocha' {
 	export interface Context {
@@ -40,7 +42,7 @@ export default function () {
 		const doxFile = doxStub.doxSourceFile(localFactory);
 		const symbol = doxStub.getExportedSymbol.call(
 			doxFile.fileSymbol,
-			'localExport',
+			escape('localExport'),
 		);
 		let declaration!: DoxDeclaration;
 
@@ -59,11 +61,11 @@ export default function () {
 		);
 	});
 	it('does not error a nameSpaceExport', function () {
-		let symbol = getSymbol('childSpace');
+		let symbol = getSymbol(escape('childSpace'));
 		assert.exists(symbol);
 		new DoxDeclaration(makeDoxSourceFile(), symbol!);
 
-		symbol = getSymbol('grandchildSpace');
+		symbol = getSymbol(escape('grandchildSpace'));
 		assert.exists(symbol);
 		new DoxDeclaration(makeDoxSourceFile(), symbol!);
 
@@ -74,11 +76,15 @@ export default function () {
 		);
 	});
 	it('does not error a module declaration', function () {
-		let symbol = getSymbol('moduleDeclaration');
+		let symbol = getSymbol(escape('moduleDeclaration'));
 		assert.exists(symbol, 'moduleDeclaration');
 		const declaration = new DoxDeclaration(makeDoxSourceFile(), symbol!);
-		assert.isTrue(declaration.localDeclarationMap.has('nsExport'));
-		const child = declaration.localDeclarationMap.get('nsExport');
+		const wrapped = declaration.tsWrap(symbol!);
+		assert.exists(wrapped, 'wrapped');
+		declaration.relate(wrapped);
+
+		assert.isTrue(declaration.localDeclarationMap.has(escape('nsExport')));
+		const child = declaration.localDeclarationMap.get(escape('nsExport'));
 		const sourceFile = child!.doxSourceFile;
 		assert.exists(sourceFile, 'sourceFile');
 		assert.equal(
@@ -87,7 +93,7 @@ export default function () {
 			sourceFile.constructor.name,
 		);
 
-		symbol = getSymbol('emptyDeclaration');
+		symbol = getSymbol(escape('emptyDeclaration'));
 		assert.exists(symbol, 'emptyDeclaration');
 		new DoxDeclaration(makeDoxSourceFile(), symbol!);
 
@@ -98,11 +104,11 @@ export default function () {
 		);
 	});
 	it('does not error an export specifier', function () {
-		let symbol = getSymbol('localDeclaration');
+		let symbol = getSymbol(escape('localDeclaration'));
 		assert.exists(symbol);
 		new DoxDeclaration(makeDoxSourceFile(), symbol!);
 
-		symbol = getSymbol('localAlias');
+		symbol = getSymbol(escape('localAlias'));
 		assert.exists(symbol);
 		new DoxDeclaration(makeDoxSourceFile(), symbol!);
 
@@ -113,7 +119,7 @@ export default function () {
 		);
 	});
 	it('does not error an import specifier', function () {
-		const symbol = getSymbol('child');
+		const symbol = getSymbol(escape('child'));
 		assert.exists(symbol);
 		new DoxDeclaration(makeDoxSourceFile(), symbol!);
 
@@ -124,7 +130,7 @@ export default function () {
 		);
 	});
 	it('does not error a reExport', function () {
-		const symbol = getSymbol('__export');
+		const symbol = getSymbol('__export' as __String);
 		assert.exists(symbol);
 		new DoxDeclaration(makeDoxSourceFile(), symbol!);
 
@@ -144,27 +150,29 @@ export default function () {
 			);
 		});
 	});
-	it(`assigns groups to each export symbol in the "${localFactory}" factory:`, function () {
+	it(`assigns categories to each export symbol in the "${localFactory}" factory:`, function () {
 		makeDoxSourceFile().fileSymbol.exports!.forEach((symbol) => {
 			const declaration = new DoxDeclaration(makeDoxSourceFile(), symbol);
-			assert.exists(declaration.group);
+			assert.exists(declaration.category);
 			assert.isTrue(
-				Object.values(DeclarationGroup).includes(
-					declaration.group as any,
+				Object.values(CategoryKind).includes(
+					declaration.category as any,
 				),
-				`did not find ${declaration.group}`,
+				`did not find ${declaration.category}`,
 			);
 		});
 	});
-	it('creates an error if an unknown group is encountered', function () {
-		const symbol = getSymbol('localDeclaration');
+	it('creates an error if an unknown category is encountered', function () {
+		const symbol = getSymbol(escape('localDeclaration'));
 		assert.exists(symbol);
 		const declaration = new DoxDeclaration(makeDoxSourceFile(), symbol!);
-		(declaration as any).groupTsKind =
-			ts.SyntaxKind.AmpersandAmpersandEqualsToken;
-
-		declaration.group;
-
+		const { valueNode, wrappedItem, checker } = declaration;
+		declarationUtils.getCategoryKind(
+			valueNode,
+			wrappedItem,
+			ts.SyntaxKind.AmpersandAmpersandEqualsToken,
+			checker,
+		);
 		assert.lengthOf(this.errorReports, 1);
 		assert.include(
 			this.errorReports[0].toString(),
@@ -173,8 +181,8 @@ export default function () {
 	});
 
 	it('flags non exported declarations', function () {
-		const notExported = declarationFactory('common', 'localVar');
-		const exported = declarationFactory('specifiers', 'localVar');
+		const notExported = declarationFactory('common', escape('localVar'));
+		const exported = declarationFactory('specifiers', escape('localVar'));
 
 		assert.exists(notExported.flags, 'notExported');
 		assert.exists(exported.flags, 'exported');
@@ -183,9 +191,9 @@ export default function () {
 		assert.notExists(exported.flags.notExported);
 	});
 	it('resolves scope keywords', function () {
-		const varScope = declarationFactory('scopes', 'varScope');
-		const letScope = declarationFactory('scopes', 'letScope');
-		const constScope = declarationFactory('scopes', 'constScope');
+		const varScope = declarationFactory('scopes', escape('varScope'));
+		const letScope = declarationFactory('scopes', escape('letScope'));
+		const constScope = declarationFactory('scopes', escape('constScope'));
 		const expected = ['var', 'let', 'const'];
 		[varScope, letScope, constScope].forEach((declaration, i) => {
 			const { flags } = declaration;
@@ -202,7 +210,7 @@ export default function () {
 			'index.ts',
 		));
 	}
-	function getSymbol(key: string) {
+	function getSymbol(key: __String) {
 		return doxStub.getExportedSymbol.call(
 			makeDoxSourceFile().fileSymbol,
 			key,

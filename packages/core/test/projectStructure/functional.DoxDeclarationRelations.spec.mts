@@ -1,14 +1,16 @@
-import ts from 'typescript';
+import ts, { __String } from 'typescript';
 import { assert } from 'chai';
-import { DeclarationGroup, DoxDeclaration, DoxSourceFile } from '@typedox/core';
+import { CategoryKind, DoxDeclaration } from '@typedox/core';
 import { stub } from 'sinon';
 import { Context } from 'mocha';
 import { log, logLevels } from '@typedox/logger';
 import { declarationFactory, doxStub } from '@typedox/test';
+import { notEqual } from 'assert';
 
 const localLogLevel = logLevels.info;
 const localFactory = 'specifiers';
 const syntax = ts.SyntaxKind;
+const escape = ts.escapeLeadingUnderscores;
 
 declare module 'mocha' {
 	export interface Context {
@@ -31,26 +33,28 @@ export default function () {
 		this.errors = [];
 	});
 
-	it('maps a imported ExportAssignment', function () {
-		const result = this.testSpecifier('default');
+	it('relates a imported ExportAssignment', function () {
+		const result = this.testSpecifier(escape('default'));
 		const { children, declaration } = result;
-		assert.sameMembers(children, ['default']);
-		const targetParents = declaration.children.get('default')!.parents;
+		assert.sameMembers(children, [escape('default')]);
+		const targetParents = declaration.children.get(
+			escape('default'),
+		)!.parents;
 		assert.isTrue(targetParents.has(declaration));
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'childClause');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Variable,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Variable,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 		assert.isTrue(declaration.flags.isDefault);
 	});
-	it('maps a export= ExportAssignment', function () {
+	it('relates a export= ExportAssignment', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'exportEqual/exportEqual.ts',
 		);
 		const { children, declaration } = result;
@@ -59,165 +63,161 @@ export default function () {
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'common');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Module,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Namespace,
+			CategoryKind[declaration.category!],
 		);
 		assert.sameMembers(Array.from(declaration.localDeclarationMap.keys()), [
-			'foo',
+			escape('foo'),
 			'bar',
 		]);
 		assert.equal(declaration.nameSpace, 'common');
 		assert.isTrue(declaration.flags.isDefault);
 	});
-	it('maps a local ExportAssignment', function () {
-		const result = this.testSpecifier('default', 'child/child.ts');
+	it('relates a local ExportAssignment', function () {
+		const result = this.testSpecifier(escape('default'), 'child/child.ts');
 		const { children, declaration } = result;
 		assert.sameMembers(children, []);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'childClause');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Variable,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Variable,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps an ExportDeclaration', function () {
-		const result = this.testSpecifier('__export');
+	it('relates an ExportDeclaration', function () {
+		const result = this.testSpecifier('__export' as __String);
 		const { children, declaration } = result;
 		assert.sameMembers(children, [
-			'childClause',
-			'grandchild',
-			'childSpace',
-			'child',
-			'grandchildType',
-			'childType',
+			escape('childClause'),
+			escape('grandchild'),
+			escape('childSpace'),
+			escape('child'),
+			escape('grandchildType'),
+			escape('childType'),
 		]);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal(valueNode.getText(), "export * from './child/child';");
-		assert.equal(
-			declaration.group,
-			DeclarationGroup.ReExport,
-			DeclarationGroup[declaration.group!],
-		);
+		assert.isTrue(declaration.flags.isReExporter);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a local variable ExportSpecifier', function () {
-		const result = this.testSpecifier('localVar');
+	it('relates a local variable ExportSpecifier', function () {
+		const result = this.testSpecifier(escape('localVar'));
 		const { children, declaration } = result;
 		assert.sameMembers(children, []);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'localVar');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Variable,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Variable,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a reExport variable ExportSpecifier', function () {
-		const result = this.testSpecifier('grandchild');
+	it('relates a reExport variable ExportSpecifier', function () {
+		const result = this.testSpecifier(escape('grandchild'));
 		const { children, declaration } = result;
-		assert.sameDeepMembers(children, ['grandchild']);
+		assert.sameDeepMembers(children, [escape('grandchild')]);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'grandchild');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Variable,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Variable,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a remote variable ExportSpecifier', function () {
-		const result = this.testSpecifier('remote');
+	it('relates a remote variable ExportSpecifier', function () {
+		const result = this.testSpecifier(escape('remote'));
 		const { children, declaration } = result;
-		assert.sameDeepMembers(children, ['grandchild']);
+		assert.sameDeepMembers(children, [escape('grandchild')]);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'grandchild');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Variable,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Variable,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a export variable ExportSpecifier', function () {
-		const result = this.testSpecifier('child');
+	it('relates a export variable ExportSpecifier', function () {
+		const result = this.testSpecifier(escape('child'));
 		const { children, declaration } = result;
-		assert.sameMembers(children, ['child']);
+		assert.sameMembers(children, [escape('child')]);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'child');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Variable,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Variable,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a local type ExportSpecifier', function () {
-		const result = this.testSpecifier('localType');
+	it('relates a local type ExportSpecifier', function () {
+		const result = this.testSpecifier(escape('localType'));
 		const { children, declaration } = result;
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'localType');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Type,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Type,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a type ExportSpecifier', function () {
-		const result = this.testSpecifier('childType');
+	it('relates a type ExportSpecifier', function () {
+		const result = this.testSpecifier(escape('childType'));
 		const { children, declaration } = result;
-		assert.sameMembers(children, ['childType']);
+		assert.sameMembers(children, [escape('childType')]);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'childType');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Type,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Type,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a remote type ExportSpecifier', function () {
-		const result = this.testSpecifier('grandchildType');
+	it('relates a remote type ExportSpecifier', function () {
+		const result = this.testSpecifier(escape('grandchildType'));
 		const { children, declaration } = result;
-		assert.sameMembers(children, ['grandchildType']);
+		assert.sameMembers(children, [escape('grandchildType')]);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'grandchildType');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Type,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Type,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a file ImportClause', function () {
-		const result = this.testSpecifier('fileImportClause');
+	it('relates a file ImportClause', function () {
+		const result = this.testSpecifier(escape('fileImportClause'));
 		const { children, declaration } = result;
-		assert.sameMembers(children, ['default']);
+		assert.sameMembers(children, [escape('default')]);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'childClause');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Variable,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Variable,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
 	it('maps an external module ImportClause', function () {
-		const result = this.testSpecifier('moduleImportClause');
+		const result = this.testSpecifier(escape('moduleImportClause'));
 		const { children, declaration } = result;
 		assert.sameMembers(children, []);
 		const { valueNode } = declaration;
@@ -225,185 +225,232 @@ export default function () {
 		assert.equal((valueNode as any).name.getText(), 'ts');
 		/*
 		assert.equal(
-			declaration.children.get('export=')!.group,
-			DeclarationGroup.Module,
-			DeclarationGroup[declaration.group!],
+			declaration.children.get('export=')!.category,
+			CategoryKind.Namespace,
+			CategoryKind[declaration.category!],
 		);
 		*/
 		assert.equal(declaration.nameSpace, 'ts');
 	});
 	it('maps an external module ImportEqualsDeclaration', function () {
-		const result = this.testSpecifier('TypeScript');
+		const result = this.testSpecifier(escape('TypeScript'));
 		const { children, declaration } = result;
 		assert.sameMembers(children, []);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'ts');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Module,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Namespace,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, 'ts');
 	});
-	it('maps a local member ImportEqualsDeclaration', function () {
-		const result = this.testSpecifier('bar');
+	it('relates a local member ImportEqualsDeclaration', function () {
+		const result = this.testSpecifier(escape('bar'));
 		const { children, declaration } = result;
 		assert.sameMembers(children, []);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'bar');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Variable,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Variable,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a namespace ImportEqualsDeclaration', function () {
-		const result = this.testSpecifier('local');
+	it('relates a namespace ImportEqualsDeclaration', function () {
+		const result = this.testSpecifier(escape('local'));
 		const { children, declaration } = result;
 		assert.sameMembers(children, []);
 		assert.sameMembers(Array.from(declaration.localDeclarationMap.keys()), [
-			'foo',
-			'bar',
+			escape('foo'),
+			escape('bar'),
 		]);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'local');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Module,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Namespace,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, 'local');
 	});
-	it('maps a variable ImportSpecifier', function () {
-		const result = this.testSpecifier('grandchild');
+	it('relates a variable ImportSpecifier', function () {
+		const result = this.testSpecifier(escape('grandchild'));
 		const { children, declaration } = result;
-		assert.sameMembers(children, ['grandchild']);
+		assert.sameMembers(children, [escape('grandchild')]);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'grandchild');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Variable,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Variable,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, undefined);
 	});
-	it('maps a namespace ImportSpecifier', function () {
-		const result = this.testSpecifier('nsImportSpecifier');
-		const { children, declaration } = result;
-		assert.sameMembers(children, ['childSpace']);
+	it('relates a namespace ImportSpecifier', function () {
+		const result = this.testSpecifier(escape('nsImportSpecifier'));
+		const { declaration } = result;
+		assert.sameMembers(Array.from(declaration.localDeclarationMap.keys()), [
+			escape('childSpace'),
+		]);
 		assert.equal(
 			declaration.valueNode.getText(),
 			'childSpace as nsImportSpecifier',
 		);
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Module,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Namespace,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, 'childSpace');
 	});
-	it.skip('maps a remote ImportSpecifer', function () {
-		const result = this.testSpecifier('remoteImportSpecifer');
+	it('relates a external ImportSpecifer', function () {
+		const result = this.testSpecifier(escape('EventEmitter'));
 		const { children, declaration } = result;
-		log.info(
-			declaration.valueNode.getText(),
-			DeclarationGroup[declaration.group],
-		);
+		assert.exists(declaration);
+		const { valueNode } = declaration;
+		assert.exists(valueNode);
+		assert.equal(valueNode.kind, ts.SyntaxKind.ClassDeclaration);
+		assert.equal(declaration.category, CategoryKind.Class);
+		assert.isTrue(declaration.flags.isExternal);
 	});
 	it('maps an export ModuleDeclaration', function () {
-		const result = this.testSpecifier('moduleDeclaration');
+		const result = this.testSpecifier(escape('moduleDeclaration'));
 		const { children, declaration } = result;
 		const localKeys = Array.from(declaration.localDeclarationMap.keys());
 
-		assert.sameMembers(children, ['childSpace']);
-		assert.sameMembers(localKeys, ['local']);
+		assert.sameMembers(localKeys, [escape('local'), escape('childSpace')]);
+		const local = declaration.localDeclarationMap.get(escape('local'));
+		const childSpace = declaration.localDeclarationMap.get(
+			escape('childSpace'),
+		);
+		assert.exists(local?.doxSourceFile.fileName);
+		assert.exists(childSpace?.doxSourceFile.fileName);
+		assert.notEqual(
+			local?.doxSourceFile.fileName,
+			childSpace?.doxSourceFile.fileName,
+		);
+		assert.sameMembers(Array.from(local!.localDeclarationMap.keys()), [
+			escape('foo'),
+			escape('bar'),
+		]);
+		assert.sameMembers(Array.from(childSpace!.localDeclarationMap.keys()), [
+			escape('grandchild'),
+			escape('grandchildType'),
+			escape('child'),
+			escape('childType'),
+			escape('childClause'),
+		]);
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal((valueNode as any).name.getText(), 'moduleDeclaration');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Module,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Namespace,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, 'moduleDeclaration');
 	});
-	it('maps a local ModuleDeclaration', function () {
-		const result = this.testSpecifier('local');
+	it('relates a local ModuleDeclaration', function () {
+		const result = this.testSpecifier(escape('local'));
 		const { children, declaration } = result;
 		assert.sameMembers(children, []);
 		assert.sameMembers(Array.from(declaration.localDeclarationMap.keys()), [
-			'foo',
+			escape('foo'),
 			'bar',
 		]);
 		assert.equal(declaration.wrappedItem?.name, 'local');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Module,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Namespace,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, 'local');
 	});
 
-	it('maps a NamespaceExport', function () {
-		const result = this.testSpecifier('childSpace');
-		const { children, declaration } = result;
-
-		assert.sameMembers(children, [
-			'default',
-			'child',
-			'grandchild',
-			'childSpace',
-			'grandchildType',
-			'childType',
-			'childClause',
+	it('relates a NamespaceExport', function () {
+		const result = this.testSpecifier(escape('namespaceExport'));
+		const { declaration } = result;
+		log.info(declaration.doxReference.program.getRootFileNames());
+		assert.sameMembers(Array.from(declaration.localDeclarationMap.keys()), [
+			escape('child'),
+			escape('childType'),
+			escape('childClause'),
+			escape('childSpace'),
+			escape('grandchild'),
+			escape('grandchildType'),
 		]);
 		const { valueNode } = declaration;
-		assert.equal(valueNode.getText(), '* as childSpace');
+		assert.equal(valueNode.getText(), '* as namespaceExport');
 
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Module,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Namespace,
+			CategoryKind[declaration.category!],
 		);
-		assert.equal(declaration.nameSpace, 'childSpace');
+		assert.equal(declaration.nameSpace, 'namespaceExport');
 	});
-	it('maps a NamespaceImport', function () {
-		const result = this.testSpecifier('grandchildSpace');
-		const { children, declaration } = result;
-		assert.sameMembers(children, [
-			'grandchild',
-			'childSpace',
-			'grandchildType',
+	it('relates a NamespaceImport', function () {
+		const result = this.testSpecifier(escape('grandchildSpace'));
+		const { declaration } = result;
+		log.info(declaration.doxReference.program.getRootFileNames());
+		assert.sameMembers(Array.from(declaration.localDeclarationMap.keys()), [
+			escape('grandchild'),
+			escape('childSpace'),
+			escape('grandchildType'),
 		]);
 		const { valueNode } = declaration;
 		assert.equal(valueNode.getText(), 'grandchildSpace');
 		assert.equal(
-			declaration.group,
-			DeclarationGroup.Module,
-			DeclarationGroup[declaration.group!],
+			declaration.category,
+			CategoryKind.Namespace,
+			CategoryKind[declaration.category!],
 		);
 		assert.equal(declaration.nameSpace, 'grandchildSpace');
 	});
-	it('maps a Common export', function () {
-		const result = this.testSpecifier('export=', undefined, 'common');
+	it.skip('relates an external NamespaceImport', function () {
+		const result = this.testSpecifier(escape('fs'));
+		const { children, declaration } = result;
+		log.info(
+			this.errors,
+			declaration.name,
+			children,
+			declaration.localDeclarationMap,
+		);
+	});
+	it.only('relates an InterfaceDeclaration', function () {
+		const result = this.testSpecifier(escape('interfaceDeclaration'));
+		const { children, declaration } = result;
+		log.info(
+			this.errors,
+			declaration.name,
+			children,
+			declaration.localDeclarationMap,
+		);
+	});
+	it('relates a Common export', function () {
+		const result = this.testSpecifier(
+			escape('export='),
+			undefined,
+			'common',
+		);
 		const { declaration, children } = result;
 		assert.sameMembers(children, []);
 
 		testDefault(
 			declaration,
 			syntax.ObjectLiteralExpression,
-			DeclarationGroup.Variable,
+			CategoryKind.Variable,
 		);
 	});
-
-	it('maps a default array Common export', function () {
+	it('relates a default array Common export', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'default/array.ts',
 			'common',
 		);
@@ -413,65 +460,53 @@ export default function () {
 		testDefault(
 			declaration,
 			syntax.ArrayLiteralExpression,
-			DeclarationGroup.Variable,
+			CategoryKind.Variable,
 		);
 	});
-	it('maps a default arrowFunction Common export', function () {
+	it('relates a default arrowFunction Common export', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'default/arrowFunction.ts',
 			'common',
 		);
 		const { declaration, children } = result;
 		assert.sameMembers(children, []);
 
-		testDefault(
-			declaration,
-			syntax.ArrowFunction,
-			DeclarationGroup.Function,
-		);
+		testDefault(declaration, syntax.ArrowFunction, CategoryKind.Function);
 	});
-	it('maps a default class Common export', function () {
+	it('relates a default class Common export', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'default/class.ts',
 			'common',
 		);
 		const { declaration, children } = result;
 		assert.sameMembers(children, []);
-		testDefault(
-			declaration,
-			syntax.ClassExpression,
-			DeclarationGroup.Class,
-		);
+		testDefault(declaration, syntax.ClassExpression, CategoryKind.Class);
 	});
-	it('maps a default classInstance Common export', function () {
+	it('relates a default classInstance Common export', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'default/classInstance.ts',
 			'common',
 		);
 		const { declaration, children } = result;
 		assert.sameMembers(children, []);
-		testDefault(
-			declaration,
-			syntax.NewExpression,
-			DeclarationGroup.Variable,
-		);
+		testDefault(declaration, syntax.NewExpression, CategoryKind.Variable);
 	});
-	it('maps a default enum Common export', function () {
+	it('relates a default enum Common export', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'default/enum.ts',
 			'common',
 		);
 		const { declaration, children } = result;
 		assert.sameMembers(children, []);
-		testDefault(declaration, syntax.EnumDeclaration, DeclarationGroup.Enum);
+		testDefault(declaration, syntax.EnumDeclaration, CategoryKind.Enum);
 	});
-	it('maps a default function Common export', function () {
+	it('relates a default function Common export', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'default/function.ts',
 			'common',
 		);
@@ -480,12 +515,12 @@ export default function () {
 		testDefault(
 			declaration,
 			syntax.FunctionExpression,
-			DeclarationGroup.Function,
+			CategoryKind.Function,
 		);
 	});
-	it('maps a default object Common export', function () {
+	it('relates a default object Common export', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'default/object.ts',
 			'common',
 		);
@@ -494,40 +529,32 @@ export default function () {
 		testDefault(
 			declaration,
 			syntax.ObjectLiteralExpression,
-			DeclarationGroup.Variable,
+			CategoryKind.Variable,
 		);
 	});
-	it('maps a default string Common export', function () {
+	it('relates a default string Common export', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'default/string.ts',
 			'common',
 		);
 		const { declaration, children } = result;
 		assert.sameMembers(children, []);
-		testDefault(
-			declaration,
-			syntax.StringLiteral,
-			DeclarationGroup.Variable,
-		);
+		testDefault(declaration, syntax.StringLiteral, CategoryKind.Variable);
 	});
-	it('maps a default symbol Common export', function () {
+	it('relates a default symbol Common export', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'default/symbol.ts',
 			'common',
 		);
 		const { declaration, children } = result;
 		assert.sameMembers(children, []);
-		testDefault(
-			declaration,
-			syntax.CallExpression,
-			DeclarationGroup.Variable,
-		);
+		testDefault(declaration, syntax.CallExpression, CategoryKind.Variable);
 	});
-	it('maps a default type Common export', function () {
+	it('relates a default type Common export', function () {
 		const result = this.testSpecifier(
-			'export=',
+			escape('export='),
 			'default/type.ts',
 			'common',
 		);
@@ -536,7 +563,7 @@ export default function () {
 		testDefault(
 			declaration,
 			syntax.TypeAliasDeclaration,
-			DeclarationGroup.Type,
+			CategoryKind.Type,
 		);
 	});
 }
@@ -548,7 +575,7 @@ it('test', function () {
 
 function testSpecifier(
 	this: Context,
-	key: string,
+	key: __String,
 	file: string = 'index.ts',
 	factory: doxStub.factoryFolders = localFactory,
 ) {
@@ -556,10 +583,10 @@ function testSpecifier(
 
 	const declaration = declarationFactory(factory, key, file);
 	assert.exists(declaration, 'declaration');
-	const { relate: mapRelationships, wrappedItem } = declaration!;
+	const { relate, wrappedItem } = declaration!;
 
-	assert.doesNotThrow(() => mapRelationships(wrappedItem, false));
-	assert.lengthOf(this.errors, 0, JSON.stringify(this.error, null, 4));
+	assert.doesNotThrow(() => relate(wrappedItem));
+	assert.lengthOf(this.errors, 0, JSON.stringify(this.errors, null, 4));
 
 	return {
 		children: Array.from(declaration!.children.keys()),
@@ -569,6 +596,7 @@ function testSpecifier(
 	function resetErrors(this: Context) {
 		if (this.errorStub) this.errorStub.restore();
 		this.errorStub = stub(log, 'error').callsFake((...args) => {
+			console.log(args);
 			this.errors.push(args[1]);
 			return false;
 		});
@@ -577,7 +605,7 @@ function testSpecifier(
 function testDefault(
 	declaration: DoxDeclaration,
 	expectedKind: ts.SyntaxKind,
-	expectedGroup: DeclarationGroup,
+	expectedGroup: CategoryKind,
 ) {
 	const { valueNode, wrappedItem, flags } = declaration;
 	assert.isTrue(flags.isDefault);
@@ -595,8 +623,8 @@ function testDefault(
 		wrappedItem.kindString,
 	);
 	assert.equal(
-		declaration.group,
+		declaration.category,
 		expectedGroup,
-		DeclarationGroup[declaration.group],
+		CategoryKind[declaration.category],
 	);
 }

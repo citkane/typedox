@@ -9,23 +9,21 @@ const localLogLevel = logLevels.silent;
 export default function () {
 	describe('class DoxConfig', function () {
 		const { tsConfigPath } = compilerFactory('configs');
-		const getDoxConfig = () => {
-			return new DoxConfig(config.getDoxOptions(), []);
-		};
 
 		before(function () {
 			log.setLogLevel(doxStub.globalLogLevel || localLogLevel);
 		});
 
 		it('creates a class', function () {
-			assert.doesNotThrow(
-				() => new DoxConfig(config.getDoxOptions(), []),
-			);
+			assert.doesNotThrow(() => new DoxConfig());
 		});
 
 		it('errors if entry conf does not exist', function () {
 			const badRoot = path.join(doxStub.rootDir, '../', 'foobar');
-			const options = config.getDoxOptions(['--projectRootDir', badRoot]);
+			const options = config.makeDoxOptions(undefined, [
+				'--projectRootDir',
+				badRoot,
+			]);
 
 			assert.throws(
 				() => new DoxConfig(options),
@@ -34,8 +32,8 @@ export default function () {
 		});
 
 		it('errors if entry conf is not under the root directory', function () {
-			const projectDir = doxStub.projectDir('groups');
-			const options = config.getDoxOptions([
+			const projectDir = doxStub.projectDir('categories');
+			const options = config.makeDoxOptions(undefined, [
 				'--projectRootDir',
 				path.join(projectDir, 'child'),
 			]);
@@ -48,24 +46,16 @@ export default function () {
 
 		it('can create a custom project', function () {
 			let doxConfig;
-			const options = config.getDoxOptions(['--tsConfigs', tsConfigPath]);
+			const options = config.makeDoxOptions(undefined, [
+				'--tsConfigs',
+				tsConfigPath,
+			]);
 			assert.doesNotThrow(() => (doxConfig = new DoxConfig(options)));
 			assert.equal((doxConfig as any).tsConfigs[0], tsConfigPath);
 		});
-		it('can create a commandline project', function () {
-			let doxConfig;
-			assert.doesNotThrow(
-				() =>
-					(doxConfig = new DoxConfig(config.getDoxOptions(), [
-						'--project',
-						tsConfigPath,
-					])),
-			);
-			assert.equal((doxConfig as any).getClProject()[0], tsConfigPath);
-		});
 
 		it('has correctly formed options', function () {
-			const defaultOptions = config.getDoxOptions();
+			const defaultOptions = config.makeDoxOptions();
 			const expected = {
 				...defaultOptions,
 				...{
@@ -81,16 +71,16 @@ export default function () {
 						),
 					],
 				},
-			};
+			} as unknown as config.coreDoxOptions;
 			log.debug({
 				expected,
-				got: getDoxConfig().options,
+				got: new DoxConfig().options,
 			});
-			assert.deepEqual(expected, getDoxConfig().options);
+			assert.deepEqual(expected, new DoxConfig().options);
 		});
 
 		it('has parsed tsc configs', function () {
-			const parsedConfigs = (getDoxConfig() as any).tscParsedConfigs;
+			const parsedConfigs = (new DoxConfig() as any).tscParsedConfigs;
 			assert.isTrue(!!parsedConfigs && parsedConfigs.length > 0);
 		});
 	});

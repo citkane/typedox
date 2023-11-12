@@ -1,1 +1,2 @@
-export { DoxWidgetDrawer } from './DoxWidgetDrawer.js';
+export * from './WidgetDrawer.js';
+export * from './Icons.js';

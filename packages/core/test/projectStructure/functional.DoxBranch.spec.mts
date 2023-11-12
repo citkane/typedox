@@ -4,16 +4,18 @@ import { stub } from 'sinon';
 
 import { log, logLevels } from '@typedox/logger';
 import { doxStub, projectFactory } from '@typedox/test';
+import ts from 'typescript';
 
 const localLogLevel = logLevels.silent;
 const localFactory = 'specifiers';
+const escape = ts.escapeLeadingUnderscores;
 
 let _doxReference: DoxReference;
 const reference = () =>
 	(_doxReference ??= projectFactory.specDoxReference(localFactory));
 let _declarations: DoxDeclaration[];
 const declarations = () => {
-	return (_declarations ??= reference().getRootDeclarations());
+	return (_declarations ??= (reference() as any).getRootDeclarations());
 };
 declare module 'mocha' {
 	export interface Context {
@@ -34,7 +36,9 @@ export default function () {
 	it('creates a class instance', function () {
 		let branch!: Branch;
 		const reference = doxStub.doxReference(localFactory);
-		const declarations = [doxStub.doxDeclaration(localFactory, 'localVar')];
+		const declarations = [
+			doxStub.doxDeclaration(localFactory, escape('localVar')),
+		];
 		new Branch(reference, declarations);
 		assert.doesNotThrow(
 			() => (branch = new Branch(reference, declarations)),
@@ -71,11 +75,11 @@ export default function () {
 		const branch = new Branch(reference(), declarations());
 
 		const badDeclaration = doxStub.deepClone(declarations()[0]);
-		badDeclaration.group = 500;
+		badDeclaration.category = 500;
 		(branch as any).registerDeclaration(badDeclaration);
 		assert.include(
 			report,
-			'Did not find a group for a declaration',
+			'Did not find a category for a declaration',
 			report,
 		);
 	});

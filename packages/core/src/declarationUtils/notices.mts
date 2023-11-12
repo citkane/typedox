@@ -23,17 +23,16 @@ export const notices = {
 		function (
 			this: Relate | Declare,
 			wrapped: TsWrapper,
-			notFound: string,
-			trace: string,
-			message = 'Did not find a',
+			fileName?: string,
 		) {
+			const message = fileName
+				? `Could not get a ts.Symbol for: ${fileName}`
+				: `Could not get a target fileName.`;
 			log.throwError(
 				log.identifier(this),
 				`[${wrapped.kindString}]`,
 				message,
-				`${notFound}`,
 				wrapped.report,
-				//trace,
 			);
 		},
 	report:
@@ -66,7 +65,7 @@ export const notices = {
 			log.identifier(fileName),
 			'Did not discover a category kind:',
 			ts.SyntaxKind[tsKind],
-			wrapped.report,
+			wrapped.error,
 		);
 	},
 };

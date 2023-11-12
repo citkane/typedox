@@ -7,7 +7,7 @@ import { compilerFactory, doxStub } from '@typedox/test';
 import wrapper, { TsWrapper, utils } from '@typedox/wrapper';
 
 const localLogLevel = logLevels.silent;
-const localFactory = 'groups';
+const localFactory = 'categories';
 
 const { compiler, projectDir } = compilerFactory(localFactory);
 

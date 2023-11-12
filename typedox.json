@@ -1,5 +1,3 @@
 {
-	"typeDependencies": [],
-	"logLevel": "info",
-	"tsConfigs": []
+	"logLevel": "info"
 }

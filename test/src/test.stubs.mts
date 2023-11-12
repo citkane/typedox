@@ -1,4 +1,4 @@
-import ts from 'typescript';
+import ts, { __String } from 'typescript';
 import path from 'path';
 import {
 	DoxConfig,
@@ -8,13 +8,13 @@ import {
 	DoxReference,
 	DoxSourceFile,
 	config,
-	tsItem,
 } from '@typedox/core';
 
 const globalLogLevel: logLevels | undefined = undefined; //logLevels.error;
+const escape = ts.escapeLeadingUnderscores;
+const doxArgs = new config.CoreArgsApi();
 
-/** The default project root directory (probably process.cwd()) */
-const rootDir = config.doxArgs.projectRootDir.defaultValue;
+const rootDir = path.join(process.cwd(), doxArgs.projectRootDir.defaultValue);
 const projectFactoryDir = path.join(rootDir, 'test/projectFactory');
 const projectDir = (factory: factoryFolders) =>
 	path.join(projectFactoryDir, factory);
@@ -23,7 +23,7 @@ const factoryFolders = [
 	'common',
 	'configs',
 	'ems',
-	'groups',
+	'categories',
 	'scopes',
 	'specifiers',
 	'overloading',
@@ -35,7 +35,7 @@ const ensureAbsPath = config.ensureAbsPath.bind(null, rootDir);
 /** A string of five spaces */
 const spacer = ' '.repeat(5);
 
-const defaultDoxConfigPath = ensureAbsPath(config.doxArgs.typedox.defaultValue);
+const defaultDoxConfigPath = ensureAbsPath(doxArgs.typedox.defaultValue);
 const configs = {
 	/** As per the src definition, not test - usually process.cwd()/typedox.json */
 	defaultDoxConfigPath,
@@ -63,10 +63,9 @@ export {
 
 import { assert } from 'chai';
 import { compilerFactory } from './factories/compilerFactory.mjs';
-import { logLevels } from '@typedox/logger';
-import wrapper, { TsWrapper } from '@typedox/wrapper';
+import { log, logLevels } from '@typedox/logger';
 
-function itExists(key: string, item: any, map: Map<string, any>) {
+function itExists(key: __String, item: any, map: Map<__String, any>) {
 	assert.exists(
 		item,
 		`"${key}" does not exist in [\n${spacer}${spacer}${Array.from(
@@ -75,16 +74,17 @@ function itExists(key: string, item: any, map: Map<string, any>) {
 	);
 }
 /** Extracts a doxDeclaration from the given key in a doxSourcefile. Errors with all available keys logged */
-function getDeclaration(this: DoxSourceFile, key: string) {
+function getDeclaration(this: DoxSourceFile, key: __String) {
 	const declaration = this.declarationsMap.get(key);
 	itExists(key, declaration, this.declarationsMap);
 	return declaration;
 }
 /** Gets an exported ts.Symbol child from the given key. Errors with all available keys logged */
-function getExportedSymbol(this: ts.Symbol, key: string) {
+function getExportedSymbol(this: ts.Symbol, key: __String) {
 	const exports = this.exports!;
 	const symbol = exports.get(key as any);
-	itExists(key, symbol, exports as Map<string, ts.Symbol>);
+
+	itExists(key, symbol, exports);
 
 	return symbol;
 }
@@ -92,15 +92,21 @@ function getExportedSymbol(this: ts.Symbol, key: string) {
 function doxReference(
 	folder: factoryFolders,
 	checker?: ts.TypeChecker,
-	program?: ts.Program,
+	parsedConfig?: ts.ParsedCommandLine,
 ) {
 	const { compiler } = compilerFactory(folder);
-	if (!checker || !program) {
-		({ checker, program } = compiler());
+	if (!checker || !parsedConfig) {
+		({ checker, parsedConfig } = compiler());
 	}
-	return new DoxReference(doxPackage(), 'testStubReference', program, []);
+	return new DoxReference(
+		doxPackage(),
+		'testStubReference',
+		parsedConfig,
+		1,
+		0,
+	);
 }
-function doxProject(options = config.getDefaultDoxOptions()) {
+function doxProject(options = config.getDefaultDoxOptions(doxArgs)) {
 	return {
 		options: new DoxConfig(options).options,
 	} as DoxProject;
@@ -114,19 +120,22 @@ function doxPackage() {
 }
 function doxSourceFile(folder: factoryFolders) {
 	const { compiler } = compilerFactory(folder);
-	const { getFile, checker, program } = compiler();
+	const { getFile, checker, parsedConfig } = compiler();
 	const sourceFile = getFile().sourceFile;
 	const fileSymbol = getFile().sourceSymbol;
-	const reference = doxReference(folder, checker, program);
-	return new DoxSourceFile(reference, sourceFile!, fileSymbol);
+	const reference = doxReference(folder, checker, parsedConfig);
+	return new DoxSourceFile(reference, sourceFile!);
 }
-function doxDeclaration(folder: factoryFolders, declaration: string) {
+function doxDeclaration(folder: factoryFolders, declarationName: __String) {
 	const sourceFile = doxSourceFile(folder);
-	const exportKeys = Array.from(sourceFile.fileSymbol.exports?.keys() || []);
-	const symbol = getExportedSymbol.call(sourceFile.fileSymbol, declaration);
+	const exportKeys = Array.from(sourceFile.fileSymbol?.exports?.keys() || []);
+	const symbol = getExportedSymbol.call(
+		sourceFile.fileSymbol,
+		declarationName,
+	);
 	if (!symbol)
 		throw Error(
-			`Declared symbol "${declaration}" not found in: ${JSON.stringify(
+			`Declared symbol "${declarationName}" not found in: ${JSON.stringify(
 				exportKeys,
 			)}`,
 		);

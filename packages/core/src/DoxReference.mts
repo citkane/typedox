@@ -8,7 +8,7 @@ import {
 	DoxPackage,
 	DoxSourceFile,
 	tsItem,
-} from '../index.mjs';
+} from './index.mjs';
 import { Dox } from './Dox.mjs';
 
 const __filename = log.getFilename(import.meta.url);
@@ -70,12 +70,14 @@ export class DoxReference extends Dox {
 				return;
 			}
 			const doxSourceFile = new DoxSourceFile(this, sourceFile);
+			if (doxSourceFile.error || doxSourceFile.json) return;
 			this.filesMap.set(doxSourceFile.fileName, doxSourceFile);
 		});
 
 		this.filesMap.forEach((doxFile) => doxFile.discoverDeclarations());
 		this.filesMap.forEach((doxFile) => doxFile.buildRelationships());
 		const rootDeclarations = this.getRootDeclarations();
+
 		this.doxBranch = new DoxBranch(this, rootDeclarations);
 	}
 
@@ -88,9 +90,8 @@ export class DoxReference extends Dox {
 	public get doxOptions() {
 		return this.doxProject.options;
 	}
-	public tsWrap = (item: tsItem): TsWrapper | undefined => {
+	public tsWrap = (item: tsItem): TsWrapper => {
 		const wrapped = wrap(this.checker, this.program, item);
-		if (!wrapped) notices.noWrap(item);
 		return wrapped;
 	};
 
@@ -162,34 +163,5 @@ const notices = {
 				'Error in ts.Program:',
 				String(fileName),
 			),
-	},
-	discoverFiles: {
-		fileSourceError: (fileName: string) =>
-			log.error(
-				log.identifier(__filename),
-				'No source file was found for:',
-				fileName,
-			),
-		fileSymbolWarning: (fileName: string, message: string) =>
-			log.warn(
-				log.identifier(__filename),
-				message,
-				'File was not included as part of the documentation set:',
-				fileName,
-			),
-	},
-	noWrap: (item: tsItem) => {
-		const message = isSymbol(item) ? item.name : item.getText();
-		log.error(
-			log.identifier(__filename),
-			'Could not wrap a item:',
-			message,
-		);
-	},
-	calledMultiple: function (this: DoxReference) {
-		log.error(
-			log.identifier(this),
-			'Can only call "buildRelationships" once',
-		);
 	},
 };

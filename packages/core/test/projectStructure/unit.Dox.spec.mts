@@ -2,7 +2,6 @@ import ts from 'typescript';
 import { assert } from 'chai';
 import { log, logLevels } from '@typedox/logger';
 import { compilerFactory, doxStub, projectFactory } from '@typedox/test';
-import { Dox } from '@typedox/core';
 import wrapper from '@typedox/wrapper';
 
 const localLogLevel = logLevels.silent;

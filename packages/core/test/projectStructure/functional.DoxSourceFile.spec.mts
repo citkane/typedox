@@ -5,7 +5,7 @@ import { log, logLevels } from '@typedox/logger';
 import { compilerFactory, doxStub, projectFactory } from '@typedox/test';
 
 const localLogLevel = logLevels.silent;
-const localFactory = 'groups';
+const localFactory = 'categories';
 
 const { compiler } = compilerFactory(localFactory);
 
@@ -22,43 +22,29 @@ export default function () {
 	});
 
 	it('creates a class instance', function () {
-		const { getFile, checker, program } = compiler();
+		const { getFile, checker, parsedConfig } = compiler();
 		const sourceFile = getFile().sourceFile;
 		const fileSymbol = getFile().sourceSymbol;
-		const reference = doxStub.doxReference(localFactory, checker, program);
+		const reference = doxStub.doxReference(
+			localFactory,
+			checker,
+			parsedConfig,
+		);
 
 		assert.exists(sourceFile, 'sourceFile');
 		assert.exists(fileSymbol, 'fileSymbol');
 		assert.exists(reference, 'reference');
 
-		assert.doesNotThrow(
-			() => new DoxSourceFile(reference, sourceFile!, fileSymbol),
-		);
+		assert.doesNotThrow(() => new DoxSourceFile(reference, sourceFile!));
 	});
-	it('discovers files referenced within the file', function () {
-		const sourceFile = doxSourceFile();
-		const { discoverChildFiles } = sourceFile as any;
 
-		const exports = sourceFile.fileSymbol.exports?.values();
-		const symbols = Array.from(exports || []);
-		assert.isTrue(
-			!!symbols && !!symbols.length,
-			'did not get export symbols',
-		);
-		let discoveredFiles!: string[];
-
-		assert.doesNotThrow(
-			() => (discoveredFiles = discoverChildFiles(symbols)),
-		);
-		assert.lengthOf(discoveredFiles, 3);
-	});
 	it('discovers declarations in the file', function () {
 		const {
 			doxReference,
 			sourceFile: source,
 			fileSymbol,
 		} = doxSourceFile();
-		const freshSource = new DoxSourceFile(doxReference, source, fileSymbol);
+		const freshSource = new DoxSourceFile(doxReference, source);
 		const size = freshSource.fileSymbol.exports?.size || 0;
 		assert.isTrue(
 			size > 10,
