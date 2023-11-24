@@ -1,0 +1,29 @@
+{
+	"name": "moduleImportClause",
+	"category": 3,
+	"flags": {
+		"type": "Object",
+		"isDefault": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Namespace.default",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				503,
+				621,
+				20,
+				26
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/specifiers"
+	}
+}

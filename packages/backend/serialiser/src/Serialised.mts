@@ -1,36 +1,75 @@
 import ts from 'typescript';
-import { serialiseCommentsAndTags } from './commentsAndTags/commentsAndTags.mjs';
-import { makeDeclarationLocation } from './location/location.mjs';
+import { serialiseComments } from './commentsAndTags/commentsAndTags.mjs';
 import { serialiseType } from './types/types.mjs';
-import { DeclarationSerialised } from './index.mjs';
-import { DoxDeclaration } from '@typedox/core';
-import { log } from '@typedox/logger';
+import { DeclarationSerialised, filePositions } from './index.mjs';
+import { DeclarationFlags, DoxDeclaration, DoxSourceFile } from '@typedox/core';
 
 export class Serialised {
 	public serialised: DeclarationSerialised;
-	protected valueNode: ts.Node;
+
 	constructor(declaration: DoxDeclaration) {
-		const { flags, valueNode, id, wrappedItem, category, parents } =
+		const { valueNode, wrappedItem, category, doxOptions, name, location } =
 			declaration;
-		const { name } = wrappedItem;
-		const parentIds = Array.from(parents.keys()).map(
-			(declaration) => declaration.id,
-		);
-
-		const location = makeDeclarationLocation(declaration);
+		const flags = serialiseFlags(declaration.flags);
 		const type = serialiseType(declaration);
-		const jsDoc = serialiseCommentsAndTags(valueNode);
-
-		this.valueNode = valueNode;
+		const jsDocs = serialiseComments(wrappedItem);
+		const file = makeFileInfo(valueNode, doxOptions.projectRootDir);
+		const children = Array.from(declaration.children.values()).map(
+			(declaration) => declaration.location.query,
+		);
+		const parents = Array.from(declaration.parents.keys()).map(
+			(declaration) => declaration.location.query,
+		);
 		this.serialised = {
-			id,
 			name,
 			category,
 			flags,
 			location,
 			type,
-			jsDoc,
-			parents: parentIds,
+			jsDocs,
+			file,
+			children: children.length ? children : undefined,
+			parents: parents.length ? parents : undefined,
 		};
 	}
+}
+function serialiseFlags(flags: DeclarationFlags) {
+	const serialised = { ...flags };
+	serialised.type = serialised.type
+		? ts.TypeFlags[flags.type as ts.TypeFlags]
+		: undefined;
+
+	return serialised;
+}
+function makeFileInfo(node: ts.Node, projectRootDir: string) {
+	const positions = [] as filePositions;
+	//const { tsNode, tsSymbol } = wrappedItem;
+
+	const sourceFile = node.getSourceFile();
+	const fileText = sourceFile.getFullText();
+	const declarations = (node as any).symbol?.declarations;
+	const values = !!declarations ? (declarations as ts.Node[]) : [node];
+
+	values
+		?.reduce((accumulator, node) => {
+			const start = node.getFullStart();
+			const end = start + node.getFullWidth();
+			const startLine = fileText.substring(0, start).split('\n').length;
+			const endLine = fileText.substring(0, end).split('\n').length;
+
+			accumulator.push([start, end, startLine, endLine]);
+			return accumulator;
+		}, positions)
+		.sort((a, b) => (a[0] < b[0] ? -1 : 1));
+
+	const { fileName, dirPath } = DoxSourceFile.fileMeta(
+		sourceFile,
+		projectRootDir,
+	);
+
+	return {
+		positions,
+		fileName,
+		dirPath,
+	};
 }

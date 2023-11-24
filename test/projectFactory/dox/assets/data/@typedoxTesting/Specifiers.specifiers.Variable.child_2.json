@@ -1,0 +1,32 @@
+{
+	"name": "child",
+	"category": 6,
+	"flags": {
+		"type": "StringLiteral"
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Variable.child_2",
+		"hash": ""
+	},
+	"type": {
+		"kind": "StringLiteral",
+		"name": "string",
+		"valueString": "child"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				787,
+				848,
+				39,
+				40
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/specifiers"
+	},
+	"children": [
+		"@typedoxTesting/Specifiers.specifiers.Variable.child_1"
+	]
+}

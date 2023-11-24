@@ -1,0 +1,29 @@
+{
+	"name": "export=",
+	"category": 8,
+	"flags": {
+		"type": "Any",
+		"isDefault": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Common.common.Type.default",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				26,
+				48,
+				1,
+				2
+			]
+		],
+		"fileName": "type.ts",
+		"dirPath": "/common/default"
+	}
+}

@@ -1,0 +1,29 @@
+{
+	"name": "LocalClass",
+	"category": 4,
+	"flags": {
+		"type": "Object",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Bindings.bindings.Class.LocalClass",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				0,
+				53,
+				1,
+				3
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/bindings"
+	}
+}

@@ -1,0 +1,21 @@
+@import 'colour.scss';
+@import 'reset.scss';
+@import './materialSymbols/outlined.scss';
+@import './github-markdown.scss';
+:root {
+	--font-sansserif: Verdana, Geneva, Tahoma, sans-serif;
+	--font-monospace: 'Courier New', Courier, monospace;
+}
+body,
+html {
+	font-family: var(--font-sansserif);
+	font-size: 1rem;
+}
+* {
+	box-sizing: border-box;
+}
+
+@import 'widgets.scss';
+@import 'chrome.scss';
+@import 'navigation.scss';
+@import 'content.scss';

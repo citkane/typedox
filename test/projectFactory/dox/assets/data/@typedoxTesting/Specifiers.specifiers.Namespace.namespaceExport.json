@@ -1,0 +1,28 @@
+{
+	"name": "namespaceExport",
+	"category": 3,
+	"flags": {
+		"type": "Object"
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Namespace.namespaceExport",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				944,
+				995,
+				43,
+				45
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/specifiers"
+	}
+}

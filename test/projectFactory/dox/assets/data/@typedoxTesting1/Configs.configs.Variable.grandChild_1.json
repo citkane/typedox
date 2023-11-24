@@ -1,0 +1,29 @@
+{
+	"name": "grandChild",
+	"category": 6,
+	"flags": {
+		"type": "Any",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Configs.configs.Variable.grandChild_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				0,
+				39,
+				1,
+				1
+			]
+		],
+		"fileName": "grandchild.ts",
+		"dirPath": "/configs/grandchild"
+	}
+}

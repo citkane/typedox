@@ -1,4 +1,3 @@
-import func_DoxBranch from './functional.DoxBranch.spec.mjs';
 import func_DoxDeclaration from './functional.DoxDeclaration.spec.mjs';
 import func_DoxDeclarationRelations from './functional.DoxDeclarationRelations.spec.mjs';
 import func_DoxPackage from './functional.DoxPackage.spec.mjs';
@@ -16,7 +15,6 @@ const projectStructure = {
 		DoxDeclaration: func_DoxDeclaration,
 		DoxDeclarationRelations: func_DoxDeclarationRelations,
 		DoxPackage: func_DoxPackage,
-		DoxBranch: func_DoxBranch,
 	},
 	unit: {
 		Dox: unit_Dox,

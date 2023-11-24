@@ -1,4 +1,11 @@
-import { DeclarationFlags, CategoryKind } from '@typedox/core';
+import {
+	DeclarationFlags,
+	CategoryKind,
+	DoxEvents,
+	coreEventsApi,
+	DoxLocation,
+} from '@typedox/core';
+/*
 import {
 	serialiseBranch,
 	serialiseNamespace,
@@ -6,12 +13,21 @@ import {
 	serialiseProject,
 	serialiseReference,
 } from './projectStructure/projectStructure.mjs';
+*/
+import { serialiserEventsApi } from './serialiserEventsApi.mjs';
+import { mainEventsApi } from 'typedox/events';
+
+type eventsApi = mainEventsApi & serialiserEventsApi & coreEventsApi;
+export const events = new DoxEvents<eventsApi>(
+	mainEventsApi,
+	serialiserEventsApi,
+	coreEventsApi,
+);
 
 export * from './serialiserEventsApi.mjs';
 export * from './Serialiser.mjs';
 export * from './projectStructure/_index.mjs';
 export * from './commentsAndTags/_index.mjs';
-export * from './location/_index.mjs';
 export * from './types/_index.mjs';
 export * from './menus/_index.mjs';
 
@@ -32,35 +48,39 @@ export type menuBranch = {
 };
 
 export type jsDocCollection = (comment | tag)[];
+/*
 export type serialisedProject = ReturnType<typeof serialiseProject>;
 export type serialisedPackage = ReturnType<typeof serialisePackage>;
 export type serialisedReference = ReturnType<typeof serialiseReference>;
 export type serialisedBranch = ReturnType<typeof serialiseBranch>;
 export type serialisedNamespace = ReturnType<typeof serialiseNamespace>;
-
-export interface DoxLocation {
-	query: string;
-	hash: string;
-}
+*/
 export interface DeclarationType {
 	kind: string;
 	name: string;
-	id?: number;
-	valueString?: string;
 }
 export interface DeclarationSerialised {
-	id: number;
 	name: string;
 	category: CategoryKind;
 	flags: DeclarationFlags;
 	location: DoxLocation;
 	type: DeclarationType;
-	jsDoc: jsDocCollection | undefined;
+	file: fileInfo;
 	valueString?: string;
-	parents: number[];
+	jsDocs?: jsDocCollection[];
+	parents?: string[];
+	children?: string[];
 }
 
-export enum fooEnum {
-	foo,
-	bar,
-}
+export type fileInfo = {
+	positions: filePositions;
+	fileName: string;
+	dirPath: string;
+};
+export type filePosition = [
+	start: number,
+	end: number,
+	lineStart: number,
+	lineEnd: number,
+];
+export type filePositions = filePosition[];

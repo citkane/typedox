@@ -15,7 +15,7 @@ export const reportKeys: (keyof TsWrapper)[] = [
 	'targetFileName',
 	'nodeText',
 	'nodeDeclarationText',
-	'localDeclaration',
+	'localSymbol',
 	'name',
 	'alias',
 	'kindString',
@@ -32,7 +32,7 @@ export function parseReportKey(this: TsWrapper, key: keyof TsWrapper) {
 	key === 'moduleSpecifier' &&
 		value &&
 		(value = loggerUtils.shortenString((value as ts.Node).getText(), 200));
-	key === 'localDeclaration' &&
+	key === 'localSymbol' &&
 		value &&
 		(value = loggerUtils.shortenString(
 			(
@@ -76,8 +76,8 @@ export function getTsSymbolFromNodes(
 		'name' in node
 			? checker.getSymbolAtLocation(node.name as ts.Identifier)
 			: 'expression' in node
-			? checker.getSymbolAtLocation(node.expression as ts.Expression)
-			: stillNoSymbol(node);
+			  ? checker.getSymbolAtLocation(node.expression as ts.Expression)
+			  : stillNoSymbol(node);
 
 	if (!symbol) notices.throw;
 	return symbol!;
@@ -116,7 +116,6 @@ export function getTsSymbolFromNodes(
 
 export function getModuleSpecifier(node: ts.Node): ts.Expression | undefined {
 	if ('moduleSpecifier' in node) return node.moduleSpecifier as ts.Expression;
-	if (!!node.parent) return getModuleSpecifier(node.parent); //,seen);
 	return undefined;
 }
 

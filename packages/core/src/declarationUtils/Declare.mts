@@ -1,8 +1,9 @@
 import ts from 'typescript';
 import { DeclarationFlags, Dox, DoxDeclaration } from '../index.mjs';
-import { notices } from './notices.mjs';
+import { notices } from './libNotices.mjs';
 import { log } from '@typedox/logger';
 import { TsWrapper, isLiteral, isSpecifierKind } from '@typedox/wrapper';
+import { BindingResolver } from './BindingResolver.mjs';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -11,22 +12,28 @@ export class Declare extends Dox {
 	public declaration: DoxDeclaration;
 	public flags: DeclarationFlags = {};
 	public nameSpace?: string;
+	public bindingElement?: BindingResolver;
 
 	private _valueNode!: ts.Node;
 	private debug = notices.parse.debug.bind(this);
 
 	constructor(declaration: DoxDeclaration) {
 		super();
+
 		this.declaration = declaration;
-		this.valueNode = declaration.wrappedItem.tsNode;
+		this.flags.type = declaration.wrappedItem.tsType.flags;
 	}
 	public get valueNode() {
 		return this._valueNode;
 	}
-	public declare = (wrapped: TsWrapper, isTarget = false) => {
-		if (!isSpecifierKind(wrapped.kind)) {
-			this.valueNode = wrapped.tsNode;
+	public declare = (wrapped: TsWrapper, repeat = false) => {
+		if (!wrapped.isSpecifierKind) {
+			const { tsNode } = wrapped;
+			this.valueNode ??= ts.isVariableDeclaration(tsNode)
+				? tsNode.parent.parent
+				: tsNode;
 			this.categoryTsKind ??= wrapped.kind;
+
 			return;
 		}
 
@@ -42,7 +49,7 @@ export class Declare extends Dox {
 					this.declaration,
 					wrapped,
 					'declare',
-					isTarget,
+					repeat,
 					__filename,
 			  );
 		function functionFactory(this: Declare) {
@@ -56,6 +63,7 @@ export class Declare extends Dox {
 				ModuleDeclaration: this.declareModuleDeclaration,
 				NamespaceExport: this.declareNamespaceExport,
 				NamespaceImport: this.declareNamespaceImport,
+				BindingElement: this.declareBindingElement,
 			};
 		}
 	};
@@ -70,19 +78,19 @@ export class Declare extends Dox {
 
 		this.flags.isDefault = true;
 		const expression = (wrapped.tsNode as ts.ExportAssignment).expression;
+		this.valueNode ??= wrapped.tsNode;
 
 		if (isLiteral(expression)) {
-			this.valueNode = expression.parent;
 			this.categoryTsKind = expression.kind;
 			return;
 		}
 
-		const expressionWrap = this.declaration.tsWrap(expression);
+		const expressionWrap = this.declaration.tsWrap([expression]);
 		const target =
 			wrapped.target || expressionWrap?.target || expressionWrap;
 
 		target
-			? this.declare(target)
+			? this.declare(target, true)
 			: notices.throw.call(this, wrapped, 'target');
 	};
 	/**
@@ -90,8 +98,9 @@ export class Declare extends Dox {
 	 */
 	private declareExportDeclaration = (wrapped: TsWrapper) => {
 		this.debug('ExportDeclaration');
-		this.flags.isReExporter = true;
-		//this.categoryTsKind = this.declaration.wrappedItem.kind;
+
+		this.categoryTsKind = ts.SyntaxKind.ExportDeclaration;
+		this.valueNode = wrapped.tsNode;
 	};
 	/**
 	 * export { child } from './child/child;
@@ -100,8 +109,9 @@ export class Declare extends Dox {
 	private declareExportSpecifier = (wrapped: TsWrapper) => {
 		this.debug('ExportSpecifier');
 
+		this.valueNode ??= wrapped.tsNode.parent.parent;
 		wrapped.target
-			? this.declare(wrapped.target)
+			? this.declare(wrapped.target, true)
 			: /* istanbul ignore next: soft error for debugging */
 			  notices.throw.call(this, wrapped, 'target');
 	};
@@ -111,14 +121,10 @@ export class Declare extends Dox {
 	 */
 	private declareImportClause = (wrapped: TsWrapper) => {
 		this.debug('ImportClause');
-		/*
-		const target =
-			wrapped.immediatelyAliasedSymbol || wrapped.aliasedSymbol;
-		log.info('_'.repeat(10), target?.name);
-		const wrappedTarget = target && this.declaration.tsWrap(target);
-		*/
+
+		this.valueNode ??= wrapped.tsNode.parent;
 		!!wrapped.target
-			? this.declare(wrapped.target)
+			? this.declare(wrapped.target, true)
 			: /* istanbul ignore next: soft error for debugging */
 			  notices.throw.call(this, wrapped, 'target');
 	};
@@ -130,8 +136,9 @@ export class Declare extends Dox {
 	private declareImportEqualsDeclaration = (wrapped: TsWrapper) => {
 		this.debug('ImportEqualsDeclaration');
 
+		this.valueNode ??= wrapped.tsNode;
 		!!wrapped.target
-			? this.declare(wrapped.target)
+			? this.declare(wrapped.target, true)
 			: /* istanbul ignore next: soft error for debugging */
 			  notices.throw.call(this, wrapped, 'target');
 	};
@@ -141,8 +148,9 @@ export class Declare extends Dox {
 	private declareImportSpecifier = (wrapped: TsWrapper) => {
 		this.debug('ImportSpecifier');
 
+		this.valueNode ??= wrapped.tsNode.parent.parent.parent;
 		!!wrapped.target
-			? this.declare(wrapped.target)
+			? this.declare(wrapped.target, true)
 			: /* istanbul ignore next: soft error for debugging */
 			  notices.throw.call(this, wrapped, 'target');
 	};
@@ -154,7 +162,7 @@ export class Declare extends Dox {
 		this.debug('ModuleDeclaration');
 
 		const node = wrapped.tsNode as ts.ModuleDeclaration;
-		this.valueNode = node;
+		this.valueNode ??= node;
 		this.nameSpace = node.name.getText();
 		this.categoryTsKind = node.kind;
 
@@ -181,6 +189,7 @@ export class Declare extends Dox {
 
 		this.nameSpace = wrapped.name;
 		this.categoryTsKind = ts.SyntaxKind.ModuleDeclaration;
+		this.valueNode ??= wrapped.tsNode.parent;
 	};
 	/**
 	 * import * as childSpace from '../child/child';
@@ -188,28 +197,23 @@ export class Declare extends Dox {
 	private declareNamespaceImport = (wrapped: TsWrapper) => {
 		this.debug('NamespaceImport');
 
+		this.valueNode ??= wrapped.tsNode.parent.parent;
 		const fnc = this.declareNamespaceExport;
 		fnc.call(this, wrapped, true);
 	};
-	/*
-		declareBindingElement( wrapped: TsWrapper) {
-			const topNode = ts.walkUpBindingElementsAndPatterns(
-				wrapped.tsNode as ts.BindingElement,
-			);
-			this.valueNode = topNode;
-			log.info(ts.SyntaxKind[topNode.kind]);
-			const { initializer } = topNode;
-			log.info(ts.SyntaxKind[topNode.initializer!.kind]);
-		},
-		
-		declareObjectLiteralExpression(
-			
-			wrapped: TsWrapper,
-		) {
-			this.categoryTsKind = ts.SyntaxKind.ModuleDeclaration;
-			this.valueItem = wrapped;
-		},
-		*/
+	/**
+	 * const {foo} = {foo, bar};
+	 * const [bar] = [foo, bar];
+	 */
+	private declareBindingElement = (wrapped: TsWrapper) => {
+		this.debug('BindingElement');
+
+		const { checker } = this.declaration;
+
+		this.bindingElement = new BindingResolver(checker, wrapped);
+		this.categoryTsKind = this.bindingElement.kind;
+		this.valueNode = this.bindingElement.declarationNode.parent.parent;
+	};
 
 	private set valueNode(node: ts.Node) {
 		this._valueNode = node;
@@ -218,26 +222,17 @@ export class Declare extends Dox {
 			const firstChild = node.parent.getChildAt(0)!;
 			const { LetKeyword, ConstKeyword, VarKeyword } = ts.SyntaxKind;
 			const { kind } = firstChild;
-			this.flags.scopeKeyword =
-				kind === LetKeyword
-					? 'let'
-					: kind === ConstKeyword
-					? 'const'
-					: kind === VarKeyword
-					? 'var'
-					: (undefined as never);
+			switch (kind) {
+				case LetKeyword:
+					this.flags.scopeKeyword = 'let';
+					break;
+				case ConstKeyword:
+					this.flags.scopeKeyword = 'const';
+					break;
+				case VarKeyword:
+					this.flags.scopeKeyword = 'var';
+					break;
+			}
 		}
 	}
-
-	/*
-	private declareLocal = (symbol: ts.Symbol, name?: string) => {
-		const declaration = new DoxDeclaration(this.declaration, symbol, true);
-		this.declaration.localDeclarationMap.set(
-			name || declaration.name,
-			declaration,
-		);
-
-		return declaration;
-	};
-	*/
 }

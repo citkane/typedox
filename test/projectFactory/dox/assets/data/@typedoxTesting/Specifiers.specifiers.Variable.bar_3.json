@@ -1,0 +1,33 @@
+{
+	"name": "bar",
+	"category": 6,
+	"flags": {
+		"type": "StringLiteral",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Variable.bar_3",
+		"hash": ""
+	},
+	"type": {
+		"kind": "StringLiteral",
+		"name": "string",
+		"valueString": "bar"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				46,
+				66,
+				2,
+				3
+			]
+		],
+		"fileName": "exportEqual.ts",
+		"dirPath": "/specifiers/exportEqual"
+	},
+	"parents": [
+		"@typedoxTesting/Specifiers.specifiers.Namespace.common"
+	]
+}

@@ -1,0 +1,29 @@
+{
+	"name": "LocalClass",
+	"category": 4,
+	"flags": {
+		"type": "Any",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Class.LocalClass_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				964,
+				1034,
+				28,
+				31
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/categories"
+	}
+}

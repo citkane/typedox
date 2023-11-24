@@ -1,0 +1,29 @@
+{
+	"name": "chords",
+	"category": 6,
+	"flags": {
+		"type": "Object",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Bindings.bindings.Variable.chords",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				248,
+				304,
+				13,
+				14
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/bindings"
+	}
+}

@@ -1,0 +1,29 @@
+{
+	"name": "variable",
+	"category": 6,
+	"flags": {
+		"type": "Any",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Variable.variable_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				0,
+				35,
+				1,
+				1
+			]
+		],
+		"fileName": "kinds.ts",
+		"dirPath": "/categories/child"
+	}
+}

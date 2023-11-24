@@ -1,0 +1,28 @@
+{
+	"name": "child",
+	"category": 3,
+	"flags": {
+		"type": "Object"
+	},
+	"location": {
+		"query": "@typedoxTesting1/Configs.configs.Namespace.child",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				56,
+				96,
+				2,
+				3
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/configs"
+	}
+}

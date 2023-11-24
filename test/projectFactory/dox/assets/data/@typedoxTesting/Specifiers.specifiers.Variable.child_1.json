@@ -1,0 +1,32 @@
+{
+	"name": "child",
+	"category": 6,
+	"flags": {
+		"type": "Any",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Variable.child_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				97,
+				127,
+				4,
+				5
+			]
+		],
+		"fileName": "child.ts",
+		"dirPath": "/specifiers/child"
+	},
+	"parents": [
+		"@typedoxTesting/Specifiers.specifiers.Variable.child_2"
+	]
+}

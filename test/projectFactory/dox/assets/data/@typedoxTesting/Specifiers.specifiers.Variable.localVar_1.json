@@ -1,0 +1,36 @@
+{
+	"name": "localVar",
+	"category": 6,
+	"flags": {
+		"type": "Union",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Variable.localVar_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Alias",
+		"name": "foo",
+		"id": 3
+	},
+	"jsDocs": [
+		[
+			{
+				"comment": "A local string variable"
+			}
+		]
+	],
+	"file": {
+		"positions": [
+			[
+				334,
+				405,
+				9,
+				12
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/specifiers"
+	}
+}

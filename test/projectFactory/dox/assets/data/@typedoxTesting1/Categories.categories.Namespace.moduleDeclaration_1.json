@@ -1,0 +1,29 @@
+{
+	"name": "moduleDeclaration",
+	"category": 3,
+	"flags": {
+		"type": "Any",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Namespace.moduleDeclaration_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				424,
+				492,
+				13,
+				17
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/categories"
+	}
+}

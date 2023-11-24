@@ -1,24 +1,59 @@
-import { DoxDeclaration, DoxEvents, config } from '@typedox/core';
+import { CategoryKind, config } from '@typedox/core';
 import { log } from '@typedox/logger';
-import { serialiserEventsApi } from './serialiserEventsApi.mjs';
-import { mainEventsApi } from 'typedox/events';
-import { serialiseProject, serialiseMainMenu } from './index.mjs';
+import {
+	events,
+	PackageMenu,
+	SerialiseVariable,
+	SerialiseClass,
+	SerialiseEnum,
+	SerialiseType,
+	SerialiseFunction,
+	SerialiseExport,
+	SerialiseNamespace,
+} from './index.mjs';
 
-type eventsApi = mainEventsApi & serialiserEventsApi;
 const __filename = log.getFilename(import.meta.url);
 
 export class Serialiser {
-	events: DoxEvents<eventsApi>;
-	options: config.coreDoxOptions;
 	constructor(options: config.coreDoxOptions) {
 		log.info(log.identifier(this), 'Serialiser is listening', '\n');
-		this.options = options;
 
-		this.events = new DoxEvents(serialiserEventsApi, mainEventsApi);
-		this.events.once('main.built.project', (project) => {
-			const serialisedProject = serialiseProject(project);
-			const menu = serialiseMainMenu(serialisedProject.packages);
-			this.events.emit('serialiser.mainMenu.serialised', menu);
+		new PackageMenu();
+
+		const { Variable, Class, Enum, Type, Function, Export, Namespace } =
+			CategoryKind;
+		events.on('core.declaration.related', (declaration) => {
+			switch (declaration.category) {
+				case Variable:
+					new SerialiseVariable(declaration);
+					break;
+				case Class:
+					new SerialiseClass(declaration);
+					break;
+				case Enum:
+					new SerialiseEnum(declaration);
+					break;
+				case Type:
+					new SerialiseType(declaration);
+					break;
+				case Function:
+					new SerialiseFunction(declaration);
+					break;
+				case Export:
+					new SerialiseExport(declaration);
+					break;
+				case Namespace:
+					new SerialiseNamespace(declaration);
+					break;
+			}
 		});
+
+		/*
+		events.once('main.built.project', (project) => {
+			const serialisedProject = serialiseProject(project);
+			const menu = serialisePackageMenu(serialisedProject.packages);
+			events.emit('serialiser.packageMenu.serialised', menu);
+		});
+		*/
 	}
 }

@@ -1,0 +1,28 @@
+{
+	"name": "nsImportSpecifier",
+	"category": 3,
+	"flags": {
+		"type": "Object"
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Namespace.nsImportSpecifier",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				681,
+				787,
+				30,
+				39
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/specifiers"
+	}
+}

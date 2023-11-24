@@ -1,0 +1,30 @@
+{
+	"name": "localDeclaration",
+	"category": 6,
+	"flags": {
+		"type": "StringLiteral",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Variable.localDeclaration_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "StringLiteral",
+		"name": "string",
+		"valueString": "localDeclaration"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				651,
+				696,
+				22,
+				23
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/categories"
+	}
+}

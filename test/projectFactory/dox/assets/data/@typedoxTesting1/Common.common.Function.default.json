@@ -1,0 +1,29 @@
+{
+	"name": "export=",
+	"category": 5,
+	"flags": {
+		"type": "Object",
+		"isDefault": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Common.common.Function.default",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				0,
+				18,
+				1,
+				1
+			]
+		],
+		"fileName": "arrowFunction.ts",
+		"dirPath": "/common/default"
+	}
+}

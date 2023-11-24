@@ -1,12 +1,6 @@
 import { assert } from 'chai';
 import * as path from 'path';
-import {
-	DoxPackage,
-	DoxDeclaration,
-	DoxReference,
-	DoxSourceFile,
-	Dox,
-} from '@typedox/core';
+import { DoxPackage, DoxReference, Dox } from '@typedox/core';
 import { stub } from 'sinon';
 
 import { log, logLevels } from '@typedox/logger';
@@ -47,21 +41,5 @@ export default function () {
 				)),
 		);
 		assert.isTrue(Dox.isDoxReference(reference));
-	});
-
-	it('gets the root declarations', function () {
-		const doxReference = doxPackage().doxReferences[0]; //projectFactory.specReference(factory);
-		let roots!: DoxDeclaration[];
-		assert.doesNotThrow(
-			() => (roots = (doxReference as any).getRootDeclarations()),
-		);
-		assert.isTrue(roots.length > 8, 'did not get root declarations');
-		roots.forEach((declaration) => {
-			assert.equal(
-				declaration.constructor.name,
-				'DoxDeclaration',
-				'was not a declaration',
-			);
-		});
 	});
 }

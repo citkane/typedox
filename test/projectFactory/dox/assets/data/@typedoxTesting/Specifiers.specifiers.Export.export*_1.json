@@ -1,0 +1,28 @@
+{
+	"name": "export*",
+	"category": 9,
+	"flags": {
+		"type": "Any"
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Export.export*_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				912,
+				944,
+				41,
+				43
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/specifiers"
+	}
+}

@@ -1,0 +1,1698 @@
+[
+	{
+		"name": "@typedoxTesting1/Bindings",
+		"meta": {
+			"category": 1
+		},
+		"children": [
+			{
+				"name": "bindings",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "LocalClass",
+						"meta": {
+							"category": 4,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Class.LocalClass",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "localFunction",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Function.localFunction",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "localProperty",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Function.localProperty_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "ba",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.ba_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "bar",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.bar_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "child",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.child_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "child",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.child_3",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "chords",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.chords",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "d",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.d_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "doe",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.doe_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "foo",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.foo",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "foobar",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.foobar_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "la",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.la_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "r",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.r_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "ra",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.ra_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "rem",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.rem_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "song",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Bindings.bindings.Variable.song",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			}
+		]
+	},
+	{
+		"name": "@typedoxTesting1/Categories",
+		"meta": {
+			"category": 1
+		},
+		"children": [
+			{
+				"name": "categories",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "childSpace",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Namespace.childSpace",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "default",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Namespace.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "emptyDeclaration",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Namespace.emptyDeclaration_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchildSpace",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Namespace.grandchildSpace",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchildSpace",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Namespace.grandchildSpace_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "moduleDeclaration",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Namespace.moduleDeclaration_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "rabbitHole",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Namespace.rabbitHole",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "Class",
+						"meta": {
+							"category": 4,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Class.Class_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "Class",
+						"meta": {
+							"category": 4,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Class.Class_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "LocalClass",
+						"meta": {
+							"category": 4,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Class.LocalClass_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "func",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Function.func_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "func",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Function.func_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "localFunc",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Function.localFunc_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "arrowFunc",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.arrowFunc_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "arrowFunc",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.arrowFunc_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "child",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.child_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "child",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.child_3",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "child",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.child_5",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "childReExport",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.childReExport_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "default",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "defaultExport",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.defaultExport",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "defaultExport",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.default_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.grandchild_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.grandchild_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "greatGrandchild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.greatGrandchild_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "greatGrandchild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.greatGrandchild_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "localAlias",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.localAlias",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "localDeclaration",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.localDeclaration_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "localExport",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.localExport_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "localMember",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.localMember",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "nsExport",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.nsExport",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "stars",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.stars_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "variable",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Variable.variable_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "enumerator",
+						"meta": {
+							"category": 7,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Enum.enumerator_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "enumerator",
+						"meta": {
+							"category": 7,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Enum.enumerator_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "isTypeOnly",
+						"meta": {
+							"category": 8,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Type.isTypeOnly_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export*",
+						"meta": {
+							"category": 9,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Export.export*",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export*",
+						"meta": {
+							"category": 9,
+							"location": {
+								"query": "@typedoxTesting1/Categories.categories.Export.export*_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			}
+		]
+	},
+	{
+		"name": "@typedoxTesting1/Common",
+		"meta": {
+			"category": 1
+		},
+		"children": [
+			{
+				"name": "common",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "export=",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Namespace.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchild",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Namespace.grandchild",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "DefaultClass",
+						"meta": {
+							"category": 4,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Class.DefaultClass",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 4,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Class.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Function.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Function.default_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "bar",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.bar_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "child",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.child",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.default_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.default_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.default_3",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.default_4",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.default_5",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.default_6",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "foo",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.foo_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.grandchild",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "localVar",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Variable.localVar",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "defaultEnum",
+						"meta": {
+							"category": 7,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Enum.defaultEnum",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 7,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Enum.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "defaultType",
+						"meta": {
+							"category": 8,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Type.defaultType",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 8,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Type.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "foo",
+						"meta": {
+							"category": 8,
+							"location": {
+								"query": "@typedoxTesting1/Common.common.Type.foo",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			}
+		]
+	},
+	{
+		"name": "@typedoxTesting1/Configs",
+		"meta": {
+			"category": 1
+		},
+		"children": [
+			{
+				"name": "configs",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "emptySpace",
+						"meta": {
+							"category": 11,
+							"location": {
+								"query": "@typedoxTesting1/Configs.configs.Namespace.emptySpace",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "child",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Configs.configs.Namespace.child",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchild",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Configs.configs.Namespace.grandchild",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "greatGrandchild",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting1/Configs.configs.Namespace.greatGrandchild",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "child",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Configs.configs.Variable.child_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandChild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Configs.configs.Variable.grandChild_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "greatGrandchild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Configs.configs.Variable.greatGrandchild_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			},
+			{
+				"name": "configs/child",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "child",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Configs.configs/child.Variable.child_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			},
+			{
+				"name": "configs/grandchild",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "grandChild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Configs.configs/grandchild.Variable.grandChild_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			},
+			{
+				"name": "configs/greatGrandchild",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "greatGrandchild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting1/Configs.configs/greatGrandchild.Variable.greatGrandchild_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			}
+		]
+	},
+	{
+		"name": "@typedoxTesting1/Ems",
+		"meta": {
+			"category": 1
+		},
+		"children": [
+			{
+				"name": "ems",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "default",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting1/Ems.ems.Function.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "main",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting1/Ems.ems.Function.main",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			}
+		]
+	},
+	{
+		"name": "@typedoxTesting/Overloading",
+		"meta": {
+			"category": 1
+		},
+		"children": [
+			{
+				"name": "overloading",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "explicit",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting/Overloading.overloading.Function.explicit_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "overloaded",
+						"meta": {
+							"category": 5,
+							"location": {
+								"query": "@typedoxTesting/Overloading.overloading.Function.overloaded_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "enumerator",
+						"meta": {
+							"category": 7,
+							"location": {
+								"query": "@typedoxTesting/Overloading.overloading.Enum.enumerator_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			}
+		]
+	},
+	{
+		"name": "@typedoxTesting/Scopes",
+		"meta": {
+			"category": 1
+		},
+		"children": [
+			{
+				"name": "scopes",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "constScope",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Scopes.scopes.Variable.constScope_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "letScope",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Scopes.scopes.Variable.letScope_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "varScope",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Scopes.scopes.Variable.varScope_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			}
+		]
+	},
+	{
+		"name": "@typedoxTesting/Specifiers",
+		"meta": {
+			"category": 1
+		},
+		"children": [
+			{
+				"name": "specifiers",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "EventEmitter",
+						"meta": {
+							"category": 11,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Class.EventEmitter",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "TypeScript",
+						"meta": {
+							"category": 11,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.default_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "fs",
+						"meta": {
+							"category": 11,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.fs_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "childSpace",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.childSpace",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "childSpace",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.childSpace_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "common",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.common",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export=",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.default_3",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchildSpace",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.grandchildSpace_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "local",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.local_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "moduleDeclaration",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.moduleDeclaration_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "moduleImportClause",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "namespaceExport",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.namespaceExport",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "nsImportSpecifier",
+						"meta": {
+							"category": 3,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Namespace.nsImportSpecifier",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "externalImportSpecifer",
+						"meta": {
+							"category": 4,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Class.externalImportSpecifer",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "bar",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.bar_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "bar",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.bar_3",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "child",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.child_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "child",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.child_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "childClause",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.childClause",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "clause",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.default_3",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "default",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.default",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "default",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.default_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "fileImportClause",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.default_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "foo",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.foo",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "foo",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.foo_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.grandchild_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchild",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.grandchild_3",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "localVar",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.localVar_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "remote",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Variable.remote",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "childType",
+						"meta": {
+							"category": 8,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Type.childType_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "childType",
+						"meta": {
+							"category": 8,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Type.childType_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchildType",
+						"meta": {
+							"category": 8,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Type.grandchildType_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "grandchildType",
+						"meta": {
+							"category": 8,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Type.grandchildType_2",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "interfaceDeclaration",
+						"meta": {
+							"category": 8,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Type.interfaceDeclaration_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "localType",
+						"meta": {
+							"category": 8,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Type.localType_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export*",
+						"meta": {
+							"category": 9,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Export.export*",
+								"hash": ""
+							}
+						},
+						"children": []
+					},
+					{
+						"name": "export*",
+						"meta": {
+							"category": 9,
+							"location": {
+								"query": "@typedoxTesting/Specifiers.specifiers.Export.export*_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			}
+		]
+	},
+	{
+		"name": "@typedoxTesting/Workspaces",
+		"meta": {
+			"category": 1
+		},
+		"children": [
+			{
+				"name": "@typedoxTesting/Workspaces1",
+				"meta": {
+					"category": 1
+				},
+				"children": [
+					{
+						"name": "@typedoxTesting/Workspace2",
+						"meta": {
+							"category": 1
+						},
+						"children": [
+							{
+								"name": "workspaces",
+								"meta": {
+									"category": 2
+								},
+								"children": [
+									{
+										"name": "workspace",
+										"meta": {
+											"category": 6,
+											"location": {
+												"query": "@typedoxTesting/Workspace2.workspaces.Variable.workspace_1",
+												"hash": ""
+											}
+										},
+										"children": []
+									}
+								]
+							}
+						]
+					},
+					{
+						"name": "workspaces",
+						"meta": {
+							"category": 2
+						},
+						"children": [
+							{
+								"name": "workspace",
+								"meta": {
+									"category": 6,
+									"location": {
+										"query": "@typedoxTesting/Workspaces1.workspaces.Variable.workspace_1",
+										"hash": ""
+									}
+								},
+								"children": []
+							}
+						]
+					}
+				]
+			},
+			{
+				"name": "workspaces",
+				"meta": {
+					"category": 2
+				},
+				"children": [
+					{
+						"name": "workspace",
+						"meta": {
+							"category": 6,
+							"location": {
+								"query": "@typedoxTesting/Workspaces.workspaces.Variable.workspace_1",
+								"hash": ""
+							}
+						},
+						"children": []
+					}
+				]
+			}
+		]
+	}
+]

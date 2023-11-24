@@ -1,0 +1,48 @@
+{
+	"name": "explicit",
+	"category": 5,
+	"flags": {
+		"type": "StringLiteral",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Overloading.overloading.Function.explicit_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "StringLiteral",
+		"name": "string",
+		"valueString": "explicitType"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				397,
+				436,
+				22,
+				23
+			],
+			[
+				436,
+				464,
+				23,
+				24
+			],
+			[
+				464,
+				503,
+				24,
+				25
+			],
+			[
+				503,
+				565,
+				25,
+				28
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/overloading"
+	}
+}

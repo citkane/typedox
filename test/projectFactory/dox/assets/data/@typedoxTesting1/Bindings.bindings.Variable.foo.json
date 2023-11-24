@@ -1,0 +1,29 @@
+{
+	"name": "foo",
+	"category": 6,
+	"flags": {
+		"type": "Object",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Bindings.bindings.Variable.foo",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				95,
+				123,
+				6,
+				7
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/bindings"
+	}
+}

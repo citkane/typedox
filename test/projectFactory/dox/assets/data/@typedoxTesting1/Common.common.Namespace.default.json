@@ -1,0 +1,29 @@
+{
+	"name": "export=",
+	"category": 3,
+	"flags": {
+		"type": "Object",
+		"isDefault": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Common.common.Namespace.default",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				72,
+				94,
+				4,
+				6
+			]
+		],
+		"fileName": "grandchild.ts",
+		"dirPath": "/common/grandchild"
+	}
+}

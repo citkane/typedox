@@ -1,5 +1,5 @@
 import 'source-map-support/register.js';
-import { log, logLevels } from '@typedox/logger';
+import { log } from '@typedox/logger';
 import { config, DoxProject, DoxEvents } from '@typedox/core';
 import { FileManager } from '@typedox/filemanager';
 import { Serialiser } from '@typedox/serialiser';
@@ -14,33 +14,19 @@ export default function main(customOptions?: config.options<any>) {
 	const projectConfig = new config.DoxConfig(customOptions);
 	const { options } = projectConfig;
 
-	events.emit('main.made.options', options, done);
+	events.emit('main.made.options', options);
 	config.deepFreeze(options);
 	events.emit('main.froze.options', options);
 	log.info(log.identifier(__filename), options);
-
-	if (isDone) return;
 
 	if (!log.isLogLevelSet) log.setLogLevel(options.logLevel);
 	new Serialiser(projectConfig.options);
 	new FileManager(projectConfig.options);
 	const doxProject = new DoxProject(projectConfig);
 
-	events.emit('main.built.project', doxProject!, done);
-	if (isDone) return;
+	events.emit('main.built.project', doxProject);
 
 	copyAssetsToDocs(options.doxOut, 'packages/frontend');
-}
-
-export type done = typeof done;
-export const cancel = {
-	isDone: false,
-	done,
-};
-function done(value?: any) {
-	isDone = true;
-	cancel.isDone = true;
-	events.emit('main.done', value);
 }
 
 export function logApplicationHelp() {

@@ -1,0 +1,33 @@
+{
+	"name": "foo",
+	"category": 6,
+	"flags": {
+		"type": "StringLiteral",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Variable.foo",
+		"hash": ""
+	},
+	"type": {
+		"kind": "StringLiteral",
+		"name": "string",
+		"valueString": "foo"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				432,
+				452,
+				14,
+				15
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/specifiers"
+	},
+	"parents": [
+		"@typedoxTesting/Specifiers.specifiers.Namespace.local_1"
+	]
+}

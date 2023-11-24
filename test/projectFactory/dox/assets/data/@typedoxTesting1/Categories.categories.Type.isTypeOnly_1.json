@@ -1,0 +1,29 @@
+{
+	"name": "isTypeOnly",
+	"category": 8,
+	"flags": {
+		"type": "String",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Type.isTypeOnly_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "String",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				575,
+				609,
+				19,
+				21
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/categories"
+	}
+}

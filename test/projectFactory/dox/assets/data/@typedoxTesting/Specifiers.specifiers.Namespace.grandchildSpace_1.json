@@ -1,0 +1,29 @@
+{
+	"name": "grandchildSpace",
+	"category": 3,
+	"flags": {
+		"type": "Object",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Namespace.grandchildSpace_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				203,
+				263,
+				5,
+				6
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/specifiers"
+	}
+}

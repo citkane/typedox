@@ -1,7 +1,7 @@
 import ts, { __String } from 'typescript';
 import notices from './notices.mjs';
 import { log } from '@typedox/logger';
-import { TsWrapper, wrap } from './Wrapper.mjs';
+import { TsWrapper } from './Wrapper.mjs';
 import {
 	declared,
 	getModuleSpecifier,
@@ -101,33 +101,30 @@ const cacheCallbacks = {
 	},
 	targetFileName: function (this: wrapContainer) {
 		const { wrapper, checker, program } = this;
-		const { tsNode, localDeclaration, target } = wrapper;
+		const { tsNode, target } = wrapper;
+
+		const moduleSpecifier = getModuleSpecifier(tsNode);
+
+		if (moduleSpecifier) {
+			const symbol = checker.getSymbolAtLocation(moduleSpecifier);
+			let fileName = symbol?.valueDeclaration?.getSourceFile().fileName;
+			fileName = fileName && path.resolve(fileName);
+			if (fileName) return fileName;
+
+			const { text } = moduleSpecifier as any;
+			fileName =
+				ts.resolveModuleName(
+					text as string,
+					moduleSpecifier.getSourceFile().fileName,
+					program.getCompilerOptions(),
+					ts.sys,
+				).resolvedModule?.resolvedFileName || (text as string);
+
+			fileName = fileName && path.resolve(fileName);
+			return fileName;
+		}
 		if (target) return path.resolve(target.fileName);
-
-		const targetNode: ts.Node =
-			localDeclaration?.valueDeclaration || tsNode;
-
-		if (ts.isSourceFile(targetNode))
-			return path.resolve(targetNode.fileName);
-
-		const moduleSpecifier = targetNode && getModuleSpecifier(targetNode);
-		if (!moduleSpecifier) return undefined;
-
-		const symbol = checker.getSymbolAtLocation(moduleSpecifier);
-		let fileName = symbol?.valueDeclaration?.getSourceFile().fileName;
-		fileName = fileName && path.resolve(fileName);
-		if (fileName) return fileName;
-		const { text } = moduleSpecifier as any;
-		fileName =
-			ts.resolveModuleName(
-				text as string,
-				moduleSpecifier.getSourceFile().fileName,
-				program.getCompilerOptions(),
-				ts.sys,
-			).resolvedModule?.resolvedFileName || (text as string);
-
-		fileName = fileName && path.resolve(fileName);
-		return fileName;
+		if (ts.isSourceFile(tsNode)) return path.resolve(tsNode.fileName);
 	},
 	fileName: function (this: wrapContainer) {
 		const { wrapper } = this;
@@ -168,19 +165,29 @@ const cacheCallbacks = {
 		}
 	},
 
-	localDeclaration: function (this: wrapContainer): ts.Symbol | undefined {
-		const { wrapper, checker, program } = this;
+	localSymbol: function (this: wrapContainer): ts.Symbol | undefined {
+		const { wrapper, checker } = this;
+
+		const fileSource = wrapper.tsNode.getSourceFile();
+		const locals = (fileSource as any).locals as
+			| Map<string, ts.Symbol>
+			| undefined;
+
+		if (!locals) return undefined;
+		const localSymbol = locals.get(wrapper.name);
+		return !!localSymbol?.valueDeclaration ? localSymbol : undefined;
+		/*
 		const { tsNode } = wrapper;
-		const { name, moduleReference } = tsNode as ts.ImportEqualsDeclaration;
+		const { moduleReference } = tsNode as ts.ImportEqualsDeclaration;
 
 		const symbol = ts.isExportSpecifier(tsNode)
 			? declaration(tsNode)
 			: ts.isImportEqualsDeclaration(tsNode)
-			? declaration(moduleReference as ts.Identifier)
-			: ts.isShorthandPropertyAssignment(tsNode) ||
-			  ts.isPropertyAssignment(tsNode)
-			? local(tsNode)
-			: undefined;
+			  ? declaration(moduleReference as ts.Identifier)
+			  : ts.isShorthandPropertyAssignment(tsNode) ||
+			      ts.isPropertyAssignment(tsNode)
+			    ? local(tsNode)
+			    : undefined;
 
 		return symbol;
 
@@ -204,11 +211,12 @@ const cacheCallbacks = {
 			}
 			return symbol;
 		}
+		*/
 	},
 	target: function (this: wrapContainer): ts.Symbol | undefined {
-		const { wrapper } = this;
+		const { wrapper, checker, program } = this;
 		const target =
-			wrapper.localDeclaration ||
+			wrapper.localSymbol ||
 			wrapper.immediatelyAliasedSymbol ||
 			wrapper.aliasedSymbol;
 

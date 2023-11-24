@@ -7,6 +7,7 @@ import {
 	config,
 	DoxSourceFile,
 	CategoryKind,
+	events,
 } from './index.mjs';
 import { Dox } from './Dox.mjs';
 import { log } from '@typedox/logger';
@@ -34,13 +35,15 @@ const __filename = log.getFilename(import.meta.url);
  *
  */
 export class DoxPackage extends Dox {
-	public doxReferences: DoxReference[];
+	public doxReferences!: DoxReference[];
 	public filesMap = new Map<string, DoxSourceFile>();
 	public name: string;
 	public version: string;
 	public workspaces: string[];
 	public category = CategoryKind.Package;
 
+	private parsedConfigs: ts.ParsedCommandLine[];
+	private programsRootDir: string[];
 	private parent: DoxProject;
 	private npmFilePath: string;
 
@@ -52,6 +55,9 @@ export class DoxPackage extends Dox {
 	) {
 		super();
 
+		this.parsedConfigs = parsedConfigs;
+		this.programsRootDir = programsRootDir;
+
 		const packageConfig = config.jsonFileToObject(npmFilePath);
 		const { name, version, workspaces } = packageConfig;
 
@@ -59,43 +65,25 @@ export class DoxPackage extends Dox {
 		this.name = name;
 		this.version = version;
 		this.npmFilePath = npmFilePath;
+
 		this.workspaces = parseWorkspacesToPackageNames(
 			this.rootDir,
 			workspaces,
 			this.options.npmFileConvention,
 		);
 
-		if (!this.name) {
-			const packageDirPath = path.dirname(npmFilePath);
-			const packageDirName = path.basename(packageDirPath);
-			this.name = packageDirName;
-			log.warn(
-				log.identifier(this),
-				`package file "${npmFilePath}" has no name. It has been renamed to "${this.name}"`,
-			);
-		}
-		if (!this.version) {
-			this.version = '0.0.0';
-			log.warn(
-				log.identifier(this),
-				`package "${this.name}" has no version. It has been assigned "0.0.0"`,
-			);
-		}
+		events.emit('core.package.declarePackage', this);
+	}
 
-		this.events.emit('core.package.begin', this, packageConfig);
-		log.info(
-			log.identifier(this),
-			`Making package ${this.name}: ${this.version}`,
-		);
-
+	public init = () => {
+		this.logInitInfo(this.npmFilePath);
 		this.doxReferences = this.makeDoxReferences(
-			parsedConfigs,
-			programsRootDir,
+			this.parsedConfigs,
+			this.programsRootDir,
 		);
 
 		log.info(log.identifier(this), 'done', '\n');
-		this.events.emit('core.package.end', this, packageConfig);
-	}
+	};
 	public get options() {
 		return this.doxProject.options;
 	}
@@ -144,11 +132,9 @@ export class DoxPackage extends Dox {
 				return aLen - bLen;
 			})
 			.reduce((accumulator, rootDir) => {
-				//log.info('-'.repeat(50), rootDir);
 				const name = getNameFromRootDir(rootDirs, rootDir, []).join(
 					'/',
 				);
-				//log.info('-'.repeat(50), name, '\n');
 				accumulator[rootDir] = name;
 
 				return accumulator;
@@ -175,17 +161,7 @@ export class DoxPackage extends Dox {
 				normalise(fragments.join('/')) === projectRootDir ||
 				normalise(rootDir) === normalise(projectRootDir);
 			const atEnd = !fragments.length || !parents.length;
-			/*
-			log.info({
-				parents,
-				projectRootDir,
-				rootDir,
-				fragments,
-				baseName,
-				atRoot,
-				atEnd,
-			});
-			*/
+
 			if (baseName && (atEnd || atRoot)) {
 				nameAccumulator.unshift(baseName);
 				return nameAccumulator;
@@ -207,6 +183,29 @@ export class DoxPackage extends Dox {
 			return string.replace(/^\/|\/$/g, '');
 		}
 		return referenceNameMap;
+	}
+	private logInitInfo(npmFilePath: string) {
+		if (!this.name) {
+			const packageDirPath = path.dirname(npmFilePath);
+			const packageDirName = path.basename(packageDirPath);
+			this.name = packageDirName;
+			log.warn(
+				log.identifier(this),
+				`package file "${npmFilePath}" has no name. It has been renamed to "${this.name}"`,
+			);
+		}
+		if (!this.version) {
+			this.version = '0.0.0';
+			log.warn(
+				log.identifier(this),
+				`package "${this.name}" has no version. It has been assigned "0.0.0"`,
+			);
+		}
+
+		log.info(
+			log.identifier(this),
+			`Making package ${this.name}: ${this.version}`,
+		);
 	}
 }
 

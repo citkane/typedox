@@ -1,6 +1,7 @@
 {
 	"extends": "@typedox/tsconfigs/frontend.tsconfig.json",
 	"include": ["."],
+	"exclude": ["starryNight"],
 	"compilerOptions": {
 		"outDir": "../assets/js"
 	}

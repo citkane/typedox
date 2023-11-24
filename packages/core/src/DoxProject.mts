@@ -41,7 +41,6 @@ export class DoxProject extends Dox {
 			options.projectRootDir,
 			options.npmFileConvention,
 		);
-
 		packages.forEach((packageDir) => {
 			const doxPackage = this.makePackage(
 				packageDir,
@@ -50,6 +49,7 @@ export class DoxProject extends Dox {
 			);
 			this.doxPackages.set(doxPackage.name, doxPackage);
 		});
+		this.doxPackages.forEach((doxPackage) => doxPackage.init());
 
 		log.info(log.identifier(this), 'done.', '\n');
 	}
@@ -133,17 +133,17 @@ export class DoxProject extends Dox {
 	}
 	public static findPackages(
 		rootDir: string,
-		pacackeDef: string,
+		packageDef: string,
 		accumulator = [] as string[],
 	) {
-		const packFile = path.join(rootDir, pacackeDef);
+		const packFile = path.join(rootDir, packageDef);
 		if (fs.existsSync(packFile)) accumulator.push(packFile);
 		fs.readdirSync(rootDir, { withFileTypes: true }).forEach((dirEnt) => {
 			if (!dirEnt.isDirectory()) return;
 			if (dirEnt.name === 'node_modules') return;
 
 			const newDir = path.join(rootDir, dirEnt.name);
-			DoxProject.findPackages(newDir, pacackeDef, accumulator);
+			DoxProject.findPackages(newDir, packageDef, accumulator);
 		});
 		return accumulator.sort((a, b) => {
 			const aLen = a.split(path.sep).length;

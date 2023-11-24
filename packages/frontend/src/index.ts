@@ -1,16 +1,28 @@
-import { initEnums } from './toolBox/_index.js';
+import { format, initEnums } from './factories/_index.js';
+import { eventsApi } from './frontendEventsApi.js';
+import { DoxEvents } from './lib/DoxEvents.js';
+import { State } from './lib/State.js';
 
-export * from './toolBox/_index.js';
+const events = new DoxEvents<eventsApi>(eventsApi);
+
+export * from './lib/_index.js';
+export * from './factories/_index.js';
 export * from './components/_index.js';
-export * as router from './router.js';
+export * as router from './lib/router.js';
+export { state } from './lib/State.js';
+export { events };
 
 export function doxApp() {
-	initEnums()
+	format
+		.initShikiTs()
+		.then(() => initEnums())
 		.then(() => import('./components/DoxApp.js'))
-		.then((DoxAppClass) => DoxAppClass.default)
-		.then((DoxApp) => new DoxApp())
-		.then((doxApp) => {
+		.then((DoxApp) => {
+			const state = new State();
+			const doxApp = new DoxApp.default();
+
 			document.body.appendChild(doxApp);
+			state.init();
 			return doxApp;
 		})
 		.catch((err) => console.error(err));

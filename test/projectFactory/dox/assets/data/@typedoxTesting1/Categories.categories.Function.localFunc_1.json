@@ -1,0 +1,29 @@
+{
+	"name": "localFunc",
+	"category": 5,
+	"flags": {
+		"type": "Any",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Function.localFunc_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				933,
+				964,
+				27,
+				28
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/categories"
+	}
+}

@@ -1,9 +1,15 @@
 import ts, { __String } from 'typescript';
-import { CategoryKind, DeclarationFlags, DoxSourceFile } from './index.mjs';
+import {
+	CategoryKind,
+	DeclarationFlags,
+	DoxLocation,
+	DoxSourceFile,
+	events,
+} from './index.mjs';
 import { Dox } from './Dox.mjs';
 import { Relate } from './declarationUtils/Relate.mjs';
 import { Declare } from './declarationUtils/Declare.mjs';
-import { getCategoryKind } from './declarationUtils/category.mjs';
+import { getCategoryKind } from './declarationUtils/libCategory.mjs';
 import { log } from '@typedox/logger';
 import { TsWrapper } from '@typedox/wrapper';
 
@@ -31,18 +37,17 @@ export class DoxDeclaration extends Dox {
 	public children = new Map<__String, DoxDeclaration>();
 	public doxSourceFile: DoxSourceFile;
 	public flags!: DeclarationFlags;
+	public location!: DoxLocation;
 	public localDeclarationMap = new Map<__String, DoxDeclaration>();
 	public nameSpace?: string;
 	public parent: DoxSourceFile | DoxDeclaration;
 	public parents: Map<DoxDeclaration, boolean> = new Map();
 	public valueNode!: ts.Node;
 	public wrappedItem!: TsWrapper;
-	public name: string;
 	public escapedName: __String;
 	public error = false;
 
 	private categoryTsKind!: ts.SyntaxKind;
-	private _done?: boolean;
 
 	constructor(
 		parent: DoxSourceFile | DoxDeclaration,
@@ -54,20 +59,11 @@ export class DoxDeclaration extends Dox {
 		this.parent = parent;
 		this.doxSourceFile = this.getDoxSourceFile(parent);
 		this.wrappedItem = this.tsWrap(item);
-		this.name = this.wrappedItem.name;
 		this.escapedName = this.wrappedItem.escapedName;
 
 		if (!this.wrappedItem.error) {
-			//&& !this.isExternalTarget()) {
-			this.events.once(
-				'core.declarations.findRootDeclarations',
-				this.events.api['core.declarations.findRootDeclarations'].bind(
-					this,
-				),
-			);
-			this.events.emit('core.declaration.begin', this);
-
 			const declare = new Declare(this);
+
 			try {
 				declare.declare(this.wrappedItem);
 			} catch (err) {
@@ -78,16 +74,21 @@ export class DoxDeclaration extends Dox {
 			this.categoryTsKind = declare.categoryTsKind;
 			this.flags = declare.flags;
 			this.nameSpace = declare.nameSpace;
+			this.location = makeLocation(this);
+
 			notExported && (this.flags.notExported = true);
 			this.declarationsMap.set(item.escapedName, this);
-
-			this.events.emit('core.declaration.declared', this);
 		} else {
 			this.errored();
 		}
 	}
+	public get name() {
+		return this.wrappedItem.kind === ts.SyntaxKind.ExportDeclaration
+			? 'export*'
+			: this.wrappedItem.name;
+	}
 	public get category() {
-		if (this.flags.isExternal || this.flags.isReExporter) {
+		if (this.flags.isExternal) {
 			return CategoryKind.unknown;
 		}
 		return getCategoryKind(
@@ -125,48 +126,41 @@ export class DoxDeclaration extends Dox {
 		return this.doxProject.options;
 	}
 
-	public relate = (wrappedItem: TsWrapper) => {
+	public relate = (item = this.wrappedItem) => {
 		try {
-			new Relate(this, this.done).relate(wrappedItem);
+			if (this.name === 'CategoryKind') {
+				log.info(
+					'-'.repeat(50),
+					CategoryKind[this.category],
+					this.wrappedItem.kindString,
+				);
+			}
+			new Relate(this).relate(item);
 		} catch (err) {
 			this.errored();
 		}
 	};
-	public destroy() {
+	public adopt = (child: DoxDeclaration, localDeclaration = false) => {
+		const { children, localDeclarationMap: local } = this;
+		const { escapedName } = child;
+		const isAdopted =
+			(!localDeclaration && children.has(escapedName)) ||
+			(localDeclaration && local.has(escapedName));
+
+		if (isAdopted) return;
+
+		child.parents.set(this, true);
+		localDeclaration
+			? local.set(child.escapedName, child)
+			: children.set(child.escapedName, child);
+	};
+
+	public errored(err?: unknown) {
 		this.error = true;
 		this.children.forEach((child) => child.parents.delete(this));
-		this.events.off(
-			'core.declarations.findRootDeclarations',
-			this.events.api['core.declarations.findRootDeclarations'].bind(
-				this,
-			),
-		);
-	}
-	public static findRootDeclarations(
-		this: DoxDeclaration,
-		accumulator: DoxDeclaration[],
-		packageName: string,
-		referenceName: string,
-	) {
-		const { doxPackage: pack, doxReference: ref } = this;
-		const { isExternal, reExported, notExported } = this.flags;
-		const samePackage = pack.name === packageName;
-		const sameReference = samePackage && ref.name === referenceName;
-		const isChild = !!isExternal || !!reExported || !!notExported;
-		const isRoot = sameReference && !isChild && !this.parents.size;
-
-		if (isRoot) accumulator.push(this);
-	}
-	private errored(err?: unknown) {
 		if (err) log.error(err);
-		this.destroy();
-		this.done();
 	}
-	private done(isTarget?: boolean) {
-		if (isTarget || this._done) return;
-		this.events.emit('core.declaration.end', this);
-		this._done = true;
-	}
+
 	private getDoxSourceFile(
 		item: DoxSourceFile | DoxDeclaration,
 	): DoxSourceFile {
@@ -174,17 +168,22 @@ export class DoxDeclaration extends Dox {
 			? item
 			: this.getDoxSourceFile(item.parent);
 	}
-	public adopt = (child: DoxDeclaration, localDeclaration = false) => {
-		const { children, localDeclarationMap: local } = this;
-		const { escapedName } = child;
-		const isAdopted = children.has(escapedName) || local.has(escapedName);
+}
 
-		child.parents.set(this, true);
+const seen = new Set<string>();
+const count = {} as Record<string, number>;
+export function makeLocation(declaration: DoxDeclaration): DoxLocation {
+	const { doxPackage, doxReference, category, name, flags } = declaration;
+	let query = `${doxPackage.name}.${doxReference.name}.${
+		CategoryKind[category]
+	}.${flags.isDefault ? 'default' : name}`;
+	if (seen.has(query)) {
+		count[query] ??= 0;
+		count[query]++;
+		query = query + `_${count[query]}`;
+	}
+	seen.add(query);
+	const hash = '';
 
-		if (isAdopted) return;
-
-		localDeclaration
-			? local.set(child.escapedName, child)
-			: children.set(child.escapedName, child);
-	};
+	return { query, hash };
 }

@@ -1,0 +1,29 @@
+{
+	"name": "remote",
+	"category": 6,
+	"flags": {
+		"type": "StringLiteral"
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Variable.remote",
+		"hash": ""
+	},
+	"type": {
+		"kind": "StringLiteral",
+		"name": "string",
+		"valueString": "grandchild"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				787,
+				848,
+				39,
+				40
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/specifiers"
+	}
+}

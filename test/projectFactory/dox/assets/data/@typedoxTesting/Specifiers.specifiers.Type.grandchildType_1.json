@@ -1,0 +1,33 @@
+{
+	"name": "grandchildType",
+	"category": 8,
+	"flags": {
+		"type": "StringLiteral",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Type.grandchildType_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "StringLiteral",
+		"name": "string",
+		"valueString": "grandchild"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				85,
+				133,
+				2,
+				3
+			]
+		],
+		"fileName": "grandchild.ts",
+		"dirPath": "/specifiers/grandchild"
+	},
+	"parents": [
+		"@typedoxTesting/Specifiers.specifiers.Type.grandchildType_2"
+	]
+}

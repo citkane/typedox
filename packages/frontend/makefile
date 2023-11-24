@@ -12,10 +12,10 @@ tsconfig := $(call path, './src/tsconfig.json')
 build: css linkData
 	npx tsc -b -v ${tsconfig}
 css:
-	npx sass src/css/index.scss:assets/css/index.css --style compressed
+	npx sass src/css/_index.scss:assets/css/index.css --style compressed
 
 cssWatch:
-	npx sass src/css/index.scss:assets/css/index.css --watch
+	npx sass src/css/_index.scss:assets/css/index.css --watch
 
 linkData:
 #	@if [ -d ${docData} ]; then \

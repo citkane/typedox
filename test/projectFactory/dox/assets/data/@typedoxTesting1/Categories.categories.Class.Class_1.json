@@ -1,0 +1,32 @@
+{
+	"name": "Class",
+	"category": 4,
+	"flags": {
+		"type": "Any",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Class.Class_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				139,
+				161,
+				7,
+				8
+			]
+		],
+		"fileName": "kinds.ts",
+		"dirPath": "/categories/child"
+	},
+	"parents": [
+		"@typedoxTesting1/Categories.categories.Class.Class_2"
+	]
+}

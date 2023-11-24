@@ -1,4 +1,4 @@
-import { appendChildren, makeElement } from '../toolBox/dom.js';
+import { appendChildren, makeElement } from '../lib/dom.js';
 import { ChromeFooter, ChromeMain, ChromeLeft } from './_index.js';
 
 export default class DoxApp extends HTMLElement {

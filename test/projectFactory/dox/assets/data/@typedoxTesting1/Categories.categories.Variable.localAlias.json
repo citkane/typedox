@@ -1,0 +1,29 @@
+{
+	"name": "localAlias",
+	"category": 6,
+	"flags": {
+		"type": "StringLiteral"
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Variable.localAlias",
+		"hash": ""
+	},
+	"type": {
+		"kind": "StringLiteral",
+		"name": "string",
+		"valueString": "localDeclaration"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				752,
+				813,
+				24,
+				25
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/categories"
+	}
+}

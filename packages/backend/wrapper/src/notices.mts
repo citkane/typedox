@@ -22,7 +22,7 @@ export default {
 			this.error = true;
 			const descriptor = isSymbol(tsItem)
 				? tsItem.name
-				: tsItem.getText && tsItem.getText();
+				: tsItem.map((node) => node.getText() + '\n');
 			log.throwError(
 				log.identifier(this),
 				`Did not wrap a ${tsItem.constructor?.name}:`,

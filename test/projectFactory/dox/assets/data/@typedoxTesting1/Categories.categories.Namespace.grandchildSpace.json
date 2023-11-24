@@ -1,0 +1,28 @@
+{
+	"name": "grandchildSpace",
+	"category": 3,
+	"flags": {
+		"type": "Object"
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Namespace.grandchildSpace",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				161,
+				223,
+				8,
+				10
+			]
+		],
+		"fileName": "kinds.ts",
+		"dirPath": "/categories/child"
+	}
+}

@@ -1,9 +1,16 @@
 import ts from 'typescript';
 import { jsDocCollection } from '../index.mjs';
+import { TsWrapper } from '@typedox/wrapper';
 
-export function serialiseCommentsAndTags(
-	node: ts.Node,
-): jsDocCollection | undefined {
+export function serialiseComments(wrapped: TsWrapper) {
+	return wrapped.tsSymbol.declarations?.reduce((accumulator, node) => {
+		const comment = serialiseComment(node);
+		!!comment && accumulator.push(comment);
+
+		return accumulator;
+	}, [] as jsDocCollection[]);
+}
+export function serialiseComment(node: ts.Node): jsDocCollection | undefined {
 	const jsDoc = ts.getJSDocCommentsAndTags(node);
 	const jsDocs = jsDoc.reduce((accumulator, doc) => {
 		ts.isJSDoc(doc)
@@ -29,5 +36,5 @@ function reduceJsDoc(accumulator: jsDocCollection, doc: ts.JSDoc) {
 	}
 }
 function reduceJsDocTag(accumulator: jsDocCollection, tag: ts.JSDocTag) {
-	accumulator.push({ tag });
+	accumulator.push({ tag: 'todo' });
 }

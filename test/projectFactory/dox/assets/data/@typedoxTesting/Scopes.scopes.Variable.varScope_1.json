@@ -1,0 +1,29 @@
+{
+	"name": "varScope",
+	"category": 6,
+	"flags": {
+		"type": "String",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Scopes.scopes.Variable.varScope_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "String",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				0,
+				31,
+				1,
+				1
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/scopes"
+	}
+}

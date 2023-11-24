@@ -1,15 +1,12 @@
 import { log } from '@typedox/logger';
+import ts from 'typescript';
 import {
-	DoxBranch,
 	DoxDeclaration,
 	DoxPackage,
 	DoxProject,
 	DoxReference,
 	DoxSourceFile,
 } from './index.mjs';
-import { coreEventsApi } from './events/coreEventsApi.mjs';
-import { DoxEvents } from './events/DoxEvents.mjs';
-import ts from 'typescript';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -19,7 +16,6 @@ export const tsFileSpecifier = 'tsconfig';
 let uid = 0;
 
 export class Dox {
-	public events: DoxEvents<coreEventsApi>;
 	public defaultStrings = [
 		ts.escapeLeadingUnderscores('default'),
 		ts.escapeLeadingUnderscores('export='),
@@ -29,35 +25,34 @@ export class Dox {
 		uid++;
 		return id;
 	}
-
 	protected isDoxProject = Dox.isDoxProject;
 	protected isDoxPackage = Dox.isDoxPackage;
 	protected isDoxReference = Dox.isDoxReference;
 	protected isDoxDeclaration = Dox.isDoxDeclaration;
 	protected isDoxSourceFile = Dox.isDoxSourceFile;
-	protected isDoxBranch = Dox.isDoxBranch;
+	protected isBindingElement = Dox.isBindingElement;
 
-	constructor() {
-		this.events = new DoxEvents<coreEventsApi>(coreEventsApi);
-	}
-
-	public static isDoxProject(item: Dox): item is DoxProject {
+	public static isDoxProject(item: any): item is DoxProject {
 		return item.constructor && item.constructor.name === 'DoxProject';
 	}
-	public static isDoxPackage(item: Dox): item is DoxPackage {
+	public static isDoxPackage(item: any): item is DoxPackage {
 		return item.constructor && item.constructor.name === 'DoxPackage';
 	}
-	public static isDoxReference(item: Dox): item is DoxReference {
+	public static isDoxReference(item: any): item is DoxReference {
 		return item.constructor && item.constructor.name === 'DoxReference';
 	}
-	public static isDoxDeclaration(item: Dox): item is DoxDeclaration {
+	public static isDoxDeclaration(item: any): item is DoxDeclaration {
 		return item.constructor && item.constructor.name === 'DoxDeclaration';
 	}
-	public static isDoxSourceFile(item: Dox): item is DoxSourceFile {
+	public static isDoxSourceFile(item: any): item is DoxSourceFile {
 		return item.constructor && item.constructor.name === 'DoxSourceFile';
 	}
-	public static isDoxBranch(item: Dox): item is DoxBranch {
-		return item.constructor && item.constructor.name === 'DoxBranch';
+
+	public static isBindingElement(item: ts.Symbol) {
+		return (
+			item.declarations &&
+			!!item.declarations.find((node) => ts.isBindingElement(node))
+		);
 	}
 	/*
 	public static isSymbol(item: any): item is ts.Symbol {

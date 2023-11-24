@@ -1,0 +1,28 @@
+{
+	"name": "childSpace",
+	"category": 3,
+	"flags": {
+		"type": "Object"
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Namespace.childSpace",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				317,
+				363,
+				8,
+				10
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/categories"
+	}
+}

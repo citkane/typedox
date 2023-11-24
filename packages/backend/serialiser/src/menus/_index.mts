@@ -1,1 +1,1 @@
-export * from './mainMenu.mjs';
+export * from './packageMenu.mjs';

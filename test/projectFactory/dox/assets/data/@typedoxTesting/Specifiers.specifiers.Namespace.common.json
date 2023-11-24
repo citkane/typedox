@@ -1,0 +1,29 @@
+{
+	"name": "common",
+	"category": 3,
+	"flags": {
+		"type": "Object",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Namespace.common",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				0,
+				68,
+				1,
+				4
+			]
+		],
+		"fileName": "exportEqual.ts",
+		"dirPath": "/specifiers/exportEqual"
+	}
+}

@@ -102,7 +102,6 @@ export default function () {
 		const { valueNode } = declaration;
 		assert.exists(valueNode);
 		assert.equal(valueNode.getText(), "export * from './child/child';");
-		assert.isTrue(declaration.flags.isReExporter);
 		assert.equal(declaration.nameSpace, undefined);
 	});
 	it('relates a local variable ExportSpecifier', function () {
@@ -376,7 +375,6 @@ export default function () {
 	it('relates a NamespaceExport', function () {
 		const result = this.testSpecifier(escape('namespaceExport'));
 		const { declaration } = result;
-		log.info(declaration.doxReference.program.getRootFileNames());
 		assert.sameMembers(Array.from(declaration.localDeclarationMap.keys()), [
 			escape('child'),
 			escape('childType'),

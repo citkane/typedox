@@ -1,14 +1,7 @@
 import ts from 'typescript';
-import { TsWrapper, isSymbol, wrap } from '@typedox/wrapper';
+import { TsWrapper, tsItem, wrap } from '@typedox/wrapper';
 import { log, loggerUtils } from '@typedox/logger';
-import {
-	CategoryKind,
-	DoxBranch,
-	DoxDeclaration,
-	DoxPackage,
-	DoxSourceFile,
-	tsItem,
-} from './index.mjs';
+import { CategoryKind, DoxPackage, DoxSourceFile, events } from './index.mjs';
 import { Dox } from './Dox.mjs';
 
 const __filename = log.getFilename(import.meta.url);
@@ -35,12 +28,10 @@ const __filename = log.getFilename(import.meta.url);
 export class DoxReference extends Dox {
 	public name: string;
 	public filesMap = new Map<string, DoxSourceFile>();
-	public doxBranch: DoxBranch;
 	public checker: ts.TypeChecker;
 	public program: ts.Program;
 	public category = CategoryKind.Reference;
 
-	private rootDeclarations?: DoxDeclaration[];
 	private parent: DoxPackage;
 
 	constructor(
@@ -74,11 +65,15 @@ export class DoxReference extends Dox {
 			this.filesMap.set(doxSourceFile.fileName, doxSourceFile);
 		});
 
+		events.emit('core.reference.declareReference', this);
+
 		this.filesMap.forEach((doxFile) => doxFile.discoverDeclarations());
 		this.filesMap.forEach((doxFile) => doxFile.buildRelationships());
-		const rootDeclarations = this.getRootDeclarations();
-
-		this.doxBranch = new DoxBranch(this, rootDeclarations);
+		this.filesMap.forEach((doxFile) => {
+			doxFile.declarationsMap.forEach((declaration) => {
+				events.emit('core.declaration.related', declaration);
+			});
+		});
 	}
 
 	public get doxPackage() {
@@ -94,18 +89,6 @@ export class DoxReference extends Dox {
 		const wrapped = wrap(this.checker, this.program, item);
 		return wrapped;
 	};
-
-	private getRootDeclarations = () => {
-		if (this.rootDeclarations) return this.rootDeclarations;
-		this.rootDeclarations = [];
-		this.events.emit(
-			'core.declarations.findRootDeclarations',
-			this.rootDeclarations,
-			this.doxPackage.name,
-			this.name,
-		);
-		return this.rootDeclarations;
-	};
 }
 
 function makeProgramFromConfig(
@@ -115,7 +98,7 @@ function makeProgramFromConfig(
 	index: number,
 ) {
 	const { fileNames, options } = parsedConfig;
-	const { configFilePath, outDir, out, outFile, noEmit } = options;
+	const { configFilePath } = options;
 	const program = ts.createProgram(fileNames, options);
 	notices.logProgram(
 		String(parsedConfig.options.configFilePath),

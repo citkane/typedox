@@ -1,4 +1,8 @@
 import ts from 'typescript';
+import { coreEventsApi } from './index.mjs';
+import { DoxEvents } from './events/DoxEvents.mjs';
+
+export const events = new DoxEvents<coreEventsApi>(coreEventsApi);
 
 export interface DeclarationFlags {
 	isDefault?: true;
@@ -7,6 +11,7 @@ export interface DeclarationFlags {
 	reExported?: true;
 	notExported?: true;
 	scopeKeyword?: 'const' | 'let' | 'var';
+	type?: ts.TypeFlags | string;
 }
 export enum CategoryKind {
 	Project,
@@ -18,6 +23,7 @@ export enum CategoryKind {
 	Variable,
 	Enum,
 	Type,
+	Export,
 	menuHeader,
 	unknown,
 }
@@ -29,8 +35,6 @@ export type referencedExport =
 
 export type localDeclaration = ts.VariableDeclaration | ts.ClassDeclaration;
 export type declaration = referencedExport | localDeclaration;
-
-export type tsItem = ts.Node | ts.Symbol;
 
 export interface rawDox {
 	init: boolean;
@@ -49,12 +53,14 @@ export interface tscRawConfig {
 	};
 	error?: ts.Diagnostic;
 }
-
+export interface DoxLocation {
+	query: string;
+	hash: string;
+}
 export type namedDef<def> = [string | undefined, def];
 export type namedRegistry<reg> = Record<string, reg>;
 
 export { Dox } from './Dox.mjs';
-export { DoxBranch } from './DoxBranch.mjs';
 export { DoxDeclaration } from './DoxDeclaration.mjs';
 export { DoxPackage } from './DoxPackage.mjs';
 export { DoxProject } from './DoxProject.mjs';

@@ -1,0 +1,38 @@
+{
+	"name": "local",
+	"category": 3,
+	"flags": {
+		"type": "Object",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Namespace.local_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				405,
+				454,
+				12,
+				16
+			],
+			[
+				454,
+				503,
+				16,
+				20
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/specifiers"
+	},
+	"parents": [
+		"@typedoxTesting/Specifiers.specifiers.Namespace.moduleDeclaration_1"
+	]
+}

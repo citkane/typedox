@@ -1,0 +1,29 @@
+{
+	"name": "export=",
+	"category": 7,
+	"flags": {
+		"type": "Object",
+		"isDefault": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Common.common.Enum.default",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				46,
+				68,
+				5,
+				6
+			]
+		],
+		"fileName": "enum.ts",
+		"dirPath": "/common/default"
+	}
+}

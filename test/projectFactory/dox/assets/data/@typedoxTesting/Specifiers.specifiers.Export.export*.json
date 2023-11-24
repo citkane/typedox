@@ -1,0 +1,33 @@
+{
+	"name": "export*",
+	"category": 9,
+	"flags": {
+		"type": "Any",
+		"reExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting/Specifiers.specifiers.Export.export*",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				26,
+				69,
+				1,
+				3
+			]
+		],
+		"fileName": "child.ts",
+		"dirPath": "/specifiers/child"
+	},
+	"children": [
+		"@typedoxTesting/Specifiers.specifiers.Variable.grandchild_1",
+		"@typedoxTesting/Specifiers.specifiers.Type.grandchildType_1"
+	]
+}

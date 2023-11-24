@@ -1,0 +1,14 @@
+{
+	"references": [
+		{ "path": "./bindings" },
+		{ "path": "./categories" },
+		{ "path": "./common" },
+		{ "path": "./configs" },
+		{ "path": "./ems" },
+		{ "path": "./overloading" },
+		{ "path": "./scopes" },
+		{ "path": "./specifiers" },
+		{ "path": "./workspaces" }
+	],
+	"exclude": ["."]
+}

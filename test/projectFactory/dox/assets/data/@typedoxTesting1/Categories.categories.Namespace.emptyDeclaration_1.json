@@ -1,0 +1,29 @@
+{
+	"name": "emptyDeclaration",
+	"category": 3,
+	"flags": {
+		"type": "Any",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Namespace.emptyDeclaration_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				492,
+				529,
+				17,
+				18
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/categories"
+	}
+}

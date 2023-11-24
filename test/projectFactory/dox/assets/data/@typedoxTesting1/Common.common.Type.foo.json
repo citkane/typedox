@@ -1,0 +1,30 @@
+{
+	"name": "foo",
+	"category": 8,
+	"flags": {
+		"type": "Union",
+		"notExported": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Common.common.Type.foo",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Alias",
+		"name": "foo",
+		"id": 0
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				0,
+				35,
+				1,
+				1
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/common"
+	}
+}

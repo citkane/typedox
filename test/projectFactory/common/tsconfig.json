@@ -2,7 +2,7 @@
 	"include": ["."],
 	"compilerOptions": {
 		"composite": true,
-		"outDir": "../dist"
-		//"module": "CommonJS"
+		"outDir": "../dist",
+		"module": "CommonJS"
 	}
 }

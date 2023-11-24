@@ -1,0 +1,29 @@
+{
+	"name": "export=",
+	"category": 6,
+	"flags": {
+		"type": "Object",
+		"isDefault": true
+	},
+	"location": {
+		"query": "@typedoxTesting1/Common.common.Variable.default",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				127,
+				281,
+				3,
+				13
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/common"
+	}
+}

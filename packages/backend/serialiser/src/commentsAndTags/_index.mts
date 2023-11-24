@@ -1,1 +1,1 @@
-export { serialiseCommentsAndTags } from './commentsAndTags.mjs';
+export { serialiseComment as serialiseCommentsAndTags } from './commentsAndTags.mjs';

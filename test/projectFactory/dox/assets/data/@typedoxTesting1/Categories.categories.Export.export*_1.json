@@ -1,0 +1,32 @@
+{
+	"name": "export*",
+	"category": 9,
+	"flags": {
+		"type": "Any"
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Export.export*_1",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Any",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				363,
+				394,
+				10,
+				11
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/categories"
+	},
+	"children": [
+		"@typedoxTesting1/Categories.categories.Variable.childReExport_1",
+		"@typedoxTesting1/Categories.categories.Variable.stars_1"
+	]
+}

@@ -1,3 +1,4 @@
+/*
 import {
 	DoxBranch,
 	DoxProject,
@@ -57,6 +58,7 @@ export function serialiseProject(project: DoxProject) {
 		packages,
 	};
 }
+
 export function serialisePackage(doxPackage: DoxPackage) {
 	const { version, name, doxReferences, workspaces, category } = doxPackage;
 	const referenceMap = new Map<string, DoxReference>();
@@ -74,6 +76,7 @@ export function serialisePackage(doxPackage: DoxPackage) {
 		category,
 	};
 }
+
 export function serialiseReference(reference: DoxReference) {
 	return {
 		...serialiseBranch(reference.doxBranch),
@@ -166,3 +169,5 @@ const noEmitCategories = [
 	CategoryKind.unknown,
 	CategoryKind.menuHeader,
 ];
+
+*/

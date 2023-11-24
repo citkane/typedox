@@ -1,8 +1,9 @@
 import ts from 'typescript';
 import * as utils from './wrapperUtils.mjs';
 import { TsWrapper, wrap } from './Wrapper.mjs';
+import { log } from '@typedox/logger';
 
-export type tsItem = ts.Node | ts.Symbol;
+export type tsItem = ts.Node[] | ts.Symbol;
 export { wrappedCache } from './WrapperCache.mjs';
 export { wrap, TsWrapper, utils };
 export function isSymbol(item: any): item is ts.Symbol {
@@ -10,16 +11,24 @@ export function isSymbol(item: any): item is ts.Symbol {
 }
 export function isNode(item: any): item is ts.Node {
 	if (!item.constructor) return false;
+	const constructor = item.constructor.name;
 	return (
-		item.constructor.name === 'NodeObject' ||
-		item.constructor.name === 'IdentifierObject'
+		constructor === 'NodeObject' ||
+		constructor === 'IdentifierObject' ||
+		constructor === 'SourceFileObject'
 	);
 }
 export function isTypeNode(item: any): item is ts.Type {
 	return item.constructor && item.constructor.name === 'TypeObject';
 }
-export function isNodeOrSymbol(item: any): item is ts.Node | ts.Symbol {
-	return isSymbol(item) || isNode(item);
+export function isNodeOrSymbol(item: any): item is ts.Node[] | ts.Symbol {
+	if (Array.isArray(item) && item.find((node) => !isNode(node))) {
+		log.info(item.map((node) => node.constructor.name));
+	}
+	return (
+		isSymbol(item) ||
+		(Array.isArray(item) && !item.find((node) => !isNode(node)))
+	);
 }
 export function isExportStar(symbol: ts.Symbol) {
 	return symbol.flags === ts.SymbolFlags.ExportStar;
@@ -37,8 +46,9 @@ export function isSpecifierKind(kind: ts.SyntaxKind) {
 		syntax.ModuleDeclaration,
 		syntax.NamespaceExport,
 		syntax.NamespaceImport,
+		syntax.BindingElement,
 		//syntax.InterfaceDeclaration,
-		//syntax.BindingElement,
+
 		//syntax.ObjectLiteralExpression,
 	];
 

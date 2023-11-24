@@ -1,0 +1,31 @@
+{
+	"name": "arrowFunc",
+	"category": 6,
+	"flags": {
+		"type": "Object"
+	},
+	"location": {
+		"query": "@typedoxTesting1/Categories.categories.Variable.arrowFunc_2",
+		"hash": ""
+	},
+	"type": {
+		"kind": "Object",
+		"name": "unknown"
+	},
+	"jsDocs": [],
+	"file": {
+		"positions": [
+			[
+				813,
+				933,
+				25,
+				27
+			]
+		],
+		"fileName": "index.ts",
+		"dirPath": "/categories"
+	},
+	"children": [
+		"@typedoxTesting1/Categories.categories.Variable.arrowFunc_1"
+	]
+}
