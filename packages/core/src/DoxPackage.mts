@@ -1,17 +1,15 @@
-import path from 'path';
-import fs from 'fs';
+import path from 'node:path';
+import fs from 'node:fs';
+import ts from 'typescript';
+import { log } from '@typedox/logger';
 import {
 	DoxProject,
 	DoxReference,
-	namedRegistry,
 	config,
-	DoxSourceFile,
 	CategoryKind,
 	events,
+	Dox,
 } from './index.mjs';
-import { Dox } from './Dox.mjs';
-import { log } from '@typedox/logger';
-import ts from 'typescript';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -35,8 +33,6 @@ const __filename = log.getFilename(import.meta.url);
  *
  */
 export class DoxPackage extends Dox {
-	public doxReferences!: DoxReference[];
-	public filesMap = new Map<string, DoxSourceFile>();
 	public name: string;
 	public version: string;
 	public workspaces: string[];
@@ -57,32 +53,24 @@ export class DoxPackage extends Dox {
 
 		this.parsedConfigs = parsedConfigs;
 		this.programsRootDir = programsRootDir;
-
-		const packageConfig = config.jsonFileToObject(npmFilePath);
-		const { name, version, workspaces } = packageConfig;
-
 		this.parent = parent;
-		this.name = name;
-		this.version = version;
-		this.npmFilePath = npmFilePath;
-
-		this.workspaces = parseWorkspacesToPackageNames(
-			this.rootDir,
-			workspaces,
-			this.options.npmFileConvention,
-		);
-
-		events.emit('core.package.declarePackage', this);
+		(({ name, version, workspaces }) => {
+			this.name = name;
+			this.version = version;
+			this.npmFilePath = npmFilePath;
+			this.workspaces = DoxPackage.parseWorkspacesToPackageNames(
+				this.rootDir,
+				workspaces,
+				this.options.npmFileConvention,
+			);
+		})(config.jsonFileToObject(npmFilePath));
 	}
 
-	public init = () => {
+	public init = async () => {
+		events.emit('core.package.declarePackage', this);
 		this.logInitInfo(this.npmFilePath);
-		this.doxReferences = this.makeDoxReferences(
-			this.parsedConfigs,
-			this.programsRootDir,
-		);
-
-		log.info(log.identifier(this), 'done', '\n');
+		this.makeDoxReferences(this.parsedConfigs, this.programsRootDir);
+		log.info(log.identifier(this), 'Done making Typedox package', '\n');
 	};
 	public get options() {
 		return this.doxProject.options;
@@ -93,102 +81,28 @@ export class DoxPackage extends Dox {
 	public get rootDir() {
 		return path.dirname(this.npmFilePath);
 	}
-
 	private makeDoxReferences = (
 		parsedConfigs: ts.ParsedCommandLine[],
 		rootDirs: string[],
 	) => {
-		const nameSpaceMap = DoxPackage.getUniqueNameMap(
-			rootDirs,
-			this.options.projectRootDir,
-		);
-		const doxReferences = parsedConfigs.reduce(
-			(accumulator, parsedConfig, i) => {
-				const rootDir = rootDirs[i];
-				const name = nameSpaceMap[rootDir];
-				const reference = new DoxReference(
+		((nameSpaceMap) => {
+			parsedConfigs.forEach((parsedConfig, i) => {
+				new DoxReference(
 					this,
-					name,
+					name(nameSpaceMap, i),
 					parsedConfig,
 					parsedConfigs.length,
 					i,
 				);
-				if (reference.program) accumulator.push(reference);
-				return accumulator;
-			},
-			[] as DoxReference[],
-		);
-
-		return doxReferences;
-	};
-
-	public static getUniqueNameMap(rootDirs: string[], projectRootDir: string) {
-		projectRootDir = normalise(projectRootDir);
-		const referenceNameMap = rootDirs
-			.sort((a, b) => {
-				const aLen = a.split('/').length;
-				const bLen = b.split('/').length;
-
-				return aLen - bLen;
-			})
-			.reduce((accumulator, rootDir) => {
-				const name = getNameFromRootDir(rootDirs, rootDir, []).join(
-					'/',
-				);
-				accumulator[rootDir] = name;
-
-				return accumulator;
-			}, {} as namedRegistry<string>);
-
-		function getNameFromRootDir(
-			rootDirs: string[],
-			rootDir: string,
-			nameAccumulator: string[],
-		): string[] {
-			rootDir = normalise(rootDir);
-			const parents = rootDirs.filter((dir) => {
-				dir = normalise(dir);
-				return (
-					dir !== rootDir &&
-					dir !== projectRootDir &&
-					rootDir.startsWith(dir)
-				);
 			});
-
-			const fragments = rootDir.split('/');
-			const baseName = fragments.pop();
-			const atRoot =
-				normalise(fragments.join('/')) === projectRootDir ||
-				normalise(rootDir) === normalise(projectRootDir);
-			const atEnd = !fragments.length || !parents.length;
-
-			if (baseName && (atEnd || atRoot)) {
-				nameAccumulator.unshift(baseName);
-				return nameAccumulator;
-			}
-			const conflict =
-				!!fragments.length &&
-				!!parents.find((parent) =>
-					parent.endsWith(fragments[fragments.length - 1]),
-				);
-			if (conflict && baseName) nameAccumulator.unshift(baseName);
-
-			return getNameFromRootDir(
-				rootDirs,
-				fragments.join('/'),
-				nameAccumulator,
-			);
+		})(DoxPackage.getUniqueNameMap(rootDirs, this.options.projectRootDir));
+		function name(nameSpaceMap: Record<string, string>, i: number) {
+			return ((rootDir) => nameSpaceMap[rootDir])(rootDirs[i]);
 		}
-		function normalise(string: string) {
-			return string.replace(/^\/|\/$/g, '');
-		}
-		return referenceNameMap;
-	}
+	};
 	private logInitInfo(npmFilePath: string) {
 		if (!this.name) {
-			const packageDirPath = path.dirname(npmFilePath);
-			const packageDirName = path.basename(packageDirPath);
-			this.name = packageDirName;
+			this.name = getNameFromPath();
 			log.warn(
 				log.identifier(this),
 				`package file "${npmFilePath}" has no name. It has been renamed to "${this.name}"`,
@@ -201,31 +115,139 @@ export class DoxPackage extends Dox {
 				`package "${this.name}" has no version. It has been assigned "0.0.0"`,
 			);
 		}
-
 		log.info(
 			log.identifier(this),
 			`Making package ${this.name}: ${this.version}`,
 		);
+
+		function getNameFromPath() {
+			return ((packageDirPath) => path.basename(packageDirPath))(
+				path.dirname(npmFilePath),
+			);
+		}
 	}
-}
+	private static getUniqueNameMap(
+		rootDirs: string[],
+		projectRootDir: string,
+	) {
+		return rootDirs
+			.sort((a, b) => dirDepth(a) - dirDepth(b))
+			.reduce(
+				(accumulator, rootDir) =>
+					((name) => {
+						accumulator[rootDir] = name;
+						return accumulator;
+					})(getNameFromRootDir(rootDirs, rootDir, []).join('/')),
+				{} as Record<string, string>,
+			);
 
-function parseWorkspacesToPackageNames(
-	startDir: string,
-	workspaces: string[] | undefined,
-	npmFileConvention: string,
-) {
-	const accumulator = [] as string[];
-	if (!workspaces) return accumulator;
+		function dirDepth(dir: string) {
+			return dir.split('/').length;
+		}
+		function getNameFromRootDir(
+			rootDirs: string[],
+			rootDir: string,
+			nameAccumulator: string[],
+		): string[] {
+			return (({ parentDirs, baseName, atEnd, atRoot, fragments }) => {
+				if (baseName && (atEnd || atRoot)) {
+					nameAccumulator.unshift(baseName);
+					return nameAccumulator;
+				}
+				return ((conflict) => {
+					if (conflict && baseName) nameAccumulator.unshift(baseName);
+					return getNameFromRootDir(
+						rootDirs,
+						fragments.join('/'),
+						nameAccumulator,
+					);
+				})(isRootName(fragments, parentDirs));
+			})(normalisedState());
 
-	return workspaces.reduce((accumulator, workspacePath) => {
-		const workspaceFile = path.isAbsolute(workspacePath)
-			? path.join(workspacePath, npmFileConvention)
-			: path.join(startDir, workspacePath, npmFileConvention);
+			function isRootName(fragments: string[], parentDirs: string[]) {
+				return (
+					!!fragments.length &&
+					!!parentDirs.find((parent) =>
+						parent.endsWith(fragments[fragments.length - 1]),
+					)
+				);
+			}
+			function normalisedState() {
+				return ((rootDir) =>
+					((parentDirs) =>
+						((fragments) =>
+							((baseName) =>
+								((atRoot) =>
+									((atEnd) => {
+										return {
+											fragments,
+											parentDirs,
+											baseName,
+											atRoot,
+											atEnd,
+										};
+									})(atEnd(fragments, parentDirs)))(
+									atRoot(fragments),
+								))(baseName(fragments)))(fragments(rootDir)))(
+						parentDirs(rootDir),
+					))(normalise(rootDir));
+			}
+			function atEnd(fragments: string[], parentDirs: string[]) {
+				return !fragments.length || !parentDirs.length;
+			}
+			function atRoot(fragments: string[]) {
+				return (
+					normalise(fragments.join('/')) === projectRootDir ||
+					normalise(rootDir) === normalise(projectRootDir)
+				);
+			}
+			function baseName(fragments: string[]) {
+				return fragments.pop();
+			}
+			function fragments(rootDir: string) {
+				return rootDir.split('/');
+			}
+			function parentDirs(normalisedRootDir: string) {
+				return rootDirs.filter((dir) => {
+					return ((dir) => {
+						return (
+							dir !== normalisedRootDir &&
+							dir !== projectRootDir &&
+							normalisedRootDir.startsWith(dir)
+						);
+					})(normalise(dir));
+				});
+			}
+			function normalise(string: string) {
+				return string.replace(/^\/|\/$/g, '');
+			}
+		}
+	}
+	private static parseWorkspacesToPackageNames(
+		startDir: string,
+		workspaces: string[] | undefined,
+		npmFileConvention: string,
+	) {
+		if (!workspaces) return [] as string[];
 
-		if (!fs.existsSync(workspaceFile)) return accumulator;
-		const packageConfig = config.jsonFileToObject(workspaceFile);
-		if (packageConfig.name) accumulator.push(packageConfig.name);
+		return workspaces.reduce((accumulator, workspacePath) => {
+			return ((packageConfig) => {
+				if (!packageConfig) return accumulator;
+				accumulator.push(packageConfig.name);
+				return accumulator;
+			})(getPackageConfig(workspacePath));
+		}, [] as string[]);
 
-		return accumulator;
-	}, accumulator);
+		function getPackageConfig(workspacePath: string) {
+			return ((workspaceFile) => {
+				return fs.existsSync(workspaceFile)
+					? config.jsonFileToObject(workspaceFile)
+					: undefined;
+			})(
+				path.isAbsolute(workspacePath)
+					? path.join(workspacePath, npmFileConvention)
+					: path.join(startDir, workspacePath, npmFileConvention),
+			);
+		}
+	}
 }

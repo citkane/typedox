@@ -1,15 +1,16 @@
+import { dirname, join } from 'node:path';
+import { gzipSync } from 'node:zlib';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import ts from 'typescript';
 import { CategoryKind, DoxEvents, config, coreEventsApi } from '@typedox/core';
 import { serialiserEventsApi } from '@typedox/serialiser';
 import { log } from '@typedox/logger';
-import path from 'path';
-import fs from 'fs';
 import { fileEventsApi } from './fileEventsApi.mjs';
-import ts from 'typescript';
 
 type eventsApi = fileEventsApi & serialiserEventsApi & coreEventsApi;
 const events = new DoxEvents<eventsApi>(fileEventsApi, serialiserEventsApi);
 const __filename = log.getFilename(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
 export class FileManager {
 	private options: config.coreDoxOptions;
@@ -21,15 +22,12 @@ export class FileManager {
 		events.on('serialiser.packageMenu.serialised', (menu) => {
 			this.saveDataFile(menu, '_packageMenu.json');
 		});
-		events.on('serialiser.declaration.serialised', (declaration) => {
-			const fileName = declaration.location.query + '.json';
-			const success = this.saveDataFile(declaration, 'data', fileName);
-			if (!success) log.error(log.identifier(this), fileName);
+		events.on('serialiser.declarations.bundled', (filePath, bundle) => {
+			this.saveDataFile(bundle, 'data', `${filePath}.json`);
 		});
 		events.on('core.sourcefile.declareSourceFile', (filePath, meta) => {
-			const fileData = fs.readFileSync(filePath, { encoding: 'utf8' });
 			const fileName = `${meta.dirPath}/${meta.fileName}`;
-			this.saveFile(fileData, 'sources', fileName);
+			this.saveFile(readFileSync(filePath, 'utf-8'), 'sources', fileName);
 		});
 	}
 	saveEnumJson() {
@@ -38,19 +36,21 @@ export class FileManager {
 	}
 	saveDataFile = (data: object, ...args: string[]) => {
 		try {
-			const string = JSON.stringify(data, null, '\t');
-			this.saveFile(string, ...args);
+			this.saveFile(JSON.stringify(data), ...args);
 			return true;
 		} catch (error) {
-			log.error(log.identifier(this), 'Did not convert data to JSON');
+			log.error(log.identifier(this), error);
 			return false;
 		}
 	};
-	saveFile = (data: string, ...args: string[]) => {
-		const assetsDir = path.join(__dirname, '../../../frontend/assets');
-		const filePath = path.join(assetsDir, ...args);
-		const dir = path.dirname(filePath);
-		if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-		fs.writeFileSync(filePath, data);
+
+	saveFile = (input: string, ...args: string[]) => {
+		const assetsDir = join(__dirname, '../../../frontend/assets');
+		const filePath = join(assetsDir, ...args) + '.gz';
+		const dir = dirname(filePath);
+		if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+
+		const compressed = gzipSync(input);
+		writeFileSync(filePath, compressed);
 	};
 }

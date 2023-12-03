@@ -97,78 +97,92 @@
 		}
 	}
 }
-.widget.category {
-	font-size: 9px;
-	font-family: var(--font-monospace);
-	border: 1px solid var(--col-border-muted);
-	color: var(--col-primary-65);
-	width: 14px;
-	height: 14px;
-	align-self: center;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	&::after {
-		line-height: 16px;
-	}
-	&.Package {
-		transform: rotate(45deg);
-		&::after {
-			transform: rotate(-45deg);
-			color: var(--col-secondary-60);
-			content: 'P';
-		}
-	}
-	&.Reference {
-		transform: rotate(45deg);
-		&::after {
-			transform: rotate(-45deg);
-			color: var(--col-accent1-60);
-			content: 'R';
-		}
-	}
-	&.Namespace {
-		transform: rotate(45deg);
-		&::after {
-			transform: rotate(-45deg);
-			color: var(--col-accent3-60);
-			content: 'N';
-		}
-	}
-	&.Class {
-		&::after {
-			color: var(--col-accent1-60);
-			content: 'C';
-		}
-	}
-	&.Function {
-		&::after {
-			color: var(--col-accent3-60);
-			content: 'F';
-		}
-	}
-	&.Variable {
+package-drawer {
+	&.external .widget.category:before {
+		content: '';
+		width: 0.6em;
+		height: 0.6em;
+		left: -0.4em;
+		position: absolute;
 		border-radius: 50%;
-		&::after {
-			color: var(--col-secondary-60);
-			content: 'V';
-		}
+		background: var(--col-primary-40);
 	}
-	&.Enum {
-		border-radius: 50%;
-		&::after {
-			color: var(--col-accent2-60);
-			content: 'E';
+	.widget.category {
+		font-size: 9px;
+		font-family: var(--font-monospace);
+		border: 1px solid var(--col-primary-40);
+		color: var(--col-primary-65);
+		width: 14px;
+		height: 14px;
+		align-self: center;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+
+		&:after {
+			line-height: 16px;
 		}
-	}
-	&.Type {
-		border-radius: 50%;
-		&::after {
-			color: var(--col-accent1-60);
-			content: 'T';
+		&.Package {
+			transform: rotate(45deg);
+			&:after {
+				transform: rotate(-45deg);
+				color: var(--col-secondary-70);
+				content: 'P';
+			}
+		}
+		&.Reference {
+			transform: rotate(45deg);
+			&:after {
+				transform: rotate(-45deg);
+				color: var(--col-accent1-80);
+				content: 'R';
+			}
+		}
+		&.Namespace {
+			transform: rotate(45deg);
+			&:after {
+				transform: rotate(-45deg);
+				color: var(--col-accent3-60);
+				content: 'N';
+			}
+		}
+		&.Class {
+			&:after {
+				color: var(--col-accent1-50);
+				content: 'C';
+			}
+		}
+		&.Function {
+			&:after {
+				color: var(--col-accent3-50);
+				content: 'F';
+			}
+		}
+		&.Variable {
+			border-radius: 50%;
+			&:after {
+				color: var(--col-secondary-60);
+				content: 'V';
+			}
+		}
+		&.Enum {
+			border-radius: 50%;
+			&:after {
+				color: var(--col-accent2-50);
+				content: 'E';
+			}
+		}
+		&.Type {
+			border-radius: 50%;
+			&:after {
+				color: var(--col-accent1-70);
+				content: 'T';
+			}
 		}
 	}
 }
+
 .resizeable {
 	position: relative;
 	z-index: 100;
@@ -240,14 +254,21 @@ nav-context {
 	&:hover,
 	&[state='active'] {
 		icon-context {
-			font-variation-settings: 'FILL' 1 !important;
+			font-variation-settings:
+				'FILL' 1,
+				'wght' 100 !important;
 		}
 	}
+	&[state='active'] {
+		cursor: default;
+	}
+	&:not([state='active']):hover {
+		opacity: 0.75;
+	}
 	icon-context {
-		font-variation-settings: 'wght' 270 !important;
+		font-variation-settings: 'wght' 200 !important;
 	}
 }
-
 dev-colours {
 	display: block;
 	margin-bottom: 1em;

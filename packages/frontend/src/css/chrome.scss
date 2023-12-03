@@ -3,7 +3,6 @@ html {
 	width: 100vw;
 	height: 100vh;
 	position: relative;
-	background: var(--col-canvas-default);
 }
 dox-app {
 	display: flex;
@@ -23,32 +22,34 @@ dox-app {
 			position: relative;
 			display: flex;
 			z-index: 10;
+			context-mainmenu {
+				contain: content;
+			}
 			left-menu {
-				position: relative;
-				z-index: 0;
+				contain: content;
 				display: block;
 				height: 100%;
 				font-size: 0.8rem;
 				background: var(--col-primary-15);
+
 				.resizeable {
 					height: 100%;
 					position: relative;
+					border-right: 1rem solid var(--col-canvas-default);
+					display: flex;
+					flex-direction: column;
 				}
-			}
-			left-context {
-				z-index: 1;
-				position: relative;
-				background: var(--col-primary-20);
-				border-right: 1px solid var(--col-secondary-25);
 			}
 		}
 		chrome-main {
+			contain: content;
 			height: 100%;
 			flex-grow: 1;
 			position: relative;
 			display: block;
 			min-width: 0;
-			overflow: scroll;
+			overflow: auto;
+			background: var(--col-canvas-default);
 			.fullscreen {
 				z-index: 100;
 				position: fixed;
@@ -62,6 +63,7 @@ dox-app {
 		}
 	}
 	chrome-footer {
+		contain: content;
 		background: var(--col-primary-20);
 		border-top: 1px solid var(--col-border-muted);
 		.inner {

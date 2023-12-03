@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { TsWrapperCache } from './WrapperCache.mjs';
+import { TsWrapperInstanceCache } from './WrapperInstanceCache.mjs';
 import { log, loggerUtils } from '@typedox/logger';
 import { TsWrapper } from './Wrapper.mjs';
 import { isSymbol, tsItem } from './index.mjs';
@@ -39,7 +39,7 @@ export default {
 			log.throwError(log.identifier(this), `${message}:`, symbol.name);
 		},
 	},
-	cacheSet: function (this: TsWrapperCache, key: string) {
+	cacheSet: function (this: TsWrapperInstanceCache, key: string) {
 		log.error(
 			log.identifier(this),
 			'Tried to set existing cache key:',

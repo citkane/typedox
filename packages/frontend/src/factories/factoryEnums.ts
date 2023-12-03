@@ -14,21 +14,21 @@ export let SyntaxKind: {
 } = {} as any;
 
 export async function initEnums() {
-	const promises = [
+	const [categoryKindData, syntaxKindData] = await Promise.all([
 		files.fetchDataFromFile<any>('assets/_categoryKind.json'),
 		files.fetchDataFromFile<any>('assets/_syntaxKind.json'),
-	];
-	const [categoryKindData, syntaxKindData] = await Promise.all(promises);
-	rebuildEnum(CategoryKind, categoryKindData);
-	rebuildEnum(SyntaxKind, syntaxKindData);
+	]);
+	rebuildEnum(CategoryKind, { ...categoryKindData });
+	rebuildEnum(SyntaxKind, { ...syntaxKindData });
 }
 
 function rebuildEnum(target: any, data: any) {
 	Object.keys(data).forEach((key) => {
-		const index = parseInt(key);
-		if (!index) return;
-		const name = data[index];
-		target[(data[name] = index)] = name;
-		target[name] = index;
+		((index) =>
+			!isNaN(index) &&
+			((name) => {
+				target[(data[name] = index)] = name;
+				target[name] = index;
+			})(data[index]))(parseInt(key));
 	});
 }

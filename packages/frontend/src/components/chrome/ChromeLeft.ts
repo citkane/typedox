@@ -1,15 +1,15 @@
 import { dom } from '../../index.js';
-import { LeftContext } from './LeftContext.js';
-import { LeftMenu } from './LeftMenu.js';
+import { ContextMainmenu } from '../context/ContextMainmenu.js';
+import { LeftMenu } from '../navigation/LeftMenu.js';
 
 export class ChromeLeft extends HTMLElement {
-	public doxLeftContext: LeftContext;
+	public doxLeftContext: ContextMainmenu;
 	public doxLeftMenu: LeftMenu;
 
 	constructor() {
 		super();
 
-		this.doxLeftContext = new LeftContext();
+		this.doxLeftContext = new ContextMainmenu();
 		this.doxLeftMenu = new LeftMenu();
 	}
 	connectedCallback() {

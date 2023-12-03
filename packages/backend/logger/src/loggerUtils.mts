@@ -94,10 +94,10 @@ export function identifier(subject: string | object | number) {
 		typeof subject === 'string'
 			? parseFilename(subject)
 			: typeof subject === 'number'
-			? String(subject)
-			: getConstructorName(subject)
-			? `${initLowerCamel(subject.constructor.name)}`
-			: getName(subject);
+			  ? String(subject)
+			  : getConstructorName(subject)
+			    ? `${initLowerCamel(subject.constructor.name)}`
+			    : getName(subject);
 
 	return `[${value}]`;
 	function parseFilename(subject: string) {
@@ -169,8 +169,8 @@ export function inspect(
 		return typeof ignoreOrShrink === 'boolean'
 			? [ignoreOrShrink as boolean, ignore]
 			: !!ignoreOrShrink
-			? [undefined, ignoreOrShrink as string[]]
-			: [undefined, undefined];
+			  ? [undefined, ignoreOrShrink as string[]]
+			  : [undefined, undefined];
 	}
 	function shrink(
 		item: any,
@@ -254,4 +254,19 @@ export function formatBytes(bytes: number, decimals = 2) {
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
 
 	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
+type helpItem = { description: string; defaultValue: string };
+export function logHelp(args: Record<string, helpItem>, argHyphen: string) {
+	Object.keys(args).forEach(logKey);
+
+	function logKey(key: string) {
+		((helpItem) => {
+			log.group(argHyphen + log.colourise('Underscore', String(key)));
+			log.log(helpItem.description);
+			log.log('Default value:', helpItem.defaultValue);
+			log.log();
+			log.groupEnd();
+		})(args[key]);
+	}
 }

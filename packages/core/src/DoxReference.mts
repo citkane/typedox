@@ -1,7 +1,13 @@
 import ts from 'typescript';
-import { TsWrapper, tsItem, wrap } from '@typedox/wrapper';
+import { TsWrapper, tsItem } from '@typedox/wrapper';
 import { log, loggerUtils } from '@typedox/logger';
-import { CategoryKind, DoxPackage, DoxSourceFile, events } from './index.mjs';
+import {
+	CategoryKind,
+	DoxDeclaration,
+	DoxPackage,
+	DoxSourceFile,
+	events,
+} from './index.mjs';
 import { Dox } from './Dox.mjs';
 
 const __filename = log.getFilename(import.meta.url);
@@ -43,7 +49,7 @@ export class DoxReference extends Dox {
 	) {
 		super();
 
-		this.name = name;
+		this.name = name.replace(/\./g, '_');
 		this.parent = parent;
 		this.program = makeProgramFromConfig(
 			parsedConfig,
@@ -69,11 +75,17 @@ export class DoxReference extends Dox {
 
 		this.filesMap.forEach((doxFile) => doxFile.discoverDeclarations());
 		this.filesMap.forEach((doxFile) => doxFile.buildRelationships());
-		this.filesMap.forEach((doxFile) => {
-			doxFile.declarationsMap.forEach((declaration) => {
+		this.filesMap.forEach((doxFile, key) => {
+			doxFile.declarationsMap.forEach((declaration, key) => {
 				events.emit('core.declaration.related', declaration);
 			});
+			doxFile.declarationsMap.clear();
 		});
+		this.filesMap.clear();
+		TsWrapper.flushCache();
+		DoxDeclaration.flushCounter();
+
+		events.emit('core.reference.done', this);
 	}
 
 	public get doxPackage() {
@@ -86,7 +98,7 @@ export class DoxReference extends Dox {
 		return this.doxProject.options;
 	}
 	public tsWrap = (item: tsItem): TsWrapper => {
-		const wrapped = wrap(this.checker, this.program, item);
+		const wrapped = TsWrapper.wrap(this.checker, this.program, item);
 		return wrapped;
 	};
 }

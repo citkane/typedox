@@ -71,7 +71,7 @@ export function makeResizeable(
 
 		const value = event[eventKey] - offset;
 		if (value >= _min && value <= _max) {
-			target.style[styleKey] = value + 'px';
+			setTimeout(() => (target.style[styleKey] = value + 'px'));
 		}
 	}
 	function disconnectedCallback() {

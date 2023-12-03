@@ -5,7 +5,8 @@ left-menu {
 		right: 100%;
 		height: 100%;
 		width: 100%;
-		overflow-y: scroll;
+		padding-bottom: 1em;
+		overflow-y: auto;
 		&[state='active'] {
 			position: static;
 			right: auto;
@@ -16,8 +17,50 @@ left-menu {
 			display: flex;
 		}
 	}
+	package-menu {
+		.local,
+		.external,
+		.reexported,
+		.imported {
+			display: none;
+		}
+		&.local .local {
+			display: block;
+		}
+		&.external .external {
+			display: block;
+		}
+		&.reexported .reexported {
+			display: block;
+		}
+		&.imported .imported {
+			display: block;
+		}
+		package-drawer {
+			content-visibility: auto;
+			contain-intrinsic-size: auto 1.6em;
+		}
+	}
+	context-packagemenu {
+		display: block;
+
+		.filter {
+			display: inline-block;
+			padding: 0.5em 1em;
+			cursor: pointer;
+			color: var(--col-accent1-50);
+			&[state='off'] {
+				color: var(--col-primary-50);
+			}
+		}
+	}
 }
-left-context {
+
+context-mainmenu {
+	z-index: 1;
+	position: relative;
+	background: var(--col-primary-20);
+	border-right: 1px solid var(--col-secondary-25);
 	> .inner {
 		width: 3em;
 		display: flex;

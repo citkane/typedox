@@ -1,7 +1,6 @@
-import { CategoryKind, config } from '@typedox/core';
+import { CategoryKind, DoxEvents, config, coreEventsApi } from '@typedox/core';
 import { log } from '@typedox/logger';
 import {
-	events,
 	PackageMenu,
 	SerialiseVariable,
 	SerialiseClass,
@@ -13,6 +12,8 @@ import {
 } from './index.mjs';
 
 const __filename = log.getFilename(import.meta.url);
+
+const events = new DoxEvents<coreEventsApi>(coreEventsApi);
 
 export class Serialiser {
 	constructor(options: config.coreDoxOptions) {

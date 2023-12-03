@@ -2,6 +2,7 @@
 @import 'reset.scss';
 @import './materialSymbols/outlined.scss';
 @import './github-markdown.scss';
+
 :root {
 	--font-sansserif: Verdana, Geneva, Tahoma, sans-serif;
 	--font-monospace: 'Courier New', Courier, monospace;
@@ -11,6 +12,7 @@ html {
 	font-family: var(--font-sansserif);
 	font-size: 1rem;
 }
+
 * {
 	box-sizing: border-box;
 }

@@ -1,6 +1,14 @@
 import { menuBranch, menuMeta } from '@typedox/serialiser';
-import { Menu, WidgetDrawer, dom, files, state } from '../../index.js';
-import { CategoryKind } from '../../factories/factoryEnums.js';
+import {
+	Menu,
+	WidgetDrawer,
+	declaration,
+	dom,
+	events,
+	files,
+	state,
+} from '../../index.js';
+import { CategoryKind, SyntaxKind } from '../../factories/factoryEnums.js';
 import { NavLink } from './NavLinks.js';
 
 export class PackageMenu extends Menu {
@@ -10,18 +18,25 @@ export class PackageMenu extends Menu {
 
 		this.menu = files
 			.fetchDataFromFile<menuBranch[]>('assets/_packageMenu.json')
-			.then((menudata) => {
-				return menudata.map((data) => {
-					const { name, children, meta } = data;
-					return new PackageDrawer(
-						name,
-						PackageDrawer,
-						meta as menuMeta,
-						0,
-						children,
-					);
-				});
-			});
+			.then((menudata) =>
+				menudata.map(
+					(data, i) =>
+						new PackageDrawer(
+							data.name,
+							PackageDrawer,
+							data.meta as menuMeta,
+							0,
+							i,
+							data.children,
+						),
+				),
+			);
+
+		events.on('context.declarations.change', (context) => {
+			!!state.declarationContexts[context]
+				? this.classList.add(context)
+				: this.classList.remove(context);
+		});
 	}
 	connectedCallback() {
 		super.connectedCallback(
@@ -38,45 +53,47 @@ export class PackageMenu extends Menu {
 	disconnectedCallback() {
 		super.disconnectedCallback();
 	}
-	/*
-	static sortMenu(menu: menuBranch) {
-		menu.children?.sort((a, b) => {
-			const aIndex = a.meta.category + a.name;
-			const bIndex = b.meta.category + b.name;
-			if (aIndex === bIndex) return 0;
-			return aIndex > bIndex ? 1 : -1;
-		});
-		menu.children?.forEach((child) => PackageMenu.sortMenu(child));
-
-		return menu;
-	}
-	*/
 }
 
 class PackageDrawer extends WidgetDrawer<menuMeta> {
+	private kind = declaration.syntaxKind(this.meta);
+	private isExternal = declaration.isExternal(this.meta);
+	private isLocal = declaration.isLocal(this.meta, this.kind);
+	private isImported = declaration.isImported(this.meta, this.kind);
+	private isReexported = declaration.isReexported(this.meta, this.kind);
+
 	constructor(
 		name: string,
 		Class: typeof WidgetDrawer<menuMeta>,
 		meta: menuMeta,
 		depth: number,
+		index: number,
 		children?: menuBranch[],
+		parent?: PackageDrawer,
 	) {
-		super(name, Class, meta, depth, children);
+		super(name, Class, meta, depth, index, children, parent);
 
-		const paddingLeft = depth * 12;
-		this.header.left.style.paddingLeft = `${paddingLeft}px`;
-		const category = dom.makeElement(
-			'div',
-			`widget category ${CategoryKind[this.meta.category]}`,
-		);
-		this.header.right.appendChild(category);
+		this.meta = meta;
 		this.header.right.style.paddingRight = '5px';
+		((paddingLeft) =>
+			(this.header.left.style.paddingLeft = `${paddingLeft}px`))(
+			depth * 12,
+		);
+		((category) => this.header.right.appendChild(category))(
+			PackageDrawer.categoryDiv(this.meta),
+		);
 	}
 	connectedCallback() {
 		super.connectedCallback();
 
+		if (this.kind) this.classList.add(SyntaxKind[this.kind]);
+		if (this.isLocal) this.classList.add('local');
+		if (this.isExternal) this.classList.add('external');
+		if (this.isImported) this.classList.add('imported');
+		if (this.isReexported) this.classList.add('reexported');
+
 		if (!this.meta.location) {
-			this.header.title.addEventListener('click', this.toggleOpened);
+			this.header.title.onclick = this.toggleOpened;
 			this.header.title.style.cursor = 'pointer';
 		} else {
 			this.header.title.replaceChildren(
@@ -86,7 +103,13 @@ class PackageDrawer extends WidgetDrawer<menuMeta> {
 	}
 	disconnectedCallback() {
 		super.disconnectedCallback();
-		this.header.title.removeEventListener('click', this.toggleOpened);
+	}
+
+	static categoryDiv(meta: menuMeta) {
+		return dom.makeElement(
+			'div',
+			`widget category ${CategoryKind[meta.category]}`,
+		);
 	}
 }
 

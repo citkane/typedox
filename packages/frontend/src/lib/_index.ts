@@ -1,5 +1,4 @@
-export * as dom from './dom.js';
-export * as files from './files.js';
-export * as router from './router.js';
-export * from './DoxEvents.js';
-export { State } from './State.js';
+export * as dom from './libDom.js';
+export * as files from './libFiles.js';
+export * as router from './libRouter.js';
+export * as declaration from './libDeclaration.js';

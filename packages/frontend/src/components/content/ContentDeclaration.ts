@@ -1,55 +1,36 @@
-import { DeclarationSerialised, Serialised } from '@typedox/serialiser';
+import { DeclarationSerialised } from '@typedox/serialiser';
 import {
 	CategoryKind,
 	CodeComments,
-	CodeHeader,
 	CodeSnippets,
 	ContentLineage,
+	FileHeader,
 	dom,
 	events,
 } from '../../index.js';
 import { DeclarationFlags } from '@typedox/core';
 
 export class ContentDeclaration extends HTMLElement {
-	public rawData: DeclarationSerialised;
-	public header: HTMLElement;
-	public codeHeader: HTMLElement;
-	public codeSnippets: HTMLElement;
-	public declareRelations: ContentLineage | undefined;
-	public comments: HTMLElement;
+	private rawData: DeclarationSerialised;
+	private lineage: HTMLElement | undefined;
+	private textWrapper: HTMLElement;
+	private codeWrapper: HTMLDivElement;
 
 	constructor(rawData: DeclarationSerialised) {
 		super();
-		const {
-			name,
-			category,
-			flags,
-			file,
-			jsDocs,
-			location,
-			children,
-			parents,
-		} = rawData;
 
 		this.rawData = rawData;
-		this.header = ContentDeclaration.makeHeader(name, category, flags);
-		this.codeHeader = new CodeHeader(file);
-		this.codeSnippets = new CodeSnippets(file, location);
-		this.declareRelations =
-			!children && !parents
-				? undefined
-				: new ContentLineage(rawData, true, true, true);
-		this.comments = new CodeComments(jsDocs, file.positions);
+		this.textWrapper = ContentDeclaration.makeTextWrapper(rawData);
+		this.codeWrapper = ContentDeclaration.makeCodeWrapper(rawData);
+		this.lineage = ContentDeclaration.makeLineage(rawData);
 
 		events.on('dev.devinfo.log', this.logRawData);
 	}
 	connectedCallback() {
 		dom.appendChildren.call(this, [
-			this.header,
-			this.codeHeader,
-			this.codeSnippets,
-			this.declareRelations,
-			this.comments,
+			this.textWrapper,
+			this.codeWrapper,
+			this.lineage,
 		]);
 	}
 	disconnectedCallback() {
@@ -58,13 +39,37 @@ export class ContentDeclaration extends HTMLElement {
 	private logRawData = () => {
 		console.info(JSON.stringify(this.rawData, null, 2));
 	};
-	private static makeHeader(
-		name: string,
+	private static makeTextWrapper(rawData: DeclarationSerialised) {
+		const { name, category, flags, file, jsDocs } = rawData;
+		const title = dom.makeElement('h1', 'declaration', name);
+		const comments = new CodeComments(jsDocs, file.positions);
+		const codeHeader = ContentDeclaration.makeCodeHeader(category, flags);
+		const rightCol = dom.makeElement('div', 'right');
+		const leftCol = dom.makeElement('div', 'left');
+		const wrapper = dom.makeElement('div', 'textWrapper');
+
+		rightCol.appendChild(codeHeader);
+		dom.appendChildren.call(leftCol, [title, comments]);
+		dom.appendChildren.call(wrapper, [leftCol, rightCol]);
+
+		return wrapper;
+	}
+	private static makeCodeWrapper(rawData: DeclarationSerialised) {
+		const { name, category, flags, file, location } = rawData;
+		const codeWrapper = dom.makeElement<HTMLDivElement>('div', 'code');
+
+		const fileHeader = new FileHeader(file);
+		const codeSnippets = new CodeSnippets(file, location);
+
+		dom.appendChildren.call(codeWrapper, [fileHeader, codeSnippets]);
+
+		return codeWrapper;
+	}
+	private static makeCodeHeader(
 		category: CategoryKind,
 		flags: DeclarationFlags,
 	) {
 		const wrapperHtml = dom.makeElement('div', 'header');
-		const nameHtml = dom.makeElement('h1', null, name);
 		const scopeHtml =
 			flags.scopeKeyword &&
 			dom.makeElement('span', 'flag', flags.scopeKeyword);
@@ -76,13 +81,27 @@ export class ContentDeclaration extends HTMLElement {
 			'category',
 			CategoryKind[category],
 		);
-		const children = [nameHtml, typeHtml, scopeHtml, categoryHtml].filter(
+		const children = [typeHtml, scopeHtml, categoryHtml].filter(
 			(html) => !!html,
 		) as HTMLElement[];
 
 		dom.appendChildren.call(wrapperHtml, children);
 
 		return wrapperHtml;
+	}
+	private static makeLineage(rawData: DeclarationSerialised) {
+		const { children, parents } = rawData;
+		if (!children && !parents) return undefined;
+		const lineageContainer = dom.makeElement('div', 'lineage');
+		//console.log(parents, children);
+		const lineage = new ContentLineage(
+			rawData,
+			true,
+			!!parents,
+			!!children,
+		);
+		lineageContainer.appendChild(lineage);
+		return lineageContainer;
 	}
 }
 

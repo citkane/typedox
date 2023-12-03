@@ -25,7 +25,6 @@ export const notices = {
 			wrapped: TsWrapper,
 			fileName?: string,
 		) {
-			this.declaration.errored();
 			const message = fileName
 				? `Could not get a ts.Symbol for: ${fileName}`
 				: `Could not get a target fileName.`;
@@ -38,24 +37,9 @@ export const notices = {
 		},
 	report:
 		/* istanbul ignore next: soft error for debugging */
-		function (
-			this: DoxDeclaration,
-			wrapped: TsWrapper,
-			route: string,
-			local: boolean,
-			fileName: string,
-		) {
-			const errorMessage = `Did not ${route} a ${
-				local ? 'localTargetNode' : 'node'
-			} relationship`;
-			deepReport.call(
-				this,
-				fileName,
-				'error',
-				errorMessage,
-				wrapped,
-				local,
-			);
+		function (this: DoxDeclaration, route: string, fileName: string) {
+			const errorMessage = `Did not ${route} a node`;
+			deepReport.call(this, fileName, 'error', errorMessage);
 		},
 	categoryKind: function (
 		tsKind: ts.SyntaxKind,
@@ -77,8 +61,6 @@ function deepReport(
 	location: string,
 	logLevel: Exclude<keyof typeof logLevels, 'silent'>,
 	message: string,
-	wrapped: TsWrapper,
-	isLocalTarget: boolean,
 ) {
 	log[logLevel](log.identifier(location), message, {
 		filename: this.wrappedItem.fileName,
@@ -87,10 +69,5 @@ function deepReport(
 			this.wrappedItem.nodeDeclarationText,
 			80,
 		),
-
-		targetReport: isLocalTarget ? wrapped.report : undefined,
-		targetDeclaration: isLocalTarget
-			? wrapped.nodeDeclarationText
-			: undefined,
 	});
 }

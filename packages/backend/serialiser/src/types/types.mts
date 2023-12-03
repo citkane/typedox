@@ -13,18 +13,17 @@ export function serialiseType(declaration: DoxDeclaration): DeclarationType {
 	const type = aliasSymbol
 		? serialiseAlias(declaration, aliasSymbol)
 		: flags === StringLiteral
-		? serialiseStringLiteral(tsType)
-		: {
-				kind: ts.TypeFlags[tsType.flags],
-				name: 'unknown',
-		  };
+		  ? serialiseStringLiteral(tsType)
+		  : {
+					kind: ts.TypeFlags[tsType.flags],
+					name: 'unknown',
+		    };
 
 	return type;
 }
 function serialiseAlias(declaration: DoxDeclaration, symbol: ts.Symbol) {
 	const name = symbol.name;
-	const id = declaration.doxSourceFile.declarationsMap.get(escape(name))?.id;
-	return { kind: 'Alias', name, id };
+	return { kind: 'Alias', name };
 }
 function serialiseStringLiteral(type: ts.Type) {
 	const { value } = type as any;

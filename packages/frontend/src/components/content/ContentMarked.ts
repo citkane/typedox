@@ -1,5 +1,5 @@
 import { format } from '../../index.js';
-import { makeElement } from '../../lib/dom.js';
+import { makeElement } from '../../lib/libDom.js';
 
 export class ContentMarked extends HTMLElement {
 	inner: HTMLDivElement;

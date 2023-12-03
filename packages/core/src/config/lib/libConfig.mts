@@ -131,9 +131,9 @@ export function getDoxFilepathFromArgs(
 /*
 
 */
-export function deepFreeze(item: any, seen = new Map<object, true>()) {
+export function deepFreeze(item: any, seen = new Set<object>()) {
 	if (typeof item !== 'object' || seen.has(item)) return item;
-	seen.set(item, true);
+	seen.add(item);
 	Object.freeze(item);
 	Array.isArray(item)
 		? item.forEach((child) => deepFreeze(child, seen))
@@ -147,7 +147,9 @@ export function clone<T = object>(object: any) {
 	return { ...object } as T;
 }
 
-export function jsonFileToObject(absFilepath: string) {
+export function jsonFileToObject(
+	absFilepath: string,
+): Record<any, any> & any[] {
 	ensureFileExists(absFilepath);
 	const sourceFile = ts.readJsonConfigFile(absFilepath, ts.sys.readFile);
 	const diagnostics: ts.Diagnostic[] = [];

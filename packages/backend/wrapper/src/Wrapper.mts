@@ -1,12 +1,9 @@
 import ts from 'typescript';
-import { TsWrapperCache, wrappedCache } from './WrapperCache.mjs';
 import {
-	isNode,
-	isNodeOrSymbol,
-	isSpecifierKind,
-	isSymbol,
-	tsItem,
-} from './index.mjs';
+	TsWrapperInstanceCache,
+	wrappedCache,
+} from './WrapperInstanceCache.mjs';
+import { isNodeOrSymbol, isSymbol, tsItem, utils } from './index.mjs';
 import notices from './notices.mjs';
 import { log } from '@typedox/logger';
 import {
@@ -24,7 +21,7 @@ let cachedWrappers = new Map<ts.Node[], TsWrapper>();
 /**
  * Provides a convenience dox API wrapper around the typescript compiler API.
  */
-export class TsWrapper extends TsWrapperCache {
+export class TsWrapper extends TsWrapperInstanceCache {
 	error = false;
 	constructor(checker: ts.TypeChecker, program: ts.Program, tsItem: tsItem) {
 		super(checker, program);
@@ -39,12 +36,7 @@ export class TsWrapper extends TsWrapperCache {
 			unsuccessful.call(this, log.stackTracer(), tsItem);
 		}
 	}
-	public cacheFlush = () => {
-		cachedWrappers = new Map<ts.Node[], TsWrapper>();
-	};
-	public get cacheGet() {
-		return this.cacheGetter.bind(null, this);
-	}
+
 	public get tsNodes(): wrappedCache['tsNodes'] {
 		return this.cacheGet('tsNodes');
 	}
@@ -79,7 +71,7 @@ export class TsWrapper extends TsWrapperCache {
 		return this.cacheGet('alias');
 	}
 	public get escapedAlias() {
-		return this.alias && ts.escapeLeadingUnderscores(this.alias);
+		return this.alias ? ts.escapeLeadingUnderscores(this.alias) : undefined;
 	}
 	public get kind() {
 		return this.tsNode.kind;
@@ -133,7 +125,7 @@ export class TsWrapper extends TsWrapperCache {
 		if (!target || !target.name || target.name === 'unknown')
 			return undefined;
 
-		return wrap(this.checker, this.program, target);
+		return TsWrapper.wrap(this.checker, this.program, target);
 	}
 	/**
 	 * The last symbol (if any) within or outside the file of a reference symbol chain
@@ -175,7 +167,7 @@ export class TsWrapper extends TsWrapperCache {
 		return ts.isIdentifier(this.tsNode);
 	}
 	public get isSpecifierKind() {
-		return isSpecifierKind(this.kind);
+		return utils.isSpecifierKind(this.kind);
 	}
 	public get isBindingElement() {
 		return ts.isBindingElement(this.tsNode);
@@ -192,34 +184,40 @@ export class TsWrapper extends TsWrapperCache {
 
 		return report;
 	}
-}
-export function wrap(
-	checker: ts.TypeChecker,
-	program: ts.Program,
-	tsItem: tsItem,
-): TsWrapper {
-	const keyRef = getRef(tsItem);
-	if (cachedWrappers.has(keyRef)) return cachedWrappers.get(keyRef)!;
-	let wrapped: TsWrapper | undefined;
-	try {
-		wrapped = new TsWrapper(checker, program, keyRef);
-		cachedWrappers.set(keyRef, wrapped);
-	} catch (error: any) {
-		wrapped ??= { error: true } as TsWrapper;
-		//error.message && log.error(error);
-		abort(checker, tsItem);
+	private get cacheGet() {
+		return this.cacheGetter.bind(null, this);
 	}
-
-	return wrapped;
-	function getRef(item: tsItem) {
-		if (isSymbol(item)) {
-			return item.declarations! || [item.valueDeclaration!];
-		} else {
-			return item;
+	public static flushCache = () => {
+		cachedWrappers.clear();
+	};
+	public static wrap(
+		checker: ts.TypeChecker,
+		program: ts.Program,
+		tsItem: tsItem,
+	): TsWrapper {
+		const keyRef = getRef(tsItem);
+		if (cachedWrappers.has(keyRef)) return cachedWrappers.get(keyRef)!;
+		let wrapped: TsWrapper | undefined;
+		try {
+			wrapped = new TsWrapper(checker, program, keyRef);
+			cachedWrappers.set(keyRef, wrapped);
+		} catch (error: any) {
+			wrapped ??= { error: true } as TsWrapper;
+			//error.message && log.error(error);
+			abort(checker, tsItem);
 		}
-	}
-	function abort(checker: ts.TypeChecker, item: tsItem) {
-		const symbol = getRef(item);
-		symbol && cachedWrappers.delete(symbol);
+
+		return wrapped;
+		function getRef(item: tsItem) {
+			if (isSymbol(item)) {
+				return item.declarations! || [item.valueDeclaration!];
+			} else {
+				return item;
+			}
+		}
+		function abort(checker: ts.TypeChecker, item: tsItem) {
+			const symbol = getRef(item);
+			symbol && cachedWrappers.delete(symbol);
+		}
 	}
 }

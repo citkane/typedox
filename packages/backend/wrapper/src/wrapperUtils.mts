@@ -115,8 +115,9 @@ export function getTsSymbolFromNodes(
 }
 
 export function getModuleSpecifier(node: ts.Node): ts.Expression | undefined {
+	if (ts.isSourceFile(node)) return undefined;
 	if ('moduleSpecifier' in node) return node.moduleSpecifier as ts.Expression;
-	return undefined;
+	return getModuleSpecifier(node.parent);
 }
 
 export function declared(symbol: ts.Symbol) {
@@ -153,9 +154,37 @@ export function declared(symbol: ts.Symbol) {
 	}, accumulator);
 
 	return declared;
-	/*
-		const node = declarations.find((declared) => !ts.isTypeNode(declared));
-		const type = declarations.find((declared) => ts.isTypeNode(declared));
-		return { node, type };
-		*/
+}
+
+export function isExportSpecifierKind(kind: ts.SyntaxKind) {
+	const specifiers = [
+		ts.SyntaxKind.ExportAssignment,
+		ts.SyntaxKind.ExportDeclaration,
+		ts.SyntaxKind.ExportSpecifier,
+		ts.SyntaxKind.NamespaceExport,
+	];
+
+	return specifiers.includes(kind);
+}
+export function isImportSpecifierKind(kind: ts.SyntaxKind) {
+	const specifiers = [
+		ts.SyntaxKind.ImportClause,
+		ts.SyntaxKind.ImportEqualsDeclaration,
+		ts.SyntaxKind.ImportSpecifier,
+		ts.SyntaxKind.NamespaceImport,
+	];
+
+	return specifiers.includes(kind);
+}
+export function isSpecifierKind(kind: ts.SyntaxKind) {
+	const specifiers = [
+		ts.SyntaxKind.ModuleDeclaration,
+		ts.SyntaxKind.BindingElement,
+	];
+
+	return (
+		specifiers.includes(kind) ||
+		isExportSpecifierKind(kind) ||
+		isImportSpecifierKind(kind)
+	);
 }

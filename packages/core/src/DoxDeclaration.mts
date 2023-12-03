@@ -4,7 +4,6 @@ import {
 	DeclarationFlags,
 	DoxLocation,
 	DoxSourceFile,
-	events,
 } from './index.mjs';
 import { Dox } from './Dox.mjs';
 import { Relate } from './declarationUtils/Relate.mjs';
@@ -12,8 +11,11 @@ import { Declare } from './declarationUtils/Declare.mjs';
 import { getCategoryKind } from './declarationUtils/libCategory.mjs';
 import { log } from '@typedox/logger';
 import { TsWrapper } from '@typedox/wrapper';
+import { notices } from './declarationUtils/libNotices.mjs';
 
 const __filename = log.getFilename(import.meta.url);
+const count = new Map<string, number>();
+
 /**
  * A container for typescript declarations:
  *
@@ -34,52 +36,52 @@ const __filename = log.getFilename(import.meta.url);
  *
  */
 export class DoxDeclaration extends Dox {
-	public children = new Map<__String, DoxDeclaration>();
-	public doxSourceFile: DoxSourceFile;
+	public children = new Set<DoxDeclaration>();
+	public parents = new Set<DoxDeclaration>();
+	public localDeclarations = new Map<__String, DoxDeclaration>();
+	public doxSourceFile!: DoxSourceFile;
 	public flags!: DeclarationFlags;
 	public location!: DoxLocation;
-	public localDeclarationMap = new Map<__String, DoxDeclaration>();
 	public nameSpace?: string;
-	public parent: DoxSourceFile | DoxDeclaration;
-	public parents: Map<DoxDeclaration, boolean> = new Map();
+	public parent!: DoxSourceFile | DoxDeclaration;
 	public valueNode!: ts.Node;
 	public wrappedItem!: TsWrapper;
-	public escapedName: __String;
+	public escapedName!: __String;
+	public escapedAlias?: __String;
+	public kind!: ts.SyntaxKind;
 	public error = false;
-
-	private categoryTsKind!: ts.SyntaxKind;
+	public categoryTsKind!: ts.SyntaxKind;
 
 	constructor(
 		parent: DoxSourceFile | DoxDeclaration,
 		item: ts.Symbol,
-		notExported: boolean = false,
+		isLocal: boolean,
 	) {
 		super();
-
 		this.parent = parent;
 		this.doxSourceFile = this.getDoxSourceFile(parent);
-		this.wrappedItem = this.tsWrap(item);
-		this.escapedName = this.wrappedItem.escapedName;
 
-		if (!this.wrappedItem.error) {
-			const declare = new Declare(this);
+		try {
+			this.wrappedItem = this.tsWrap(item);
+			if (this.wrappedItem.error) throw Error();
+			((declare) => {
+				this.escapedName = this.wrappedItem.escapedName;
+				this.escapedAlias = this.wrappedItem.escapedAlias;
+				this.kind = this.wrappedItem.kind;
 
-			try {
-				declare.declare(this.wrappedItem);
-			} catch (err) {
-				this.errored();
-			}
+				declare.declare(this.wrappedItem, false);
 
-			this.valueNode = declare.valueNode;
-			this.categoryTsKind = declare.categoryTsKind;
-			this.flags = declare.flags;
-			this.nameSpace = declare.nameSpace;
-			this.location = makeLocation(this);
+				this.valueNode = declare.valueNode;
+				this.categoryTsKind = declare.categoryTsKind;
+				this.flags = declare.flags;
+				this.nameSpace = declare.nameSpace;
+				isLocal && (this.flags.isLocal = true);
 
-			notExported && (this.flags.notExported = true);
-			this.declarationsMap.set(item.escapedName, this);
-		} else {
-			this.errored();
+				this.location = DoxDeclaration.makeLocation(this);
+				DoxDeclaration.setScopeFlag(this.flags, this.valueNode);
+			})(new Declare(this));
+		} catch (err) {
+			this.errored(err);
 		}
 	}
 	public get name() {
@@ -88,15 +90,7 @@ export class DoxDeclaration extends Dox {
 			: this.wrappedItem.name;
 	}
 	public get category() {
-		if (this.flags.isExternal) {
-			return CategoryKind.unknown;
-		}
-		return getCategoryKind(
-			this.valueNode,
-			this.wrappedItem,
-			this.categoryTsKind,
-			this.checker,
-		);
+		return getCategoryKind(this);
 	}
 	public get categoryString() {
 		return CategoryKind[this.category];
@@ -125,42 +119,46 @@ export class DoxDeclaration extends Dox {
 	public get doxOptions() {
 		return this.doxProject.options;
 	}
-
-	public relate = (item = this.wrappedItem) => {
+	public relate = (item: TsWrapper) => {
 		try {
-			if (this.name === 'CategoryKind') {
-				log.info(
-					'-'.repeat(50),
-					CategoryKind[this.category],
-					this.wrappedItem.kindString,
-				);
-			}
 			new Relate(this).relate(item);
 		} catch (err) {
-			this.errored();
+			this.errored(err);
 		}
 	};
-	public adopt = (child: DoxDeclaration, localDeclaration = false) => {
-		const { children, localDeclarationMap: local } = this;
-		const { escapedName } = child;
-		const isAdopted =
-			(!localDeclaration && children.has(escapedName)) ||
-			(localDeclaration && local.has(escapedName));
-
-		if (isAdopted) return;
-
-		child.parents.set(this, true);
-		localDeclaration
-			? local.set(child.escapedName, child)
-			: children.set(child.escapedName, child);
+	public engender = (child: DoxDeclaration) => {
+		child.parents.add(this);
+		this.localDeclarations.set(child.escapedName, child);
 	};
-
-	public errored(err?: unknown) {
-		this.error = true;
-		this.children.forEach((child) => child.parents.delete(this));
-		if (err) log.error(err);
+	public adopt = (child: DoxDeclaration) => {
+		if (!this.shouldAdopt(child)) return;
+		child.parents.add(this);
+		this.children.add(child);
+	};
+	public static flushCounter() {
+		count.clear();
 	}
-
+	public static functionFactory(
+		this: Declare | Relate,
+		prefix: 'relate' | 'declare',
+		key: keyof typeof ts.SyntaxKind,
+	) {
+		return ((fnc) => {
+			if (!fnc) {
+				notices.report.call(this.declaration, prefix, __filename);
+			}
+			return fnc;
+		})((this as any)[`${prefix}${key}`]);
+	}
+	public static getValueNode(node: ts.Node): ts.Node {
+		if (ts.isSourceFile(node.parent)) return node;
+		return DoxDeclaration.getValueNode(node.parent);
+	}
+	private shouldAdopt = (child: DoxDeclaration) => {
+		return this.kind === ts.SyntaxKind.ExportDeclaration
+			? DoxDeclaration.isEncapsulated(child)
+			: true;
+	};
 	private getDoxSourceFile(
 		item: DoxSourceFile | DoxDeclaration,
 	): DoxSourceFile {
@@ -168,22 +166,83 @@ export class DoxDeclaration extends Dox {
 			? item
 			: this.getDoxSourceFile(item.parent);
 	}
-}
-
-const seen = new Set<string>();
-const count = {} as Record<string, number>;
-export function makeLocation(declaration: DoxDeclaration): DoxLocation {
-	const { doxPackage, doxReference, category, name, flags } = declaration;
-	let query = `${doxPackage.name}.${doxReference.name}.${
-		CategoryKind[category]
-	}.${flags.isDefault ? 'default' : name}`;
-	if (seen.has(query)) {
-		count[query] ??= 0;
-		count[query]++;
-		query = query + `_${count[query]}`;
+	private errored(err?: unknown) {
+		this.error = true;
+		this.children.forEach((child) => child.parents.delete(this));
+		if (err) log.error(err);
 	}
-	seen.add(query);
-	const hash = '';
+	private static isEncapsulated(declaration: DoxDeclaration) {
+		return (
+			!Dox.isImportSpecifierKind(declaration.kind) &&
+			!Dox.defaultKeys.includes(declaration.escapedName) &&
+			!!declaration.doxSourceFile.fileSymbol.exports?.has(
+				declaration.escapedName,
+			)
+		);
+	}
+	private static setScopeFlag(flags: DeclarationFlags, node: ts.Node) {
+		setFlag(flags, getScopeNode(node));
 
-	return { query, hash };
+		function setFlag(
+			flags: DeclarationFlags,
+			node?: ts.Node,
+			{ LetKeyword, ConstKeyword, VarKeyword } = ts.SyntaxKind,
+		) {
+			if (!node) return;
+			switch (node.kind) {
+				case LetKeyword:
+					flags.scopeKeyword = 'let';
+					break;
+				case ConstKeyword:
+					flags.scopeKeyword = 'const';
+					break;
+				case VarKeyword:
+					flags.scopeKeyword = 'var';
+					break;
+			}
+			return !!flags.scopeKeyword;
+		}
+		function getScopeNode(node: ts.Node) {
+			return node
+				.getChildren()
+				.find(
+					(node) =>
+						node.kind === ts.SyntaxKind.VariableDeclarationList,
+				)
+				?.getChildAt(0);
+		}
+	}
+	private static makeLocation(
+		declaration: DoxDeclaration,
+		hash = '',
+	): DoxLocation {
+		return ((query, hash) => ({ query, hash }))(
+			makeQueryString(declaration),
+			hash,
+		);
+
+		function makeQueryString({
+			doxPackage,
+			doxReference,
+			kind,
+			category,
+			flags,
+			name,
+		}: DoxDeclaration) {
+			return numberQuery(
+				`${doxPackage.name}.${doxReference.name}.${kind}.${category}.${
+					flags.isDefault ? 'default' : name
+				}`,
+			);
+		}
+		function numberQuery(query: string) {
+			if (count.has(query)) return query + `_${counter(query)}`;
+			count.set(query, 0);
+			return query;
+		}
+		function counter(query: string) {
+			count.set(query, count.get(query)! + 1);
+			return count.get(query);
+		}
+	}
 }

@@ -1,10 +1,8 @@
 import ts from 'typescript';
-import * as path from 'path';
-import * as fs from 'fs';
-import { DoxPackage } from './index.mjs';
-import { DoxConfig } from './config/DoxConfig.mjs';
-import { Dox } from './Dox.mjs';
+import path from 'node:path';
+import fs from 'node:fs';
 import { log } from '@typedox/logger';
+import { Dox, DoxPackage, config } from './index.mjs';
 
 const __filename = log.getFilename(import.meta.url);
 
@@ -27,132 +25,171 @@ const __filename = log.getFilename(import.meta.url);
  */
 export class DoxProject extends Dox {
 	public doxPackages = new Map<string, DoxPackage>();
-	public doxConfig: DoxConfig;
+	public doxConfig: config.DoxConfig;
 
-	constructor(doxConfig: DoxConfig) {
+	private parsedConfigRegistry: ts.ParsedCommandLine[];
+
+	constructor(doxConfig: config.DoxConfig) {
 		super();
-
 		log.info(log.identifier(this), 'Making a Typedox project.', '\n');
 
 		this.doxConfig = doxConfig;
-		const { options } = doxConfig;
-
-		const packages = DoxProject.findPackages(
-			options.projectRootDir,
-			options.npmFileConvention,
-		);
-		packages.forEach((packageDir) => {
-			const doxPackage = this.makePackage(
-				packageDir,
-				this.doxConfig.tscParsedConfigs,
-				this.doxConfig.options.projectRootDir,
-			);
-			this.doxPackages.set(doxPackage.name, doxPackage);
-		});
+		this.parsedConfigRegistry = [...doxConfig.tscParsedConfigs];
+		this.makePackages();
 		this.doxPackages.forEach((doxPackage) => doxPackage.init());
 
-		log.info(log.identifier(this), 'done.', '\n');
+		log.info(log.identifier(this), 'Done making a Typedox project.', '\n');
 	}
 	public get options() {
 		return this.doxConfig.options;
 	}
+	private makePackages() {
+		((packageDirs) => {
+			packageDirs.forEach((packageDir) => {
+				((doxPackage) =>
+					this.doxPackages.set(doxPackage.name, doxPackage))(
+					this.makePackage(packageDir, this.doxConfig),
+				);
+			});
+		})(DoxProject.findPackages(this.doxConfig.options));
+	}
 	private makePackage = (
 		packageFile: string,
-		parsedConfigs: ts.ParsedCommandLine[],
-		projectRootDir: string,
+		{ options: { projectRootDir } }: config.DoxConfig,
 	) => {
-		const packageDir = path.dirname(packageFile);
-
-		const packageParsedConfigs = [] as ts.ParsedCommandLine[];
-		const packageProgramsRootDir = [] as string[];
-		const included = [] as number[];
-		parsedConfigs.forEach((parsedConfig, i) => {
-			const programRootDir = DoxProject.getProgramRootDir(
-				parsedConfig,
-				projectRootDir,
-			);
-
-			if (!programRootDir) return notices.rootDir.warn();
-
-			const include = programRootDir.startsWith(packageDir);
-			if (include) {
-				packageParsedConfigs.push(parsedConfig);
-				packageProgramsRootDir.push(programRootDir);
-				included.push(i);
-			}
-		});
-		included.sort().forEach((index, i) => {
-			parsedConfigs.splice(index - i, 1);
-		});
-		return new DoxPackage(
-			this,
-			packageFile,
+		return ((
+			packageDir,
 			packageParsedConfigs,
 			packageProgramsRootDir,
+			configIndices,
+		) => {
+			this.parsedConfigRegistry.forEach((parsedConfig, i) => {
+				((programRootDir) => {
+					if (!programRootDir) return notices.rootDir.warn();
+					if (programRootDir.startsWith(packageDir)) {
+						packageParsedConfigs.push(parsedConfig);
+						packageProgramsRootDir.push(programRootDir);
+						configIndices.push(i);
+					}
+				})(programRootDir(parsedConfig));
+			});
+			/* Prunes the parsedConfigRegistry to avoid duplicate
+			   references under wrong packages */
+			configIndices.sort().forEach((index, i) => {
+				this.parsedConfigRegistry.splice(index - i, 1);
+			});
+			return new DoxPackage(
+				this,
+				packageFile,
+				packageParsedConfigs,
+				packageProgramsRootDir,
+			);
+		})(
+			path.dirname(packageFile),
+			[] as ts.ParsedCommandLine[],
+			[] as string[],
+			[] as number[],
 		);
+		function programRootDir(parsedConfig: ts.ParsedCommandLine) {
+			return DoxProject.getProgramRootDir(
+				parsedConfig.fileNames,
+				parsedConfig.options,
+				projectRootDir,
+			);
+		}
 	};
 
-	public static getProgramRootDir(
-		parsedConfig: ts.ParsedCommandLine,
+	private static getProgramRootDir(
+		fileNames: string[],
+		{ composite, configFilePath }: ts.CompilerOptions,
 		projectRootDir: string,
 	) {
-		const { composite, configFilePath } = parsedConfig.options;
-		const fileDirs = parsedConfig.fileNames.reduce(
-			(accumulator, fileName) => {
-				fileName = path.resolve(fileName);
-				const dir = path.dirname(fileName);
-				const len = dir.split(path.sep).length;
+		type dirAccumulator = { min: number; dirs: string[] };
+
+		return ((programRootDir) => {
+			if (!composite) return programRootDir;
+			if (isString(configFilePath))
+				return path.dirname(path.resolve(configFilePath));
+			return ((configFile) => {
+				return configFile
+					? path.dirname(path.resolve(configFile))
+					: undefined;
+			})(ts.findConfigFile(programRootDir, ts.sys.fileExists));
+		})(getDirFromDirs(getFileDirs()));
+
+		function getDirFromDirs(fileDirs: dirAccumulator) {
+			return (
+				fileDirs.dirs.find((dir) => dirDepth(dir) === fileDirs.min) ||
+				projectRootDir
+			);
+		}
+		function getFileDirs() {
+			return fileNames.reduce(
+				(accumulator, fileName) => reduceFile(accumulator, fileName),
+				{ min: 0, dirs: [] as string[] },
+			);
+		}
+		function reduceFile(accumulator: dirAccumulator, fileName: string) {
+			return ((dir, dirDepth) => {
 				accumulator.dirs.push(dir);
-				accumulator.min === 0 && (accumulator.min = len);
-				accumulator.min = len < accumulator.min ? len : accumulator.min;
+				accumulator.min === 0 && (accumulator.min = dirDepth);
+				accumulator.min =
+					dirDepth < accumulator.min ? dirDepth : accumulator.min;
 
 				return accumulator;
-			},
-			{ min: 0, dirs: [] as string[] },
-		);
+			})(getDir(fileName), dirDepth(getDir(fileName)));
 
-		let programRootDir = fileDirs.dirs.find((dir) => {
-			const len = dir.split(path.sep).length;
-			return len === fileDirs.min;
-		});
-		programRootDir ??= projectRootDir;
-
-		if (!composite) return programRootDir;
-		if (
-			configFilePath &&
-			(typeof configFilePath === 'string' ||
-				configFilePath instanceof String)
-		) {
-			return path.dirname(path.resolve(configFilePath.toString()));
+			function getDir(fileName: string) {
+				return ((fileName) => path.dirname(fileName))(
+					path.resolve(fileName),
+				);
+			}
 		}
-
-		let configFile = ts.findConfigFile(programRootDir, ts.sys.fileExists);
-		configFile = configFile ? path.resolve(configFile) : undefined;
-
-		return configFile && path.dirname(configFile);
+		function isString(value: any): value is string {
+			return (
+				!!value &&
+				(typeof value === 'string' || value instanceof String)
+			);
+		}
 	}
-	public static findPackages(
-		rootDir: string,
-		packageDef: string,
+	private static findPackages(
+		{
+			projectRootDir: activeDir,
+			npmFileConvention,
+		}: config.DoxConfig['options'],
 		accumulator = [] as string[],
 	) {
-		const packFile = path.join(rootDir, packageDef);
-		if (fs.existsSync(packFile)) accumulator.push(packFile);
-		fs.readdirSync(rootDir, { withFileTypes: true }).forEach((dirEnt) => {
+		((packageFilePath) => {
+			if (fs.existsSync(packageFilePath))
+				accumulator.push(packageFilePath);
+			fs.readdirSync(activeDir, {
+				withFileTypes: true,
+			}).forEach(findPackageInDir);
+		})(path.join(activeDir, npmFileConvention));
+
+		/* sort the packages by directory depth to enable predicatable pruning of the parsedConfigRegistry */
+		return accumulator.sort((a, b) => {
+			return dirDepth(b) - dirDepth(a);
+		});
+
+		function findPackageInDir(dirEnt: fs.Dirent) {
 			if (!dirEnt.isDirectory()) return;
 			if (dirEnt.name === 'node_modules') return;
-
-			const newDir = path.join(rootDir, dirEnt.name);
-			DoxProject.findPackages(newDir, packageDef, accumulator);
-		});
-		return accumulator.sort((a, b) => {
-			const aLen = a.split(path.sep).length;
-			const bLen = b.split(path.sep).length;
-			return bLen - aLen;
-		});
+			((newDir) => {
+				DoxProject.findPackages(
+					{
+						projectRootDir: newDir,
+						npmFileConvention,
+					} as config.DoxConfig['options'],
+					accumulator,
+				);
+			})(path.join(activeDir, dirEnt.name));
+		}
 	}
 }
-
+function dirDepth(dirPath: string) {
+	return dirPath.split(path.sep).length;
+}
 const notices = {
 	rootDir: {
 		warn: () =>

@@ -1,4 +1,3 @@
-import { DeclarationSerialised, Serialised } from '@typedox/serialiser';
 import {
 	ContentDeclaration,
 	DevColours,
@@ -11,55 +10,62 @@ import {
 import { DoxLocation } from '@typedox/core';
 
 export class ChromeMain extends HTMLElement {
-	content?: HTMLElement;
-	fullscreen: HTMLElement;
+	public content = welcomeDiv();
+
 	constructor() {
 		super();
-		window.addEventListener('popstate', ({ state }) =>
-			this.setContent(state),
-		);
-		this.fullscreen = dom.makeElement('div', 'fullscreen');
-		this.fullscreen.appendChild(new IconFullscreen('md-24'));
-		this.fullscreen.addEventListener('click', toggleFullscreen);
 
 		new DevColours();
+		window.addEventListener('popstate', ({ state }) =>
+			this.navigate(state),
+		);
 	}
 	connectedCallback() {
 		events.on('nav.history.pushState', this.setContent);
 
-		const devInfo = dom.makeElement('div');
-		devInfo.id = 'devInfo';
-		const location = router.urlToLocation(window.location);
-		location && this.setContent(location);
+		dom.appendChildren.call(this, [
+			devInfoContainer(),
+			fullscreenButton(),
+			this.content,
+		]);
+		const doxLocation = router.urlToLocation(window.location);
+		!!doxLocation && this.setContent(doxLocation);
+	}
 
-		dom.appendChildren.call(this, [devInfo, this.fullscreen]);
+	private navigate(doxLocation: DoxLocation) {
+		doxLocation ??= router.urlToLocation(window.location)!;
+		this.setContent(doxLocation);
 	}
-	disconnectedCallback() {
-		events.off('nav.history.pushState', this.setContent);
-		this.fullscreen.removeEventListener('click', toggleFullscreen);
-		window.removeEventListener('popstate', ({ state }) =>
-			this.setContent(state),
-		);
-	}
-	private setContent = (location: DoxLocation) => {
+	private setContent = (doxLocation: DoxLocation) =>
 		files
-			.fetchQueryFromFile(location.query)
-			.then((rawData) => {
-				const newContent = new ContentDeclaration(rawData);
-				this.content
-					? this.replaceChild(newContent, this.content)
-					: this.appendChild(newContent);
-				this.content = newContent;
-			})
-			.catch((err) => {
-				console.error(err);
-			});
-	};
+			.fetchQueryFromFile(doxLocation.query)
+			.then((rawData) => new ContentDeclaration(rawData))
+			.then(this.replaceContent)
+			.catch((err) => console.error(err));
+
+	private replaceContent = (freshContent: ContentDeclaration) =>
+		this.replaceChild(freshContent, this.content) &&
+		(this.content = freshContent);
 }
 
 customElements.define('chrome-main', ChromeMain);
 
-const elem = document.body;
+function fullscreenButton() {
+	return ((div, icon) =>
+		div.appendChild(icon) && (div.onclick = toggleFullscreen) && div)(
+		dom.makeElement<HTMLDivElement>('div', 'fullscreen'),
+		new IconFullscreen('md-24'),
+	);
+}
+function devInfoContainer() {
+	return ((devInfo) => (devInfo.id = 'devInfo') && devInfo)(
+		dom.makeElement<HTMLDivElement>('div'),
+	);
+}
+function welcomeDiv() {
+	return dom.makeElement('div', null, 'Welcome to Typedox');
+}
+
 document.exitFullscreen = document.exitFullscreen
 	? document.exitFullscreen
 	: (document as any).webkitExitFullscreen
@@ -67,27 +73,33 @@ document.exitFullscreen = document.exitFullscreen
 	  : (document as any).msExitFullscreen
 	    ? (document as any).msExitFullscreen
 	    : undefined;
-elem.requestFullscreen = elem.requestFullscreen
-	? elem.requestFullscreen
-	: (elem as any).webkitRequestFullscreen
-	  ? (elem as any).webkitRequestFullscreen
-	  : (elem as any).msRequestFullscreen
-	    ? (elem as any).msRequestFullscreen
+
+const body = document.body;
+body.requestFullscreen = body.requestFullscreen
+	? body.requestFullscreen
+	: (body as any).webkitRequestFullscreen
+	  ? (body as any).webkitRequestFullscreen
+	  : (body as any).msRequestFullscreen
+	    ? (body as any).msRequestFullscreen
 	    : undefined;
+
 function toggleFullscreen(e: MouseEvent) {
 	e.stopPropagation();
-	if (!document.exitFullscreen || !elem.requestFullscreen) return;
+	if (!document.exitFullscreen || !body.requestFullscreen) return;
 	const icon = e.target as HTMLElement;
-	const isFullscreen =
-		(window as any).fullScreen ||
-		(window.innerWidth == screen.width &&
-			window.innerHeight == screen.height);
 
-	isFullscreen
+	isFullscreen()
 		? document
 				.exitFullscreen()
 				.then(() => icon.setAttribute('state', 'closed'))
-		: elem
+		: body
 				.requestFullscreen()
 				.then(() => icon.setAttribute('state', 'opened'));
+}
+function isFullscreen() {
+	return (
+		!!(window as any).fullScreen ||
+		(window.innerWidth == screen.width &&
+			window.innerHeight == screen.height)
+	);
 }

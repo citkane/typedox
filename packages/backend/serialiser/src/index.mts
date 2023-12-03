@@ -1,28 +1,4 @@
-import {
-	DeclarationFlags,
-	CategoryKind,
-	DoxEvents,
-	coreEventsApi,
-	DoxLocation,
-} from '@typedox/core';
-/*
-import {
-	serialiseBranch,
-	serialiseNamespace,
-	serialisePackage,
-	serialiseProject,
-	serialiseReference,
-} from './projectStructure/projectStructure.mjs';
-*/
-import { serialiserEventsApi } from './serialiserEventsApi.mjs';
-import { mainEventsApi } from 'typedox/events';
-
-type eventsApi = mainEventsApi & serialiserEventsApi & coreEventsApi;
-export const events = new DoxEvents<eventsApi>(
-	mainEventsApi,
-	serialiserEventsApi,
-	coreEventsApi,
-);
+import { DeclarationFlags, CategoryKind, DoxLocation } from '@typedox/core';
 
 export * from './serialiserEventsApi.mjs';
 export * from './Serialiser.mjs';
@@ -36,9 +12,12 @@ export { Serialised } from './Serialised.mjs';
 type comment = { comment: string };
 type tag = { tag: any };
 
+export type declarationBundle = Record<string, DeclarationSerialised>;
 export type menuMeta = {
 	category: CategoryKind;
 	location?: DoxLocation;
+	isExternal?: true;
+	isLocal?: true;
 };
 export type menuBranch = {
 	name: string;

@@ -1,15 +1,14 @@
 import { DeclarationSerialised } from '@typedox/serialiser';
-import { NavLink, dom, files } from '../../index.js';
+import { NavLink, dom, files, state } from '../../index.js';
+
+type direction = 'parents' | 'children';
 
 export class ContentLineage extends HTMLElement {
-	private query: string;
-	//private relation: HTMLElement;
-	private declaration: DeclarationSerialised;
 	public parentsDiv?: HTMLElement;
 	public childrenDiv?: HTMLElement;
-	public peersDiv: HTMLElement;
+	public peerDiv: HTMLElement;
 
-	private hasPeers: boolean;
+	private declaration: DeclarationSerialised;
 	private parentPath: boolean;
 	private childPath: boolean;
 
@@ -18,102 +17,151 @@ export class ContentLineage extends HTMLElement {
 		isRoot = false,
 		parentPath = false,
 		childPath = false,
-		peers?: HTMLElement,
 	) {
 		super();
 		const { parents, children } = declaration;
-		this.query = declaration.location.query;
 		this.declaration = declaration;
 		this.parentPath = parentPath;
 		this.childPath = childPath;
 
-		if (parents && parents.length) {
-			this.parentsDiv = dom.makeElement(
-				'div',
-				`parents ${parents.length > 1 ? 'many' : ''}`,
-			);
-		}
-
-		this.hasPeers = !!peers;
-		this.peersDiv = peers ?? dom.makeElement('div', 'peers');
-
-		const peer = isRoot
-			? dom.makeElement('div', 'root', declaration.name)
-			: new NavLink(declaration.name, declaration.location);
-
-		const classes = ['relation'];
-		parents && classes.push('parents');
-		children && classes.push('children');
-		peer.classList.add(...classes);
-		this.peersDiv.appendChild(peer);
-
-		if (children && children.length) {
-			this.childrenDiv = dom.makeElement(
-				'div',
-				`children ${children.length > 1 ? 'many' : ''}`,
-			);
-		}
+		this.parentsDiv = self.relationsDiv(parents, 'parents');
+		this.peerDiv = self.peerDiv(isRoot, parents, children, declaration);
+		this.childrenDiv = self.relationsDiv(children, 'children');
 	}
 	connectedCallback() {
 		dom.appendChildren.call(this, [
 			this.parentsDiv,
-			!this.hasPeers ? this.peersDiv : undefined,
+			this.peerDiv,
 			this.childrenDiv,
 		]);
 		this.parentPath &&
-			this.inherit('parents', this.parentsDiv, this.declaration.parents);
+			this.inherit('parents', this.declaration, this.parentsDiv);
 		this.childPath &&
-			this.inherit(
-				'children',
-				this.childrenDiv,
-				this.declaration.children,
-			);
+			this.inherit('children', this.declaration, this.childrenDiv);
 	}
-	inherit(
-		direction: 'parents' | 'children',
+	private inherit(
+		direction: direction,
+		declaration: DeclarationSerialised,
 		targetDiv?: HTMLElement,
-		relatives?: string[],
 	) {
-		console.log(relatives);
-		if (!targetDiv || !relatives) return;
-		const placeholder =
-			direction === 'parents' ? this.parentsDiv : this.childrenDiv;
-		relatives.forEach((query) => {
-			files.fetchQueryFromFile(query).then((data) => {
-				console.log(data);
-				direction === 'parents'
-					? delete data.children
-					: delete data.parents;
+		if (!targetDiv || !declaration[direction]) return;
 
-				data.parents = data.parents?.filter((query) => {
-					return query !== this.query;
+		((queries) =>
+			queries?.forEach((query) => {
+				files.fetchQueryFromFile(query).then((data) => {
+					this.inheritContainer(direction)!.insertBefore(
+						((data) => self.createNewRelative(data, direction))(
+							((data) => self.unRecurseRelative(data, query))(
+								((data) =>
+									self.emancipateRelatives(data, direction))({
+									...data,
+								}),
+							),
+						),
+						this.inheritContainer(direction)!.lastChild,
+					);
 				});
-				data.children = data.children?.filter((query) => {
-					return query !== this.query;
-				});
-				const relative = new ContentLineage(
-					data,
-					false,
-					direction === 'parents',
-					direction === 'children',
-				);
-				placeholder?.appendChild(relative);
-				/*
-				switch (placeholder) {
-					case 'parents':
-						this.parentsDiv?.appendChild(relative);
-						break;
-					case 'children':
-						this.childrenDiv?.appendChild(relative);
-						break;
-					default:
-						this.appendChild(relative);
-						break;
-				}
-				*/
-			});
-		});
+			}))(
+			self.pruneRelatives({ ...declaration }, direction, 10, targetDiv)[
+				direction
+			],
+		);
+	}
+	private inheritContainer = (direction: direction) =>
+		direction === 'parents' ? this.parentsDiv : this.childrenDiv;
+
+	private static createNewRelative(
+		data: DeclarationSerialised,
+		direction: direction,
+	) {
+		return new ContentLineage(
+			data,
+			false,
+			direction === 'parents',
+			direction === 'children',
+		);
+	}
+	private static pruneRelatives(
+		declaration: DeclarationSerialised,
+		direction: direction,
+		maxLen: number,
+		container: HTMLElement,
+	) {
+		return ((pruneLen) => {
+			if (!pruneLen || pruneLen < maxLen) return declaration;
+			declaration[direction] = declaration.children?.slice(0, maxLen);
+			container.appendChild(
+				new ContentLineage(
+					{
+						name: `...and [${pruneLen}] more`,
+					} as DeclarationSerialised,
+					true,
+				),
+			);
+			return declaration;
+		})(declaration[direction] && declaration[direction]!.length - maxLen);
+	}
+	private static unRecurseRelative(
+		data: DeclarationSerialised,
+		relatedQuery: string,
+	) {
+		data.parents = data.parents?.filter((query) => query !== relatedQuery);
+		data.children = data.children?.filter(
+			(query) => query !== relatedQuery,
+		);
+		return data;
+	}
+	private static emancipateRelatives(
+		data: DeclarationSerialised,
+		direction: direction,
+	) {
+		direction === 'parents'
+			? (data.children = !!data.children ? [] : undefined)
+			: (data.parents = !!data.parents ? [] : undefined);
+
+		return data;
+	}
+	private static peerClasses(
+		parents: string[] | undefined,
+		children: string[] | undefined,
+	) {
+		return ((classes) => {
+			!!(parents && parents.length) && classes.push('hasparent');
+			!!(children && children.length) && classes.push('haschild');
+			return classes;
+		})(['relation']);
+	}
+	private static peerDiv(
+		isRoot: boolean,
+		parents: string[] | undefined,
+		children: string[] | undefined,
+		declaration: DeclarationSerialised,
+	) {
+		return ((classes) =>
+			isRoot
+				? self.addClassesToElement(
+						dom.makeElement('div', 'root', declaration.name),
+						classes,
+				  )
+				: self.addClassesToElement(
+						new NavLink(declaration.name, declaration.location),
+						classes,
+				  ))(self.peerClasses(parents, children));
+	}
+	private static addClassesToElement(
+		element: HTMLElement,
+		classes: string[],
+	) {
+		element.classList.add(...classes);
+		return element;
+	}
+	private static relationsDiv(relatives: string[] | undefined, key: string) {
+		if (!relatives || !relatives.length) return undefined;
+		return dom.makeElement(
+			'div',
+			`${key} ${relatives.length > 1 ? 'many' : ''}`,
+		);
 	}
 }
-
+const self = ContentLineage;
 customElements.define('content-lineage', ContentLineage);

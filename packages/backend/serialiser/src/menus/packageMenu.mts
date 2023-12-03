@@ -1,7 +1,22 @@
-import { CategoryKind, DoxLocation } from '@typedox/core';
-import { menuBranch, events } from '../index.mjs';
+import {
+	CategoryKind,
+	DoxEvents,
+	DoxLocation,
+	coreEventsApi,
+} from '@typedox/core';
+import { menuBranch, serialiserEventsApi } from '../index.mjs';
 import { log } from '@typedox/logger';
+import { mainEventsApi } from 'typedox/events';
 
+type eventsApi = coreEventsApi & serialiserEventsApi & mainEventsApi;
+const events = new DoxEvents<eventsApi>(
+	coreEventsApi,
+	serialiserEventsApi,
+	mainEventsApi,
+);
+/**
+ * This function does something
+ */
 type registryBranch = {
 	menuBranch: menuBranch;
 	references: Record<string, menuBranch>;
@@ -45,8 +60,7 @@ export class PackageMenu {
 				name,
 				category,
 				location,
-				parents,
-				children,
+				flags,
 			} = declaration;
 
 			const references = this.registry[doxPackage.name];
@@ -59,7 +73,14 @@ export class PackageMenu {
 				);
 			}
 			const parentBranch = references.references[doxReference.name];
-			const menuBranch = makeBranch(name, category, [], location);
+			const menuBranch = makeBranch(
+				name,
+				category,
+				[],
+				location,
+				flags.isExternal,
+				flags.isLocal,
+			);
 
 			parentBranch.children?.push(menuBranch);
 		});
@@ -77,8 +98,14 @@ export class PackageMenu {
 		category: CategoryKind,
 		children?: menuBranch[],
 		location?: DoxLocation,
+		isExternal?: boolean,
+		isLocal?: boolean,
 	) {
-		return { name, meta: { category, location }, children } as menuBranch;
+		return {
+			name,
+			meta: { category, location, isExternal, isLocal },
+			children,
+		} as menuBranch;
 	}
 	static sortMenu(menu: menuBranch) {
 		menu.children?.sort((a, b) => {

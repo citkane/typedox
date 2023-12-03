@@ -1,5 +1,5 @@
 import 'source-map-support/register.js';
-import { log } from '@typedox/logger';
+import { log, loggerUtils } from '@typedox/logger';
 import { config, DoxProject, DoxEvents } from '@typedox/core';
 import { FileManager } from '@typedox/filemanager';
 import { Serialiser } from '@typedox/serialiser';
@@ -8,40 +8,46 @@ import { copyAssetsToDocs } from './bff.mjs';
 
 const __filename = log.getFilename(import.meta.url);
 const events = new DoxEvents<mainEventsApi>(mainEventsApi);
-let isDone = false;
 
 export default function main(customOptions?: config.options<any>) {
-	const projectConfig = new config.DoxConfig(customOptions);
-	const { options } = projectConfig;
+	if (bootApplicationHelp()) return;
+	((projectConfig) => {
+		bootListeners(projectConfig);
+		bootProject(projectConfig);
+		bootAssets(projectConfig);
+	})(bootConfig(customOptions));
+}
 
-	events.emit('main.made.options', options);
-	config.deepFreeze(options);
-	events.emit('main.froze.options', options);
-	log.info(log.identifier(__filename), options);
+function bootConfig(customOptions?: config.options<any>) {
+	return ((projectConfig) => {
+		events.emit('main.made.options', projectConfig.options);
+		config.deepFreeze(projectConfig);
+		events.emit('main.froze.options', projectConfig.options);
+		if (!log.isLogLevelSet) log.setLogLevel(projectConfig.options.logLevel);
 
-	if (!log.isLogLevelSet) log.setLogLevel(options.logLevel);
-	new Serialiser(projectConfig.options);
-	new FileManager(projectConfig.options);
-	const doxProject = new DoxProject(projectConfig);
-
-	events.emit('main.built.project', doxProject);
-
+		return projectConfig;
+	})(new config.DoxConfig(customOptions));
+}
+function bootListeners({ options }: config.DoxConfig) {
+	new Serialiser(options);
+	new FileManager(options);
+}
+function bootProject(projectConfig: config.DoxConfig) {
+	((doxProject) => {
+		events.emit('main.built.project', doxProject);
+	})(new DoxProject(projectConfig));
+}
+function bootAssets({ options }: config.DoxConfig) {
 	copyAssetsToDocs(options.doxOut, 'packages/frontend');
 }
 
-export function logApplicationHelp() {
-	const args = new config.CoreArgsApi();
-	Object.keys(args).map((k) => {
-		const key = k as keyof typeof args;
-		const helpItem = args[key];
-
-		log.group(config.argHyphen + log.colourise('Underscore', String(key)));
-		log.log(helpItem.description);
-		log.log('Default value:', helpItem.defaultValue);
-		log.log();
-		log.groupEnd();
-	});
-	return true;
+function bootApplicationHelp() {
+	return ((isRequested) => {
+		return isRequested
+			? ((args) => {
+					loggerUtils.logHelp(args as any, config.argHyphen);
+					return true;
+			  })(new config.CoreArgsApi())
+			: false;
+	})(process.argv.includes(`${config.argHyphen}help`));
 }
-export const isRequestForHelp = (argv = process.argv) =>
-	argv.includes(`${config.argHyphen}help`);

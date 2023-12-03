@@ -1,4 +1,4 @@
-import { makeElement } from '../../lib/dom.js';
+import { makeElement } from '../../lib/libDom.js';
 
 export class ChromeFooter extends HTMLElement {
 	connectedCallback() {

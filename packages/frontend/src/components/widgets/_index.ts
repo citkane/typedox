@@ -1,3 +1,3 @@
-export * from './ClassesDrawers.js';
-export * from './ClassesIcons.js';
+export * from './WidgetDrawer.js';
+export * from './libIcons.js';
 export * from './DevColours.js';

@@ -97,28 +97,28 @@ export class DoxSourceFile extends Dox {
 			| undefined;
 
 		exports?.forEach((exportSymbol) =>
-			makeDeclaration.call(this, exportSymbol),
+			makeDeclaration.call(this, exportSymbol, false),
 		);
 		locals?.forEach((localSymbol) => {
-			//if (this.isDuplicateSymbol(localSymbol, exports)) return;
+			if (exports && this.isDuplicateSymbol(localSymbol, exports)) return;
 			makeDeclaration.call(this, localSymbol, true);
 		});
 
 		function makeDeclaration(
 			this: DoxSourceFile,
 			item: ts.Symbol,
-			local?: boolean,
+			isLocal: boolean,
 		) {
-			const declaration = new DoxDeclaration(this, item, local);
+			const declaration = new DoxDeclaration(this, item, isLocal);
 			if (declaration.error) return;
-
-			this.declarationsMap.set(declaration.escapedName, declaration);
+			const { escapedName } = declaration;
+			this.declarationsMap.set(escapedName, declaration);
 		}
 	};
 
 	public buildRelationships = () => {
 		this.declarationsMap.forEach((declaration) => {
-			declaration.relate();
+			declaration.relate(declaration.wrappedItem);
 		});
 	};
 	private findDoxPackage() {
@@ -135,20 +135,17 @@ export class DoxSourceFile extends Dox {
 			return findPackage(path.join(dir, '../'), packageDef);
 		}
 	}
-	/*
+
 	private isDuplicateSymbol(
-		needle: ts.Symbol,
-		haystack: Map<__String, DoxDeclaration | ts.Symbol> = this
-			.declarationsMap,
+		localSymbol: ts.Symbol,
+		exports: Map<__String, ts.Symbol>,
 	) {
-		if (!haystack.has(needle.escapedName)) return false;
-		const found = haystack.get(needle.escapedName)!;
-		const foundSymbol = this.isDoxDeclaration(found)
-			? found.wrappedItem.tsSymbol
-			: found;
-		return foundSymbol === needle;
+		return (
+			'exportSymbol' in localSymbol &&
+			localSymbol.exportSymbol === exports?.get(localSymbol.escapedName)
+		);
 	}
-*/
+
 	public static fileMeta(sourceFile: ts.SourceFile, projectRootDir: string) {
 		const regex = new RegExp(`^${projectRootDir}`);
 

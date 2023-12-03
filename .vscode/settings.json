@@ -18,5 +18,15 @@
 	],
 	"editor.formatOnSave": true,
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
-	"editor.formatOnPaste": true
+	"editor.formatOnPaste": true,
+	"liveServer.settings.ignoreFiles": [
+		".vscode/**",
+		"**/*.scss",
+		"**/*.sass",
+		"**/*.ts",
+		"**/*.js"
+	],
+	"liveServer.settings.multiRootWorkspaceName": "@typedox/frontend",
+	"liveServer.settings.useLocalIp": true,
+	"liveServer.settings.root": "/packages/frontend"
 }

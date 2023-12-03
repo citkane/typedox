@@ -1,4 +1,5 @@
 import { log } from '@typedox/logger';
+import { utils } from '@typedox/wrapper';
 import ts from 'typescript';
 import {
 	DoxDeclaration,
@@ -16,10 +17,6 @@ export const tsFileSpecifier = 'tsconfig';
 let uid = 0;
 
 export class Dox {
-	public defaultStrings = [
-		ts.escapeLeadingUnderscores('default'),
-		ts.escapeLeadingUnderscores('export='),
-	];
 	public get id() {
 		const id = uid;
 		uid++;
@@ -32,6 +29,10 @@ export class Dox {
 	protected isDoxSourceFile = Dox.isDoxSourceFile;
 	protected isBindingElement = Dox.isBindingElement;
 
+	public static defaultKeys = [
+		ts.escapeLeadingUnderscores('default'),
+		ts.escapeLeadingUnderscores('export='),
+	];
 	public static isDoxProject(item: any): item is DoxProject {
 		return item.constructor && item.constructor.name === 'DoxProject';
 	}
@@ -54,22 +55,8 @@ export class Dox {
 			!!item.declarations.find((node) => ts.isBindingElement(node))
 		);
 	}
-	/*
-	public static isSymbol(item: any): item is ts.Symbol {
-		return item.constructor && item.constructor.name === 'SymbolObject';
-	}
-	public static isNode(item: any): item is ts.Node {
-		if (!item.constructor) return false;
-		return (
-			item.constructor.name === 'NodeObject' ||
-			item.constructor.name === 'IdentifierObject'
-		);
-	}
-	public static isTypeNode(item: any): item is ts.Type {
-		return item.constructor && item.constructor.name === 'TypeObject';
-	}
-	public static isNodeOrSymbol(item: any): item is ts.Node | ts.Symbol {
-		return Dox.isSymbol(item) || Dox.isNode(item);
-	}
-*/
+
+	public static isExportSpecifierKind = utils.isExportSpecifierKind;
+	public static isImportSpecifierKind = utils.isImportSpecifierKind;
+	public static isSpecifierKind = utils.isSpecifierKind;
 }

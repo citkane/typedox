@@ -8,8 +8,8 @@ export interface DeclarationFlags {
 	isDefault?: true;
 	isExternal?: true;
 	isReExporter?: true;
+	isLocal?: true;
 	reExported?: true;
-	notExported?: true;
 	scopeKeyword?: 'const' | 'let' | 'var';
 	type?: ts.TypeFlags | string;
 }
@@ -57,8 +57,6 @@ export interface DoxLocation {
 	query: string;
 	hash: string;
 }
-export type namedDef<def> = [string | undefined, def];
-export type namedRegistry<reg> = Record<string, reg>;
 
 export { Dox } from './Dox.mjs';
 export { DoxDeclaration } from './DoxDeclaration.mjs';

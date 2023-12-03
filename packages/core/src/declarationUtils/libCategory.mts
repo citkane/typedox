@@ -1,28 +1,23 @@
 import ts from 'typescript';
-import { CategoryKind } from '../index.mjs';
+import { CategoryKind, DoxDeclaration } from '../index.mjs';
 import { notices } from './libNotices.mjs';
 import { log } from '@typedox/logger';
-import { TsWrapper } from '@typedox/wrapper';
 
 const __filename = log.getFilename(import.meta.url);
 
-export function getCategoryKind(
-	valueNode: ts.Node,
-	wrappedItem: TsWrapper,
-	categoryTsKind: ts.SyntaxKind,
-	checker: ts.TypeChecker,
-) {
-	const categoryKind = parseCategory(
-		categoryTsKind,
-		isArrowFunction(valueNode, checker),
-	);
-	if (categoryKind === CategoryKind.unknown) {
-		notices.categoryKind(categoryTsKind, wrappedItem, __filename);
-	}
-
-	return categoryKind;
+export function getCategoryKind({
+	valueNode,
+	wrappedItem,
+	categoryTsKind,
+	checker,
+}: DoxDeclaration) {
+	return ((categoryKind) => {
+		if (categoryKind === CategoryKind.unknown) {
+			notices.categoryKind(categoryTsKind, wrappedItem, __filename);
+		}
+		return categoryKind;
+	})(parseCategory(categoryTsKind, isArrowFunction(valueNode, checker)));
 }
-
 function parseCategory(kind: ts.SyntaxKind, isArrowFunction: boolean) {
 	const { SyntaxKind: syntax } = ts;
 
@@ -70,7 +65,11 @@ function parseCategory(kind: ts.SyntaxKind, isArrowFunction: boolean) {
 	return CategoryKind.unknown;
 }
 function isArrowFunction(valueNode: ts.Node, checker: ts.TypeChecker) {
-	const isVariable = valueNode && ts.isVariableDeclaration(valueNode);
-	const type = isVariable && checker.getTypeAtLocation(valueNode!);
-	return type ? !!type.getCallSignatures().length : false;
+	return ((type) => {
+		return type ? !!type.getCallSignatures().length : false;
+	})(
+		((isVariable) => isVariable && checker.getTypeAtLocation(valueNode))(
+			ts.isVariableDeclaration(valueNode),
+		),
+	);
 }

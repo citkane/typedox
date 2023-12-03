@@ -1,1 +1,0 @@
-{"version":3,"file":"frontendEventsApi.js","sourceRoot":"","sources":["../../src/frontendEventsApi.ts"],"names":[],"mappings":"AAIA,MAAM,CAAC,MAAM,SAAS,GAAG;IACxB,uBAAuB,EAAE,mBAAmB;IAC5C,oBAAoB,EAAE,gBAAgB;IACtC,0BAA0B,EAAE,GAAG,EAAE,GAAE,CAAC;IACpC,iBAAiB,EAAE,GAAG,EAAE,GAAE,CAAC;CAC3B,CAAC;AAEF,SAAS,mBAAmB,CAAC,QAAqB,IAAG,CAAC;AACtD,SAAS,gBAAgB,CAAC,OAAuB,IAAG,CAAC"}

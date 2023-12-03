@@ -1,11 +1,11 @@
 import ts from 'typescript';
 import * as utils from './wrapperUtils.mjs';
-import { TsWrapper, wrap } from './Wrapper.mjs';
+import { TsWrapper } from './Wrapper.mjs';
 import { log } from '@typedox/logger';
 
 export type tsItem = ts.Node[] | ts.Symbol;
-export { wrappedCache } from './WrapperCache.mjs';
-export { wrap, TsWrapper, utils };
+export { wrappedCache } from './WrapperInstanceCache.mjs';
+export { TsWrapper, utils };
 export function isSymbol(item: any): item is ts.Symbol {
 	return item.constructor && item.constructor.name === 'SymbolObject';
 }
@@ -33,27 +33,6 @@ export function isNodeOrSymbol(item: any): item is ts.Node[] | ts.Symbol {
 export function isExportStar(symbol: ts.Symbol) {
 	return symbol.flags === ts.SymbolFlags.ExportStar;
 }
-export function isSpecifierKind(kind: ts.SyntaxKind) {
-	const syntax = ts.SyntaxKind;
-
-	const specifiers = [
-		syntax.ExportAssignment,
-		syntax.ExportDeclaration,
-		syntax.ExportSpecifier,
-		syntax.ImportClause,
-		syntax.ImportEqualsDeclaration,
-		syntax.ImportSpecifier,
-		syntax.ModuleDeclaration,
-		syntax.NamespaceExport,
-		syntax.NamespaceImport,
-		syntax.BindingElement,
-		//syntax.InterfaceDeclaration,
-
-		//syntax.ObjectLiteralExpression,
-	];
-
-	return specifiers.includes(kind);
-}
 
 export function isLiteral(expression: ts.Expression) {
 	return !![
@@ -75,11 +54,8 @@ const wrapper = {
 	isTypeNode,
 	isNodeOrSymbol,
 	isExportStar,
-	isSpecifierKind,
 	isLiteral,
 	wrapperUtils: utils,
-	wrap,
-	declared: utils.declared,
 	TsWrapper,
 };
 

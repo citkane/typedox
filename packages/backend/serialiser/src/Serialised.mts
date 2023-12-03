@@ -1,8 +1,35 @@
 import ts from 'typescript';
+import { mainEventsApi } from 'typedox/events';
 import { serialiseComments } from './commentsAndTags/commentsAndTags.mjs';
 import { serialiseType } from './types/types.mjs';
-import { DeclarationSerialised, filePositions } from './index.mjs';
-import { DeclarationFlags, DoxDeclaration, DoxSourceFile } from '@typedox/core';
+import {
+	DeclarationSerialised,
+	declarationBundle,
+	filePositions,
+	serialiserEventsApi,
+} from './index.mjs';
+import {
+	DeclarationFlags,
+	DoxDeclaration,
+	DoxEvents,
+	DoxReference,
+	DoxSourceFile,
+	coreEventsApi,
+} from '@typedox/core';
+import { log } from '@typedox/logger';
+
+type eventsApi = mainEventsApi & serialiserEventsApi & coreEventsApi;
+const events = new DoxEvents<eventsApi>(
+	mainEventsApi,
+	serialiserEventsApi,
+	coreEventsApi,
+);
+
+const register = new Map<
+	string,
+	Record<string, Record<string, declarationBundle>>
+>();
+events.on('core.reference.done', saveBundle);
 
 export class Serialised {
 	public serialised: DeclarationSerialised;
@@ -10,6 +37,16 @@ export class Serialised {
 	constructor(declaration: DoxDeclaration) {
 		const { valueNode, wrappedItem, category, doxOptions, name, location } =
 			declaration;
+		const [packageKey, referenceKey, typeKey, categoryKey, nameKey] =
+			location.query.split('.');
+		const bundleKey = `${packageKey}/${referenceKey}`;
+		if (!register.has(bundleKey)) {
+			register.set(bundleKey, {});
+		}
+		const bundle = register.get(bundleKey)!;
+		bundle[typeKey] ??= {};
+		bundle[typeKey][categoryKey] ??= {} as declarationBundle;
+
 		const flags = serialiseFlags(declaration.flags);
 		const type = serialiseType(declaration);
 		const jsDocs = serialiseComments(wrappedItem);
@@ -20,7 +57,7 @@ export class Serialised {
 		const parents = Array.from(declaration.parents.keys()).map(
 			(declaration) => declaration.location.query,
 		);
-		this.serialised = {
+		this.serialised = bundle[typeKey][categoryKey][nameKey] = {
 			name,
 			category,
 			flags,
@@ -32,6 +69,25 @@ export class Serialised {
 			parents: parents.length ? parents : undefined,
 		};
 	}
+}
+function saveBundle(reference: DoxReference) {
+	const packageKey = reference.doxPackage.name;
+	const bundleKey = `${packageKey}/${reference.name}`;
+	if (!register.has(bundleKey)) return;
+	const kindRegister = register.get(bundleKey)!;
+
+	Object.keys(kindRegister).forEach((kindKey) => {
+		const kinds = kindRegister[kindKey];
+		Object.keys(kinds).forEach((categoryKey) => {
+			const bundle = kinds[categoryKey];
+			events.emit(
+				'serialiser.declarations.bundled',
+				`${bundleKey}.${kindKey}.${categoryKey}`,
+				bundle,
+			);
+		});
+	});
+	register.delete(bundleKey);
 }
 function serialiseFlags(flags: DeclarationFlags) {
 	const serialised = { ...flags };
